@@ -1107,6 +1107,16 @@ Full detail (seam, storage, fonts, harnesses, parity, lessons): `docs/WEB_BUILD.
   style, not the app's (a blank page with only the CSP shows it); `render.py` ignores it in WebKit. Don't report it.
 - Build: `./gradlew :web:wasmJsBrowserDistribution`. Several sessions share the one browser pane: pass a `tabId`.
 
+## Player guide (`tools/guide/`)
+
+Read-only web pages at `knowhowit.com.au/daybook/guide/` and `guide/<puzzle id>`, one source file per puzzle (`pages/<id>.txt`, never `.md`: `pages.yml` ignores those),
+built by `build.py` (stdlib) in `pages.yml`; adding a file adds it to the index. To write one: `tools/guide/AUTHORING.md`. Anchors are the ids in `core/TechniqueNames.kt`.
+
+- **`GuideTest` holds a page to the app:** title and tagline, `TierNotes`' lines, exactly the named techniques in order, no banned name, and every board is a real position on which the
+  teacher gives that technique (`GuideTest.teachers`). So a renamed technique or a changed tier line goes red until the page changes. Pages are a declared input of the test task, or the build cache would replay a pass.
+- **`sw.js` leaves `guide/` alone.** It stores every navigation as the app's page, so a guide page read through it became what the app opened offline (measured).
+- **No off-site requests:** each page's CSP is `default-src 'none'` plus its own stylesheet, fonts and icon; boards are inline SVG.
+
 ## Tests
 
 New tests should be **independent of the code they check** — Mambo, LITS, Kings,

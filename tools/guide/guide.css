@@ -1,0 +1,54 @@
+/* The app's Arcade scheme (ui/theme/Palette.kt) and region hues (docs/COLOUR.md). */
+@font-face { font-family: Fredoka; src: url(fonts/fredoka_regular.ttf); font-weight: 400; font-display: swap; }
+@font-face { font-family: Fredoka; src: url(fonts/fredoka_semibold.ttf); font-weight: 600; font-display: swap; }
+:root {
+  color-scheme: light dark;
+  --bg: #F4EFFF; --surface: #FFFFFF; --ink: #21145F; --ink2: #4A3F86; --primary: #5B3DF5; --on-primary: #FFFFFF;
+  --outline: #B3A6E6; --wall: #21145F; --cite: #E05A00; --error: #C4122F;
+  --hue0: #BE8EF6; --hue1: #F6C98E; --hue2: #9AEAE3; --hue3: #8EB9F6; --hue4: #F6DE8E;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #120D33; --surface: #211A5C; --ink: #F4EFFF; --ink2: #D9D4FF; --primary: #00E5FF; --on-primary: #120D33;
+    --outline: #5F52B8; --wall: #F4EFFF; --cite: #FFB300; --error: #FF8A9E;
+    --hue0: #53218C; --hue1: #8C5E21; --hue2: #1C7870; --hue3: #214E8C; --hue4: #80691E;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.5 Fredoka, system-ui, sans-serif; }
+main { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; }
+a { color: var(--primary); }
+strong { font-weight: 600; }
+h1, h2, h3 { font-weight: 600; line-height: 1.2; }
+h1 { font-size: 34px; margin: 8px 0 4px; }
+h2 { font-size: 24px; margin: 36px 0 8px; }
+h3 { font-size: 19px; margin: 32px 0 8px; scroll-margin-top: 12px; }
+h3 a { color: inherit; text-decoration: none; }
+h3:target a { color: var(--primary); }
+.tagline { color: var(--ink2); margin: 0 0 16px; }
+ul { padding-left: 22px; }
+li { margin: 4px 0; }
+ul.toc { background: var(--surface); border-radius: 12px; padding: 10px 14px 10px 32px; }
+ul.puzzles { list-style: none; padding: 0; }
+ul.puzzles li { margin: 8px 0; }
+ul.puzzles a { display: block; padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--ink); text-decoration: none; }
+ul.puzzles strong { display: block; color: var(--primary); }
+ul.puzzles span { color: var(--ink2); font-size: 15px; }
+footer { margin-top: 40px; color: var(--ink2); }
+figure { margin: 16px 0; }
+figure svg { display: block; width: 100%; max-width: 380px; height: auto; margin: 0 auto; }
+figcaption { max-width: 380px; margin: 8px auto 0; color: var(--ink2); font-size: 15px; }
+.sq { fill: var(--surface); stroke: var(--outline); stroke-width: 1; }
+.hue0 { fill: var(--hue0); } .hue1 { fill: var(--hue1); } .hue2 { fill: var(--hue2); } .hue3 { fill: var(--hue3); } .hue4 { fill: var(--hue4); }
+.hue0, .hue1, .hue2, .hue3, .hue4 { fill-opacity: .55; }
+.focus { fill: var(--primary); fill-opacity: .2; }
+.wall { stroke: var(--wall); stroke-width: 2.5; stroke-linecap: round; }
+.run { stroke: var(--primary); stroke-width: 5; stroke-linecap: round; }
+.cite { fill: none; stroke: var(--cite); stroke-width: 3; }
+.answer { fill: var(--primary); }
+svg text { fill: var(--ink); text-anchor: middle; dominant-baseline: central; font-family: Fredoka, system-ui, sans-serif; }
+.big { font-size: 22px; }
+.note { font-size: 13px; font-weight: 600; fill: var(--primary); }
+svg text.struck { fill: var(--error); }
+.strike { stroke: var(--error); stroke-width: 2; stroke-linecap: round; }
+svg text.on { fill: var(--on-primary); }

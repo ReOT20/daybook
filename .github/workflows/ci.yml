@@ -55,6 +55,11 @@ jobs:
       - name: Unit tests
         run: ./gradlew test
 
+      # GuideTest checks the facts; this catches a page the builder refuses, which would otherwise first
+      # fail in pages.yml after the merge and hold up the web deploy.
+      - name: Build the player guide
+        run: python3 tools/guide/build.py --out "$RUNNER_TEMP/guide"
+
       # Deliberately assembleRelease, not assembleDebug. Building a different variant here from
       # the one that ships is how a broken release goes out repeatedly behind a green check.
       # Unsigned is fine: secrets are not exposed to pull requests from forks.

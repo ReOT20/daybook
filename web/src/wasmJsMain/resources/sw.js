@@ -47,6 +47,14 @@ function inScope(url) {
   return url.origin === self.location.origin && url.href.startsWith(self.registration.scope);
 }
 
+/**
+ * The player guide is plain web pages sharing this scope, and not part of the app. It must stay out of the cache:
+ * cacheKey stores every navigation as the app's page, so reading a guide page would make it what the app opens offline.
+ */
+function isGuide(url) {
+  return url.href.startsWith(new URL('guide/', self.registration.scope).href);
+}
+
 /** The page is stored once, under the scope URL, whatever query string it was opened with. */
 function cacheKey(request) {
   const url = new URL(request.url);
@@ -92,7 +100,7 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (!inScope(url)) return;
+  if (!inScope(url) || isGuide(url)) return;
   const hashed = request.mode !== 'navigate' && HASHED.test(url.pathname);
   event.respondWith(hashed ? cacheFirst(request) : networkFirst(request));
 });
