@@ -314,7 +314,7 @@ object Cages : PuzzleType {
             seen[k] = true
             val laid = measurer.measure(sums[k].toString(), style, maxLines = 1)
             val at = Offset(i % n * cell + cell * 0.09f, i / n * cell + cell * 0.04f)
-            if (filled(i)) drawRoundRect(chip, at, Size(laid.size.width.toFloat(), laid.size.height.toFloat()), CornerRadius(cell * 0.06f))
+            if (filled(i)) drawRoundRect(chip, at, Size(laid.size.width.toFloat(), laid.lastBaseline + cell * 0.02f), CornerRadius(cell * 0.06f))
             drawText(laid, topLeft = at)
         }
     }

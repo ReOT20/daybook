@@ -67,6 +67,8 @@ from a measurement or review, so you can check it is still true.
   machine, 2026-10-27); the worst days are those whose first fills dead-end and are redrawn (3-4 draws). A cheaper fill
   (fewer restarts, or growing regions where the fill is already forced) would fix it; it moves every board. *M.*
 
+- [ ] **Cage Sudoku: the dashes hide a labelled square's bottom notes** where its cage closes along the bottom (7, 8, 9 lose their lower half, a highlighted 9's disc too;
+  `?puzzle=cages&date=2026-06-15&tier=standard`, r5c1). Dashes crossing notes predate #407; whether its tighter rows worsened this square was not measured. Needs the note rows laid out inside the dash inset. *S.*
 - [ ] **Cage Sudoku: the cage-first test oracle is slow on Expert** (3-13 s a board, so `CageRulesTest` samples three). Not a
   problem until the tiers change; a smarter independent solver would let it sample a year. *S.*
 - [ ] **Word Wheel: more wheels, fewer clue steps.** Grid words are limited to clued ones, so 6/7-letter words are a hand-picked 716 / 745

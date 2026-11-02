@@ -23,6 +23,13 @@ internal fun squareTap(cell: Int, selected: Int?, armed: Int?): SquareTap = when
     else -> SquareTap.SELECT
 }
 
+/**
+ * The digit the board highlights: the armed one, else the selected square's, else on an empty selected square
+ * in notes mode the digit last noted there ([notedAt] is null when that press does not count).
+ */
+internal fun highlightedDigit(cells: List<Int>, selected: Int?, armed: Int?, notesMode: Boolean, notedAt: Int?, notedDigit: Int): Int =
+    armed ?: selected?.let { at -> cells[at].takeIf { it != 0 } ?: notedDigit.takeIf { notesMode && notedAt == at } } ?: 0
+
 /** Empties [cell] and its marks, as the clear key does; `this` if there was nothing to empty. */
 fun SudokuState.clearCell(cell: Int): SudokuState =
     if (givens[cell] || (cells[cell] == 0 && notes[cell] == 0)) this else withCell(cell, 0)
