@@ -1,0 +1,103 @@
+# Shikaku
+> Cut the grid into numbered rectangles
+
+## How to play
+
+Drag from one corner to another to draw a rectangle. Tap a rectangle to remove it.
+
+A new rectangle replaces any it overlaps. It needs exactly one number to stay: drawn with none or several, it just clears the squares it covers.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". If a rectangle you drew is wrong, Hint points at that first. Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Divide the whole grid into rectangles.
+- Every rectangle must contain exactly one number.
+- That number is the rectangle's area in squares.
+
+## What changes per tier
+
+- Standard: 6x7 grid, rectangles up to 6 squares. The first two techniques below are all it needs.
+- Hard: 8x9 grid, rectangles up to 8 squares. Needs more than a number with one rectangle that fits.
+- Expert: 9x11 grid, rectangles up to 10 squares. Needs squares every rectangle covers, or a what-if.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, coloured blocks are rectangles already drawn, the tint is where to look, rings mark what the reasoning leans on, and the filled squares are the rectangle to draw. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### only-fits | A number with one rectangle that fits
+
+Go through the ways a number's rectangle could be laid out. Any that runs off the grid, takes in another number or overlaps a drawn rectangle is out. Sometimes that leaves one.
+
+~~~board
+. . 5 . . .
+2 . . . . 2
+. . . 2 . .
+2 6 . 3 3 4
+. 6 . . 3 .
+. . . . . .
+. . 4 . . .
+regions: ...... .aa... .aa... .aa... ...... ...... ......
+focus: r4c4
+cite: r3c4 r4c5
+answer: r4c4=3 r5c4=. r6c4=.
+caption: This 3 needs three squares. Sideways it would take in the 3 on its right or overlap the block on its left, and upwards it would take in the 2, so it can only run down.
+~~~
+
+### only-reaches | A square only one number can reach
+
+Start from an empty square instead. Every square belongs to some rectangle, so if only one number's rectangles can cover it, and just one of them does, that is the one.
+
+~~~board
+. . 5 . . .
+2 . . . . 2
+. . . 2 . .
+2 6 . 3 3 4
+. 6 . . 3 .
+. . . . . .
+. . 4 . . .
+regions: ...... .aadc. .aadc. .aabc. ...be. ...be. ....e.
+focus: r5c3
+answer: r5c1=. r5c2=6 r5c3=. r6c1=. r6c2=. r6c3=.
+caption: Only the 6 can reach the square on its right: the 4 below would have to run up through the block above it. Just one of the 6's rectangles covers that square, two rows deep and three wide.
+~~~
+
+### common-cells | Squares every rectangle covers
+
+A number may have several rectangles left that all cover the same squares. You can't draw it yet, but no other number can use those squares, and that can leave another number one rectangle.
+
+~~~board
+7 . . . 2 . . .
+. 2 . . . . . .
+. . . 3 2 5 6 .
+. . . . . . . .
+. 5 . . . . . 8
+. . 7 . . . . .
+. . . 8 . . . .
+. . . . . 2 . 2
+4 . . 6 . . 3 .
+regions: ade...gg ade...gg afe...gg afe..... afe..... afe..... afe..... bbccc... bbccc...
+focus: r3c6-r5c6
+answer: r4c7=. r4c8=. r5c7=. r5c8=8 r6c7=. r6c8=. r7c7=. r7c8=.
+caption: The 5 has numbers on both sides, so it can only run up and down its column, and however it does it covers the two tinted squares below it. So the 8 can't cross them, and its only rectangle left is two wide and four deep at the edge.
+~~~
+
+### what-if | A what-if
+
+Take a number with a few rectangles left and suppose each of them in turn. If all but one would straight away leave another number no room, or leave a square no number can reach, the one left is the answer. This isn't guessing: you only draw it once the others have been shown to break.
+
+~~~board
+. . . 3 . . 8 .
+. 2 . . . . . .
+5 . . . . . . .
+. 3 . . . . . .
+. . . 4 8 . . 2
+4 . 8 . . 7 . .
+. 2 . . . . . .
+. 2 . 4 . 2 8 .
+. . . . . . . .
+regions: ek...abb ek...abb ej...abb ej...abb ej...add fi...acc fi...acc fg...hcc fg...hcc
+focus: r5c5
+answer: r2c5=. r3c5=. r4c5=. r5c5=8 r6c5=. r7c5=. r8c5=. r9c5=.
+caption: This 8 can only be a line down its column, from row 1 or from row 2. From row 1 it would stop short of the bottom square, and nothing else could reach that: the 4 up and to its left would have to cross the 8's column. So it starts at row 2.
+~~~
