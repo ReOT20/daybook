@@ -200,7 +200,7 @@ def board(lines, where):
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(shown)}</text>')
     for (r, c), value in get("corners", marks).items():
         on = " on" if (r, c) in answer else ""
-        svg.append(f'<text class="corner{on}" x="{c * CELL + 6}" y="{r * CELL + 11}">{html.escape(value)}</text>')
+        svg.append(f'<text class="corner{on}" x="{c * CELL + 5}" y="{r * CELL + 10}">{html.escape(value)}</text>')
     # A note sits where the app pencils that digit, a 3x3 inside the square; a note that is not a digit, in the middle.
     for table, kind in ((notes, "note"), (struck, "note struck")):
         for (r, c), value in table.items():
