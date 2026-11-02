@@ -33,9 +33,10 @@ class SandTeachingTest {
         return v is SandLogic.Verdict.Solvable && SandOracle.replays(s.tubes, s.height, v.path)
     }
 
-    /** Takes each hint in turn until sorted; every step is one pour that keeps the board sortable. Returns the steps taken. */
+    /** Takes each hint in turn until sorted; every step is one pour that keeps the board sortable and no board comes twice. Returns the steps taken. */
     private fun walk(s: SandState, onStep: (String) -> Unit = {}): Int {
         var steps = 0
+        val seen = hashSetOf(s.tubes)
         hintWalk(s, 120) { now ->
             val d = SandTeacher.deduction(now) ?: error("no step on an unsolved board: ${now.tubes}")
             assertFalse("unexpected mistake on ${now.tubes}", d.mistake)
@@ -44,6 +45,7 @@ class SandTeachingTest {
             val next = d.apply(now) as SandState
             assertEquals("a step is one pour", now.moves + 1, next.moves)
             assertTrue("the step is a legal pour", SandOracle.pours(now.tubes, now.height).any { (a, b) -> SandOracle.pour(now.tubes, now.height, a, b)!! == next.tubes })
+            assertTrue("hints came back to ${next.tubes}", seen.add(next.tubes))
             assertTrue(d.isReached(next))
             assertFalse(d.isReached(now))
             assertTrue("a step keeps the board sortable: ${next.tubes}", next.solved || provedSortable(next))
@@ -65,6 +67,52 @@ class SandTeachingTest {
             report.appendLine(line)
         }
         writeReport("sand-teaching-coverage.txt", report.toString())
+    }
+
+    @Test
+    fun `Expert seed 71 - following hints finishes the board that once poured lilac back and forth for ever`() {
+        val s = Sand.generate(71, Difficulty.EXPERT) as SandState
+        assertTrue(walk(s) > 0)
+    }
+
+    /** "It clears the way for pouring tube a onto tube b", as the teacher writes it; a plan must name no pour already worth making. */
+    private val clears = Regex("""pouring tube (\d+) onto tube (\d+)""")
+
+    private fun worthMaking(tubes: List<List<Int>>, height: Int, a: Int, b: Int): Boolean {
+        if (!SandOracle.pours(tubes, height).contains(a to b)) return false
+        val after = SandOracle.pour(tubes, height, a, b)!!
+        fun meets(t: List<List<Int>>) = t.sumOf { c -> c.zipWithNext().count { (x, y) -> x != y } }
+        fun used(t: List<List<Int>>) = t.count { it.isNotEmpty() }
+        return (meets(after) < meets(tubes) || used(after) < used(tubes)) && SandOracle.solve(after, height, 2_000_000).solvable
+    }
+
+    @Test
+    fun `plan steps never circle and clear the way for a pour not yet worth making, over many boards and player positions`() {
+        val rng = Rng(71)
+        for (d in Difficulty.entries) {
+            var plans = 0
+            fun check(s: SandState) {
+                hintWalk(s, 120) { now ->
+                    val step = SandTeacher.teach(now) ?: return@hintWalk null
+                    if (step.technique == SandTeacher.MISTAKE || step.technique == SandTeacher.STUCK || step.technique == SandTeacher.UNSURE) return@hintWalk null
+                    if (step.technique == SandTeacher.PLAN) {
+                        plans++
+                        val (a, b) = clears.find(step.explanation)!!.destructured
+                        assertFalse("${step.explanation} on ${now.tubes}", worthMaking(now.tubes, now.height, a.toInt() - 1, b.toInt() - 1))
+                    }
+                    SandTeacher.deduction(now)!!.apply(now) as SandState
+                }
+            }
+            for (seed in 0L until 1500L) {
+                val s = SandLogic.generateVerified(seed, d) ?: error("no board seed $seed ${d.name}")
+                walk(s)
+                check(s)
+                val w = wander(s, rng, 3 + rng.nextInt(12))
+                if (!w.solved && SandTeacher.teach(w)?.technique !in listOf(SandTeacher.MISTAKE, SandTeacher.STUCK, SandTeacher.UNSURE)) { walk(w); check(w) }
+            }
+            println("${d.name}: plan steps over 1500 boards and 1500 positions: $plans")
+            assertTrue("the sample must reach plan steps", plans > 0)
+        }
     }
 
     /** Random legal pours from a daily board: where a real player might stand, sortable or not. */

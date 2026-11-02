@@ -604,9 +604,10 @@ palette, walkthrough, motif), `SandTeacher.kt`, `SandKeys.kt`. `id = "sand"` is 
   board that sorts (`withoutFrom`). The spec first said nothing but the tubes would be stored; without the log the real pour cannot be found (a
   median of 14 boards one pour back could have led to an unsortable one). A board with no log falls back to putting back one pour's sand
   (`SandLogic.unpours`). The lifted tube, the shake and the pour stream are `remember` state and decoration; one pour is one state.
-- **Hints never fall back** (nothing is hidden). The first three ladder steps are offered only when they make progress (fewer places two colours meet
-  in a tube, else fewer tubes in use, else more finished), which no pour ever undoes, so following hints cannot circle; `SandTeachingTest` follows them
-  from 200 boards a tier. Highlight indices: tube `i` is `i`.
+- **Hints never fall back** (nothing is hidden). The first three ladder steps make progress (fewer places two colours meet in a tube, else fewer tubes
+  in use, else more finished), which no pour ever undoes; a plan step is the first of the fewest pours to a pour that does (never the search's road: depth
+  first, it can start by undoing the last pour, and hints looped on Expert seed 71), so following hints cannot circle; `SandTeachingTest` follows them
+  from 1,700 boards a tier and fails on any board seen twice. Highlight indices: tube `i` is `i`.
 - **Layout: the row count (1 to 3) is whichever gives the widest tube**, and a tube's tap target is its whole column (gap and full
   height), at least 48 dp and widened towards 56 dp (`Sand.layout`, `SandLayoutTest`). The owner's baseline for too small is
   Nonogram Expert's square on a phone (16.6 dp at 375x537, 19.2 dp at 390x844). At 375x537 every tier is two rows of 39 dp tubes

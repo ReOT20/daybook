@@ -13,9 +13,11 @@ import com.joebywan.daybook.core.TeachStep
  *
  * Steps, in ladder order: [FINISH] a pour that completes a colour; [GATHER] a pour onto a matching colour, uncovering a
  * colour with somewhere to go first; [SPARE] a pour into an empty tube that frees a buried colour; and [PLAN], the first
- * pour of the search's road, explained by what it makes way for. The first three are offered only when they make
- * progress: fewer places where two colours meet in a tube, else fewer tubes in use, else more tubes finished. No pour
- * ever adds a meeting place, so following hints cannot go round in circles through them; only [PLAN] steps are neutral.
+ * pour of the shortest line to a pour that makes progress ([line]), explained by that pour. Progress is fewer places where
+ * two colours meet in a tube, else fewer tubes in use, else more tubes finished, and no pour ever goes back on it (a
+ * finished tube holds all of its colour, so nothing matches it to pour onto). The first three steps make progress; a
+ * [PLAN] step makes none but shortens the line, so following hints cannot go round in circles. The search's own road
+ * can't serve here: it is depth first, and from one side of a neutral pour its first pour can be that pour's reverse.
  *
  * A mistake is a board no order of pours can sort, proved exhaustively ([SandLogic.Verdict.Unsolvable]); a search that
  * ran out of budget ([SandLogic.Verdict.Truncated]) is never called a mistake. The pour named is the one after the last
@@ -125,9 +127,33 @@ internal object SandTeacher {
             val after = SandLogic.pour(tubes, height, a, b)
             if (good(m, after)) return spare(tubes, height, m, after)
         }
-        // 4. Plan ahead: the search's road.
-        val m = road.first()
-        return plan(tubes, height, m, road.getOrNull(1))
+        // 4. Plan ahead. Every pour that makes progress and keeps the board was taken above, so the line has two pours or more.
+        val line = line(tubes, height, here, ::keeps) ?: road
+        return plan(tubes, height, line.first(), line.drop(1).lastOrNull())
+    }
+
+    /**
+     * The fewest neutral pours from here, then a pour that makes progress and keeps the board sortable. Always found on a
+     * sortable board: the search's road makes progress somewhere, and every pour before that is neutral.
+     */
+    private fun line(
+        tubes: List<List<Int>>,
+        height: Int,
+        here: Triple<Int, Int, Int>,
+        keeps: (List<List<Int>>) -> Boolean,
+    ): List<Pair<Int, Int>>? {
+        val seen = hashSetOf(tubes)
+        val queue = ArrayDeque(listOf(tubes to emptyList<Pair<Int, Int>>()))
+        while (queue.isNotEmpty()) {
+            val (t, path) = queue.removeFirst()
+            for (m in SandLogic.pours(t, height)) {
+                val after = SandLogic.pour(t, height, m.first, m.second)
+                if (!seen.add(after)) continue
+                if (!closer(progress(after, height), here)) queue.addLast(after to path + m)
+                else if (keeps(after)) return path + m
+            }
+        }
+        return null
     }
 
     /** Where the colour now on top of [from] could go in [after]: a matching top with room, else an empty tube, else null. */
