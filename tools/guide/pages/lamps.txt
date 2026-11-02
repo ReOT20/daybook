@@ -1,0 +1,174 @@
+# Lamps
+> Light every square, no lamp seeing another
+
+## How to play
+
+Tap a square for a cross, a note that no lamp goes there, and tap again to clear it. Drag to lay crosses across squares.
+
+Double-tap or long-press a square for a lamp, and tap a lamp to remove it.
+
+On a keyboard, the arrows move, L or Enter places a lamp, X or Space a cross, and Backspace clears.
+
+Lit squares are tinted. Lamps that light each other, and a number with too many lamps or no longer enough room, turn red about a second later, but nothing stops you placing them.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- A lamp lights its own square and its whole row and column, up to a wall or the edge.
+- Light every white square. No lamp may light another lamp.
+- A number on a wall is how many lamps sit right beside it: above, below, left or right.
+
+## What changes per tier
+
+- Standard: 7x7 grid. About a quarter of the squares are walls on every tier. Needs nothing past the four direct techniques below, the ones up to "the one square that can light another".
+- Hard: 10x10 grid. Needs a lamp that would starve a number or leave a square dark, and never a what-if.
+- Expert: 12x12 grid. Needs a what-if.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, the dark squares are walls, ● is a lamp, a dot is a square a lamp lights, and x is a cross. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### zero | The squares beside a 0
+
+A 0 has no lamps beside it, so none of the squares next to it can hold one.
+
+~~~board
+. . . 1 . . .
+. 2 . . . . .
+. . . . . . .
+. . . . . . 2
+. . . . . . 0
+. . . . . . .
+. . 0 . 1 . .
+solid: r1c3 r1c4 r1c5 r1c7 r2c2 r3c1 r4c1 r4c7 r5c7 r6c6 r7c1 r7c3 r7c4 r7c5
+focus: r5c6 r5c7 r6c7
+cite: r5c7
+answer: r5c6=x r6c7=x
+caption: The 0 on the right edge has two white squares beside it, so both are crossed out.
+~~~
+
+### done | A number with all its lamps
+
+Once a number has all its lamps, the other squares beside it hold none.
+
+~~~board
+. . 1 · · ● 2
+· · ● · . · ●
+. . · x 0 x .
+. . x . x · ·
+1 x 0 x ● · ·
+● x 0 x x · ●
+. . x x 0 . 1
+solid: r1c1 r1c2 r1c3 r1c7 r2c5 r3c5 r3c7 r5c1 r5c3 r6c3 r7c1 r7c5 r7c6 r7c7
+focus: r4c1 r5c1
+cite: r5c1 r5c2 r6c1
+answer: r4c1=x
+caption: The ringed 1 already has the lamp below it, so the square above it is crossed out.
+~~~
+
+### room | A number with just enough room
+
+If a number's free squares are exactly as many as the lamps it still needs, they are all lamps. Walls, lamps, lit squares and crosses don't count as free.
+
+~~~board
+. . . 1 . . .
+. 2 . . . . .
+. . . . . . .
+. . . . . . 2
+. . . . . x 0
+. . x . . . x
+. x 0 . 1 . .
+solid: r1c3 r1c4 r1c5 r1c7 r2c2 r3c1 r4c1 r4c7 r5c7 r6c6 r7c1 r7c3 r7c4 r7c5
+focus: r1c4 r2c4
+cite: r1c4
+answer: r2c4=●
+caption: The ringed 1 has walls on both sides and the top edge above it, so its lamp goes on the one square below.
+~~~
+
+### only-light | The one square that can light another
+
+A square still dark has to be lit by something. If only one square can still give it light, that one is a lamp. That may be the square itself.
+
+~~~board
+· ● . 1 . · .
+● 2 · ● · · ·
+. · · · · · ●
+. · · · · ● 2
+. . . · . x 0
+. . x · . . x
+. x 0 . 1 . .
+solid: r1c3 r1c4 r1c5 r1c7 r2c2 r3c1 r4c1 r4c7 r5c7 r6c6 r7c1 r7c3 r7c4 r7c5
+focus: r6c7 r7c7
+cite: r6c7
+answer: r7c7=●
+caption: The ringed square is crossed out and dark. It has a wall above and a wall to its left, so only a lamp on the filled square below it can light it.
+~~~
+
+### starve | A lamp that would starve a number
+
+A lamp lights the squares beside a number too, and lit squares can't hold a lamp. If a lamp would leave a number too few places for its lamps, no lamp goes there.
+
+~~~board
+● 1 x . x . . 1 . 1
+· x 0 2 . . . . . .
+1 · x . . 1 . . 2 .
+● · · · · . 1 . . .
+· · . . . x . . . .
+. · · · ● 2 x . . .
+· ● · . 2 ● · · · ·
+● 3 . . . · . . . .
+· ● · · · · . . . .
+. · . . . · . . 2 .
+solid: r1c2 r1c8 r1c10 r2c3 r2c4 r3c1 r3c6 r3c8 r3c9 r4c6 r4c7 r5c5 r5c10 r6c1 r6c6 r7c4 r7c5 r8c2 r8c3 r8c5 r8c10 r9c7 r9c8 r10c1 r10c3 r10c9
+focus: r1c9 r1c10 r2c9 r2c10
+cite: r1c9 r1c10 r2c10
+answer: r2c9=x
+caption: The 1 in the top corner has two squares beside it, both ringed. A lamp on the filled square would light both, leaving the 1 nowhere for its lamp, so it's crossed out.
+~~~
+
+### dark | A lamp that would leave a square dark
+
+Find the squares that could still light a dark square. A lamp that would light all of them, without lighting the dark square itself, would leave it dark for good.
+
+~~~board
+● · · · · . · x ● x
+2 · . ● · · x 0 2 ●
+● · · 1 x · ● x x 1
+· · ● x 1 x · ● · ·
+. ● 2 2 ● 2 x x . ●
+● 2 · ● . ● 2 0 x .
+x x . · x 2 ● x · ·
+. . . · . x 3 ● · ·
+. 1 1 · · · ● . ● 2
+. . . · . · · · · ●
+solid: r1c6 r2c1 r2c3 r2c8 r2c9 r3c4 r3c10 r4c5 r5c1 r5c3 r5c4 r5c6 r5c9 r6c2 r6c5 r6c7 r6c8 r6c10 r7c6 r8c1 r8c7 r9c2 r9c3 r9c8 r9c10 r10c5
+focus: r7c2 r7c3 r8c2 r8c3
+cite: r7c2 r7c3 r8c2
+answer: r8c3=x
+caption: The ringed cross in row 7 can only be lit from the other two ringed squares. A lamp on the filled square would light both without lighting it, so it's crossed out.
+~~~
+
+### what-if | A what-if
+
+Suppose a lamp on a square, or none, and follow at most three of the direct steps above. If a number goes over or short, or a square can never be lit, the supposition was wrong. This isn't guessing: you only mark the square once the other choice has been shown to break.
+
+~~~board
+· · · · · · · ● · x · ·
+· ● . · · ● x 1 x 2 ● ·
+● 2 . ● . x 0 . · ● 3 ●
+· x 0 . ● · x . . · . ·
+· · x ● 2 x . . . · · .
+· ● · · x 2 ● 2 . · · ·
+· · · . . ● . . . · · ·
+1 · · ● x . x 1 . · · ·
+● . · x 0 x . . . 1 ● ·
+· 2 ● x 0 0 x . x 0 . ·
+· ● . x 0 x . . x 0 x ●
+· · · · x · · · ● x · ·
+solid: r2c3 r2c8 r2c10 r3c2 r3c3 r3c5 r3c7 r3c8 r3c11 r4c3 r4c4 r4c8 r4c11 r5c5 r5c7 r5c12 r6c6 r6c8 r6c9 r7c4 r7c5 r7c7 r8c1 r8c6 r8c8 r9c2 r9c5 r9c9 r9c10 r10c2 r10c5 r10c6 r10c8 r10c10 r10c11 r11c3 r11c5 r11c10
+focus: r8c9
+cite: r7c8 r8c8
+answer: r8c9=x
+caption: A lamp on the filled square would give the 1 on its left its lamp, so the ringed square above that 1 couldn't hold one. That square could only then be lit from the square to its right, which this lamp would light, as everything further along the row is already lit. It would stay dark, so the filled square is crossed out.
+~~~
