@@ -77,7 +77,7 @@ def board(lines, where):
     for line in lines:
         key, colon, value = line.partition(":")
         if colon:
-            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption"):
+            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "tiles", "caption"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():
@@ -91,6 +91,9 @@ def board(lines, where):
     get = lambda key, parse: parse(fields.get(key, ""), where, w, h)
     focus, cite = set(get("focus", cells)), get("cite", cells)
     answer, notes, struck = get("answer", marks), get("notes", marks), get("struck", marks)
+    tiles = get("tiles", marks)
+    if set(tiles.values()) - {"right", "near", "out"}:
+        fail(where, "tiles are right, near or out")
     regions = fields.get("regions", "").split()
     if regions and (len(regions) != h or {len(r) for r in regions} != {w}):
         fail(where, "regions needs one string per row, one letter per square")
@@ -107,6 +110,13 @@ def board(lines, where):
             if regions:
                 hue = hues.setdefault(regions[r][c], len(hues) % 5)
                 svg.append(f'<rect class="hue{hue}" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
+            if (r, c) in tiles:
+                # As the app does, a shape as well as a colour: right has an inset ring, near a corner dot.
+                svg.append(f'<rect class="tile-{tiles[r, c]}" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
+                if tiles[r, c] == "right":
+                    svg.append(f'<rect class="tile-ring" x="{x + 4}" y="{y + 4}" width="{CELL - 8}" height="{CELL - 8}" rx="4"/>')
+                elif tiles[r, c] == "near":
+                    svg.append(f'<circle class="tile-dot" cx="{x + CELL - 8}" cy="{y + 8}" r="3"/>')
             if (r, c) in focus:
                 svg.append(f'<rect class="focus" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             # A wall on the right and the bottom of any square whose neighbour is another region (or nothing).

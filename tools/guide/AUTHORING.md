@@ -52,6 +52,7 @@ caption: One or two sentences saying what the board shows. Required.
 - `focus` the tint (the step's `focus`), `cite` a ring (what the reasoning leans on), `answer` the filled square that is the move.
 - `notes` small marks, a digit in its pencil place; `struck` the same, crossed out. Never on the `answer` square.
 - `lines` thick lines between square centres (bonds, loops, paths).
+- `tiles` marks on a guess: `r1c1=right`, `near` or `out`, each its own shape as well as a colour.
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 
 For what these cannot draw (a hex, a wheel, a tube): first try tokens in a grid (Cipher's sum is rows of letters). If that really cannot

@@ -43,6 +43,9 @@ figcaption { max-width: 380px; margin: 8px auto 0; color: var(--ink2); font-size
 .sq { fill: var(--surface); stroke: var(--outline); stroke-width: 1; }
 .hue0 { fill: var(--hue0); } .hue1 { fill: var(--hue1); } .hue2 { fill: var(--hue2); } .hue3 { fill: var(--hue3); } .hue4 { fill: var(--hue4); }
 .hue0, .hue1, .hue2, .hue3, .hue4 { fill-opacity: .55; }
+.tile-right { fill: var(--hue2); } .tile-near { fill: var(--hue1); } .tile-out { fill: var(--outline); fill-opacity: .35; }
+.tile-ring { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.tile-dot { fill: var(--ink); }
 .focus { fill: var(--primary); fill-opacity: .2; }
 .wall { stroke: var(--wall); stroke-width: 2.5; stroke-linecap: round; }
 .run { stroke: var(--primary); stroke-width: 5; stroke-linecap: round; }
