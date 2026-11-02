@@ -22,7 +22,6 @@ from a measurement or review, so you can check it is still true.
 
 ## Could affect players
 
-- [ ] **Sand: following hints can loop.** Expert seed 71: the hints pour lilac between tubes 1 and 5 for ever, each claiming to "clear the way for pouring tube 8 onto tube 4"; the guide's finder caps its walk at 200 steps because of it. *S.*
 - [ ] **Boards not yet on the digit scale** (`BoardGlyph`, `ui/BoardText.kt`). Moved: Sudoku, Cage Sudoku, Inequality,
   Regions, Nonogram, Tally, Mosaic. Still on their own shares: Tents' clues (0.55 SemiBold), Mines' numbers (0.6), Lamps'
   wall numbers, Shikaku (0.46), Atoms (0.42 Bold), Cipher (0.56 Medium), Dominoes' badges (0.27), Target, Lits' piece
