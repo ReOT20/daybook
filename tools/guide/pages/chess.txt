@@ -1,0 +1,93 @@
+# Mate
+> Find the forced checkmate
+
+## How to play
+
+Tap a piece to see where it can go: a dot marks an empty square it can reach, and a ring marks a piece it can take. Tap one of those to move there. Tap another of your pieces to change your mind, or the same piece to put it down. A pawn reaching the far side opens a choice of four pieces.
+
+The opponent answers each of your moves after a moment, always with the toughest defence it has. The latest moves are tinted, and a king in check has a red circle behind it. Undo takes back your move and its reply together.
+
+Nothing legal is refused. If your move lets them escape, the line under the board says "No forced mate from here: Undo or Restart" a moment later.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Hints write moves in chess shorthand: Rd7 is a rook to d7 (K, Q, R, B and N are the pieces, and a pawn has no letter), x means it takes, + is check and # is mate. A move starting with dots is the opponent's.
+
+Every board has exactly one first move that forces mate in the moves you have. After that there may be several ways to finish, and the hint's isn't the only one that counts.
+
+## Rules
+
+- You play the side at the bottom, White or Black.
+- Checkmate the opposing king within the number of moves shown: the king is attacked and no legal move gets it out. A stalemate doesn't count.
+- The standard rules of chess apply, including castling, en passant and promotion.
+
+## What changes per tier
+
+- Standard: Mate in 2. You get two moves, and the opponent answers the first.
+- Hard: Mate in 3.
+- Expert: Mate in 4. More boards open with a quiet move.
+
+## Techniques
+
+These are the steps the hints teach. Look for them in this order: always check for a mate on the spot before anything longer. On each board, hollow pieces are White and solid pieces are Black, and White is playing. The tinted squares are where to look, rings mark what the reasoning leans on, and the two filled squares are the move, from and to. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### mate-in-one | A mate in one
+
+One move ends it. Look at the king: every square around it has to be blocked by its own pieces or covered by yours, and the check can't be answered by taking the checking piece or stepping in the way. In a double check only the king could move, so those two answers don't arise.
+
+~~~board
+. . . . . ♜ . ♚
+♟︎ . . . . . ♟︎ ♟︎
+. . . . . . . .
+. . . ♙ . . . .
+. . ♙ . . . . .
+. . . ♛ . . . .
+. . . . . . ♙ ♙
+. . . . . ♖ . ♔
+top: a b c d e f g h
+left: 8 7 6 5 4 3 2 1
+focus: r1c8 r8c6
+cite: r1c6 r1c7 r1c8 r2c7 r2c8
+answer: r8c6=♖ r1c6=♜
+caption: The rook on f1 takes on f8 with check. The king's own pawns fill g7 and h7, the rook covers g8, and Black can neither take the rook nor block it.
+~~~
+
+### forcing-key | A forcing key move
+
+The first move is a check, which limits the replies to the few that answer it. Follow each of those: every one has to leave you a mate in the moves you have left. Don't be afraid of giving up a piece, even your queen, if that's what forces it.
+
+~~~board
+. . ♕ . . ♞ . ♚
+♟︎ . . . . ♜ ♟︎ ♟︎
+. . . . . . . .
+. . . ♙ . . . .
+. . ♙ . . . . .
+. . . ♛ . . . .
+. . . . . . ♙ ♙
+. . . . . ♖ . ♔
+top: a b c d e f g h
+left: 8 7 6 5 4 3 2 1
+focus: r1c3
+cite: r1c6 r1c8
+answer: r1c3=♕ r1c6=♞
+caption: The queen takes the knight on f8 with check. Black's one reply is for the rook on f7 to take her, and the rook on f1 takes back on f8: the mate on the board above.
+~~~
+
+### quiet-key | A quiet key move
+
+The hardest key to see, because it isn't a check and the opponent can play what they like. It works when every reply still leaves you a mate. If no check does the job, look for a move that sets up a mate the opponent can't stop.
+
+~~~board
+. . . . ♚ . . .
+. . . . ♙ . . .
+. . . . ♔ . . ♟︎
+♟︎ . . ♙ . . . ♟︎
+♙ . . . . . . ♙
+. . . . . . . .
+. . ♟︎ . . . . .
+. . . . . . . .
+top: a b c d e f g h
+left: 8 7 6 5 4 3 2 1
+focus: r4c4
+cite: r1c5 r3c4
+answer: r4c4=♙ r3c4=.
+caption: The pawn steps to d6, and it isn't check. Black's king can't move and its other pawns are stuck, so Black can only promote the pawn on c2. Whatever it becomes, the pawn goes on to d7, and that's mate.
+~~~

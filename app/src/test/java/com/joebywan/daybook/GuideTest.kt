@@ -7,9 +7,16 @@ import com.joebywan.daybook.core.TeachStep
 import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
+import com.joebywan.daybook.puzzles.ChessPosition
+import com.joebywan.daybook.puzzles.ChessRules
+import com.joebywan.daybook.puzzles.ChessTeacher
 import com.joebywan.daybook.puzzles.PuzzleState
 import com.joebywan.daybook.puzzles.Sudoku
 import com.joebywan.daybook.puzzles.SudokuTeacher
+import com.joebywan.daybook.puzzles.WhosWhoLogic
+import com.joebywan.daybook.puzzles.WhosWhoState
+import com.joebywan.daybook.puzzles.WhosWhoTeacher
+import com.joebywan.daybook.puzzles.WhosWhoWords
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -81,6 +88,8 @@ class GuideTest {
      */
     private val teachers: Map<String, (Board) -> TeachStep?> = mapOf(
         "sudoku" to ::sudokuStep,
+        "chess" to ::chessStep,
+        "whoswho" to ::whosWhoStep,
     )
 
     private fun sudokuStep(b: Board): PlacementStep? {
@@ -94,6 +103,83 @@ class GuideTest {
             assertTrue("${b.technique}: $d is no pencil mark for square $cell", seen.none { cells[it] == d.digitToInt() })
         }
         return step
+    }
+
+    /** A step with its squares moved to the board's `row * width + col`. */
+    private fun mapped(step: TeachStep, focus: Set<Int>, cited: Set<Int>, targets: Set<Int>): TeachStep = object : TeachStep by step {
+        override val focus = focus
+        override val cited = cited
+        override val targets = targets
+    }
+
+    /** The moves White has left on each chess board: the rows don't show them. White to move, no castling, no en passant. */
+    private val chessMoves = mapOf("mate-in-one" to 1, "forcing-key" to 2, "quiet-key" to 2)
+
+    private fun chessStep(b: Board): TeachStep? {
+        assertEquals("a b c d e f g h", b.fields["top"])
+        assertEquals("8 7 6 5 4 3 2 1", b.fields["left"])
+        val letters = mapOf(
+            '♔' to 'K', '♕' to 'Q', '♖' to 'R', '♗' to 'B', '♘' to 'N', '♙' to 'P',
+            '♚' to 'k', '♛' to 'q', '♜' to 'r', '♝' to 'b', '♞' to 'n', '♟' to 'p',
+        )
+        val placement = b.rows.joinToString("/") { row -> row.map { letters[it[0]] ?: '1' }.joinToString("") }
+        val step = ChessTeacher.deduce(ChessPosition.fromFen("$placement w - -"), chessMoves.getValue(b.technique)) ?: return null
+        val at = { sq: Int -> (7 - sq / 8) * 8 + sq % 8 } // a1 = 0 to row * width + col, White at the bottom
+        assertEquals("${b.technique}: rings", step.cited.map(at).toSet(), b.squares("cite"))
+        // The filled squares are drawn before the move: the piece that moves, and what stands where it lands.
+        val rows = b.rows.flatten()
+        for (sq in listOf(ChessRules.from(step.move), ChessRules.to(step.move))) {
+            assertEquals("${b.technique}: the move's square $sq", rows[at(sq)], b.marks("answer")[at(sq)])
+        }
+        return mapped(step, step.focus.map(at).toSet(), step.cited.map(at).toSet(), step.targets.map(at).toSet())
+    }
+
+    /** The two games on the Who's Who page, their words and clues: what its rows don't show. */
+    private fun whosWhoGame(json: String) = Json.decodeFromString(PuzzleState.serializer(), json) as WhosWhoState
+    private val whosWhoHard = whosWhoGame(
+        """{"type":"com.joebywan.daybook.puzzles.WhosWhoState","names":["Eve","Kai","Leo","Raj"],"groups":[0,5,1],"items":[[0,1,2,3],[0,1,3,4],[0,2,3,4]],"clues":[{"kind":3,"a":0,"b":9},{"kind":2,"a":0,"b":13},{"kind":0,"a":1,"b":10},{"kind":3,"a":2,"b":3},{"kind":2,"a":0,"b":12},{"kind":0,"a":0,"b":8},{"kind":0,"a":1,"b":15},{"kind":0,"a":4,"b":13}],"answer":[[1,3,0,2],[0,2,3,1],[2,3,1,0]]}"""
+    )
+    private val whosWhoExpert = whosWhoGame(
+        """{"type":"com.joebywan.daybook.puzzles.WhosWhoState","names":["Ann","Ben","Finn","Ivy","Kai"],"groups":[0,5,4],"items":[[0,1,2,3,4],[0,1,2,3,4],[0,1,2,3,4]],"clues":[{"kind":3,"a":1,"b":10},{"kind":2,"a":0,"b":14},{"kind":1,"a":6,"b":14},{"kind":0,"a":5,"b":18},{"kind":0,"a":13,"b":16},{"kind":0,"a":2,"b":6},{"kind":3,"a":10,"b":16},{"kind":4,"a":4,"b":7,"c":8},{"kind":2,"a":3,"b":11},{"kind":0,"a":3,"b":17},{"kind":2,"a":11,"b":19}],"answer":[[4,0,1,3,2],[3,2,0,4,1],[1,3,4,2,0]]}"""
+    )
+    private val whosWhoBoards = mapOf(
+        "clue" to whosWhoHard.copy(marks = "..................o............................."),
+        "only" to whosWhoHard.copy(marks = "x..xo....x..x.....o....o...x........x..........."),
+        "link" to whosWhoHard.copy(marks = "x..xo....x..x.....o....oo..x........x..........."),
+        "house" to whosWhoHard.copy(marks = "x..xo....x..x.....o....o........................"),
+        "what-if" to whosWhoExpert.copy(marks = "x........x.....o...xxxoxx...o..o...ox.xx.x.x.x.....x.xo..o..x...x........x."),
+    )
+
+    private fun whosWhoStep(b: Board): TeachStep? {
+        val s = whosWhoBoards.getValue(b.technique)
+        assertEquals(s.groups.joinToString(" ") { WhosWhoWords.HEADERS[it] }, b.fields["top"])
+        assertEquals(s.names.joinToString(" "), b.fields["left"])
+        val text = pages.first { it.id == "whoswho" }.text
+        for (k in s.clues.indices) {
+            val line = "- ${k + 1}. ${WhosWhoLogic.clueText(s, k)}"
+            assertTrue("${b.technique}: the page should list \"$line\"", line in text)
+        }
+        // Every square but the move's shows what the marks leave it: its ticked word, or the items still possible.
+        val grid = WhosWhoLogic.gridOf(s.n, s.columns, s.marks)
+        val step = WhosWhoTeacher.deduce(s, s.marks) ?: return null
+        for (c in 0 until s.n * s.columns) {
+            if (c in step.targets) continue
+            val column = c % s.columns
+            val placed = grid.placed[c]
+            assertEquals("${b.technique}: square $c", if (placed >= 0) s.word(column, placed) else ".", b.rows[c / s.columns][column])
+            val open = (0 until s.n).filter { placed < 0 && grid.cand[c] shr it and 1 == 1 }.map { s.word(column, it) }
+            assertEquals("${b.technique}: what square $c can hold", open.joinToString(","), b.marks("notes")[c].orEmpty())
+        }
+        // The move: a tick says the item, a cross says "not" it.
+        for (t in step.ticks) assertEquals(s.word(t / s.n % s.columns, t % s.n), b.marks("answer")[t / s.n])
+        for (t in step.crosses) assertEquals("not_" + s.word(t / s.n % s.columns, t % s.n), b.marks("answer")[t / s.n])
+        // A clue's index isn't a square: a step that reads one must name it in the caption.
+        for (k in step.focus.filter { it >= WhosWhoTeacher.CLUE_BASE }) {
+            assertTrue("${b.technique}: the caption names its clue", "lue ${k - WhosWhoTeacher.CLUE_BASE + 1}" in b.fields["caption"].orEmpty())
+        }
+        val cells = { set: Set<Int> -> set.filter { it < WhosWhoTeacher.CLUE_BASE }.toSet() }
+        assertEquals("${b.technique}: rings", cells(step.cited), b.squares("cite"))
+        return mapped(step, cells(step.focus), cells(step.cited), step.targets)
     }
 
     @Test
