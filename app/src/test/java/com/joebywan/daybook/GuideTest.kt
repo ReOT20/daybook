@@ -121,7 +121,7 @@ class GuideTest {
 
     private fun pipesStep(b: Board): TeachStep? {
         val dirs = "urdl"
-        fun mask(token: String) = token.sumOf { 1 shl dirs.indexOf(it) as Int }
+        fun mask(token: String) = token.fold(0) { m, c -> m or (1 shl dirs.indexOf(c)) }
         val cells = b.rows.flatten().map(::mask)
         assertTrue("${b.technique}: a board the reasoning settles, so one answer", PipesTeacher.settles(b.width, b.rows.size, cells))
         val step = PipesTeacher.deduce(b.width, b.rows.size, cells) ?: return null

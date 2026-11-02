@@ -63,4 +63,5 @@ svg text.on { fill: var(--on-primary); }
 .pearl { stroke: var(--ink); stroke-width: 2.5; }
 .pearl.b { fill: var(--ink); }
 .pearl.w { fill: var(--surface); }
-svg text.badge { font-size: 12px; font-weight: 600; text-anchor: end; }
+.over { paint-order: stroke; stroke: var(--surface); stroke-width: 5px; }
+svg text.badge { font-size: 11px; font-weight: 600; text-anchor: end; }

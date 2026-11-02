@@ -118,7 +118,7 @@ w . . . w .
 draw: pearls
 focus: r1c1
 moves: r1c1-r1c2 r1c1-r2c1
-caption: This corner pearl has only two ways in, so both are lines. The teacher would name this board's first step after the black pearl, which then runs on further.
+caption: This corner pearl has only two ways in, so both are lines. A hint on this board names the black pearl's rule instead, and takes the lines further.
 ~~~
 
 ### dead-end | A dead end

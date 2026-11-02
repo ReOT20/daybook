@@ -49,7 +49,7 @@ A fill wipes out a colour only by covering its last patch. So if you have one fi
 . . . . . . . .
 regions: ccccccbb ccccccbb cccccccb cccccccb cccccccc cccccccc ccbccccb bcbccccb bbbbcccc cbbbaccc cccaaccb cccaabbb
 focus: r10c5 r11c4 r11c5 r12c4 r12c5
-caption: Two fills left and three colours on the board, so each fill must wipe out a colour. Only teal is down to one patch, and the fill that keeps the board winnable pours violet into it.
+caption: Two fills left and three colours on the board, so each fill must wipe out a colour. Only the tinted patch's colour is down to one patch, and the fill that keeps the board winnable pours violet into it.
 ~~~
 
 ### biggest-swallow | Filling to swallow the most areas

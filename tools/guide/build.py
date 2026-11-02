@@ -149,7 +149,7 @@ def board(lines, where):
             token = answer.get((r, c), rows[r][c])
             if token in (".", "_"):
                 continue
-            kind = "big on" if (r, c) in answer else "big"
+            kind = "big on" if (r, c) in answer else "big over" if "lines" in fields else "big"
             if draw == "spokes" and set(token) <= set("urdl"):
                 # A pipe tile: an arm from the middle to each side named (up, right, down, left).
                 ends = {"u": (x, y - CELL // 2), "r": (x + CELL // 2, y), "d": (x, y + CELL // 2), "l": (x - CELL // 2, y)}
@@ -162,7 +162,7 @@ def board(lines, where):
                     svg.append(f'<circle class="disc" cx="{x}" cy="{y}" r="15"/>')
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(token)}</text>')
     for (r, c), value in get("badges", marks).items():
-        svg.append(f'<text class="badge" x="{(c + 1) * CELL - 3}" y="{r * CELL + 9}">{html.escape(value)}</text>')
+        svg.append(f'<text class="badge{' on' if (r, c) in answer else ''}" x="{(c + 1) * CELL - 3}" y="{r * CELL + 9}">{html.escape(value)}</text>')
     # A note sits where the app pencils that digit, a 3x3 inside the square; a note that is not a digit, in the middle.
     for table, kind in ((notes, "note"), (struck, "note struck")):
         for (r, c), value in table.items():
