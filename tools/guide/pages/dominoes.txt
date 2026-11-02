@@ -1,0 +1,158 @@
+# Dominoes
+> Lay every domino so each region keeps its rule
+
+## How to play
+
+Drag a domino from the tray onto a square and on into its neighbour: the way you swipe is the way it lies.
+
+Or tap it (again to turn it round), then tap two neighbouring squares. Its first half goes on the first square.
+
+Tap a laid domino to lift it, and double-tap or long-press it to turn it round.
+
+On a keyboard, the arrows move, ] or Tab and [ pick a domino, F or Space turns it, Enter marks a square and lays it, and Backspace lifts.
+
+A region's badge turns green when the region is covered and keeps its rule, and red, after a moment, once it can't.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every hint ends in a placement. Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Lay every domino from the tray on two neighbouring squares, either way round.
+- Each coloured region has a rule. A number is the total of its pips; < and > bound the total.
+- = means every square of the region shows the same; ≠ means no two match.
+- Squares outside a region have no rule, and a domino may cross from one region into another.
+
+## What changes per tier
+
+- Standard: 5x5 board, 6 or 7 dominoes. Needs what a region's values allow.
+- Hard: 6x6 board, 9 or 10 dominoes. Needs counting the halves left in the tray.
+- Expert: 7x7 board, 12 to 14 dominoes. Needs a what-if.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Each board shows the tray under the grid, with each region's rule in the corner of its top-right square. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares and tray domino are the move. A line joins the halves of a domino already laid. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### only-partner | A square with one partner left
+
+A square with one free neighbour shares a domino with it. Then see which domino the rules let lie there.
+
+~~~board
+. _ _ _ _
+. _ _ . _
+. . _ . _
+. . . . .
+_ _ . _ _
+_ _ _ _ _
+3-0 5-0 1-1 2-1 3-2
+6-4 _ _ _ _
+regions: a.... b..c. bd.c. b.e.f ..... ..... ..... .....
+focus: r2c4 r3c4
+badges: r1c1=3 r2c1=4 r2c4== r3c2=>5 r4c3=>1 r4c5=>2
+answer: r2c4=1 r3c4=1 r7c3=1-1
+caption: The top tinted square has one free neighbour, so the two share a domino. They're both in the equal region, so it has to be a double, and the tray's only double is 1-1.
+~~~
+
+### only-place | A domino with one place left
+
+Take one domino and try it everywhere. If every other place breaks a rule, or strands a square with no partner, it goes in the one place left.
+
+~~~board
+_ 3 . . _
+_ 5 . . _
+_ . _ . .
+_ . _ 2 _
+. . _ 2 _
+_ _ _ _ _
+0-0 1-0 5-0 2-1 6-1
+_ _ _ _ _
+regions: .ab.. .ccd. .c.ef ...e. g..h. ..... ..... .....
+focus: r1c4 r2c4
+badges: r1c2=>2 r1c3=<1 r2c3=16 r2c4=<2 r3c4=<3 r3c5=>0 r5c1=<1 r5c4=2
+lines: r4c4-r5c4 r1c2-r2c2
+answer: r2c4=1 r1c4=2 r7c4=2-1
+caption: Lay the 2-1 anywhere else and a rule or a square's only partner breaks. So it lies here, and the lower square is under 2, so that's the 1.
+~~~
+
+### only-domino | The one domino that fits a square
+
+Take one square and go through the tray. If every domino but one is ruled out, that domino covers it.
+
+~~~board
+_ _ . . .
+6 . . 4 .
+6 . . 5 _
+_ _ _ _ _
+_ _ _ _ _
+_ _ _ _ _
+0-0 2-0 2-2 5-2 _
+_ _ _ _ _
+regions: ..... ..aab ccdd. ..... ..... ..... ..... .....
+focus: r2c2 r2c3
+badges: r2c4=>8 r2c5=<1 r3c2=6 r3c4=5
+lines: r2c4-r3c4 r2c1-r3c1
+answer: r2c2=2 r2c3=5 r7c4=5-2
+caption: The region over 8 already has a 4, so the right tinted square must beat 4, and the only 5 or 6 left is on the 5-2. Its 2 can't go below, where the total of 5 needs a 0, or above, which would strand the top row's middle square. So it goes on the left.
+~~~
+
+### region-value | What a region's values allow
+
+Work out what a region can be made of, from what the tray still has. That can rule out dominoes well away from where you started.
+
+~~~board
+_ _ . . .
+. . . . .
+. . . . _
+_ _ _ _ _
+_ _ _ _ _
+_ _ _ _ _
+0-0 2-0 2-2 5-2 5-4
+6-6 _ _ _ _
+regions: ..... ..aab ccdd. ..... ..... ..... ..... .....
+focus: r2c4 r3c4
+badges: r2c4=>8 r2c5=<1 r3c2=6 r3c4=5
+answer: r2c4=4 r3c4=5 r7c5=5-4
+caption: The tray's values can make a total of 5 only as 5 and 0. That leaves one way to cover the top tinted square: the 5-4, with its 5 on the bottom one.
+~~~
+
+### counting | Counting the halves left in the tray
+
+Count how many halves of a value are left, and how many squares can take nothing else. If those match, no other square gets that value.
+
+~~~board
+_ _ _ _ _ _
+. . . . _ _
+. . _ . . _
+. . _ _ . _
+. . . . . _
+_ . . _ _ _
+_ _ _ _ _ _
+2-0 5-0 3-2 4-2 5-2 4-4
+5-4 6-4 6-5 _ _ _
+regions: ...... .abc.. de..f. gh..i. ..j.k. .lm... ...... ...... ......
+focus: r4c5 r5c5
+badges: r2c2=>4 r2c3=>4 r2c4=>1 r3c1=>3 r3c2=>5 r3c5=>2 r4c1=2 r4c2=>4 r4c5=>3 r5c3=>5 r5c5=>4 r6c2=<3 r6c3=>3
+answer: r4c5=4 r5c5=5 r9c1=5-4
+caption: The two squares over 5 can only be 6s, and the tray has just two 6s, so no other square gets one. That leaves one way to cover the top tinted square: the 5-4, with its 5 on the bottom one.
+~~~
+
+### what-if | A what-if
+
+Take a square with two or three dominoes that could cover it, and suppose each in turn. If all but one run into trouble within a few steps, it's the one left.
+
+~~~board
+_ _ _ _ _ _ _
+_ _ _ _ _ _ _
+_ _ _ . . . .
+_ _ _ . . . .
+_ . . . . . .
+_ _ . . . . .
+_ _ . . . . .
+_ _ _ _ _ _ _
+0-0 1-0 4-0 6-0 1-1 2-1 4-1
+6-2 5-3 6-4 5-5 6-5 _ _
+regions: ....... ....... ...abcd ...ef.g ...hi.j ..klm.n ..llll. ....... ....... .......
+focus: r3c5
+badges: r3c4=<2 r3c5=>4 r3c6=<1 r3c7=>3 r4c4=>3 r4c5=>5 r4c7=>5 r5c4=>5 r5c5=>4 r5c7=<1 r6c3=2 r6c4=22 r6c5=<1 r6c7=<1
+answer: r3c5=5 r4c5=6 r10c5=6-5
+caption: Every other domino that could cover this square runs into trouble within a few steps. So the 6-5 goes here, its 6 on the square below.
+~~~

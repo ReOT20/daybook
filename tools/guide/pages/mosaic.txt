@@ -1,0 +1,97 @@
+# Mosaic
+> Flood the board down to one colour
+
+## How to play
+
+Pick a colour below the board, then tap an area to flood it with that colour. Tapping an area in its own colour does nothing and costs nothing.
+
+An area is squares of one colour joined edge to edge, drawn with a heavy outline. On a keyboard, number keys pick a colour, the arrows move, and Space or Enter pours it.
+
+The limit is the fewest fills the board can be done in, so every fill has to count. One fill off the best line loses the board, and a hint will say which fill lost it and how far back to undo.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". A hint only ever offers a fill that has been checked to still finish inside the limit.
+
+## Rules
+
+- Turn the whole board one colour before the fills run out.
+- A fill turns one area a new colour, and it merges with every neighbouring area already in that colour.
+
+## What changes per tier
+
+- Standard: 8x12 grid, 3 colours, 4 moves.
+- Hard: 9x14 grid, 4 colours, 5 moves.
+- Expert: 10x16 grid, 5 colours, 6 moves.
+
+## Techniques
+
+These are the reasons the hints give, plainest first. There's no answer to deduce here, only a fill to choose, and a hint gives one of these reasons only for a fill that keeps the board winnable. On each board, the tinted area is the one to fill. Each board's colours are this page's, not the game's. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### finish | The fill that finishes the board
+
+If every other area touches one area, and they're all the same colour, pour that colour in and the board is done.
+
+### count | Counting fills against colours
+
+A fill wipes out a colour only by covering its last patch. So if you have one fill for each colour you must wipe out, every fill has to do exactly that. Look for a colour that's down to one patch.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+regions: ccccccbb ccccccbb cccccccb cccccccb cccccccc cccccccc ccbccccb bcbccccb bbbbcccc cbbbaccc cccaaccb cccaabbb
+focus: r10c5 r11c4 r11c5 r12c4 r12c5
+caption: Two fills left and three colours on the board, so each fill must wipe out a colour. Only teal is down to one patch, and the fill that keeps the board winnable pours violet into it.
+~~~
+
+### biggest-swallow | Filling to swallow the most areas
+
+Look for the fill that swallows the most neighbouring areas at once. It's the obvious move, and a hint offers it only when it still finishes in time, because it doesn't always.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+regions: bbbbaabb bbbbaabb bbaaabbb bacccbbb aaccabcc aacaaacc aacaaaac ccbaaaac aabbbaaa baabaaaa baacccaa bccccaaa
+focus: r4c3 r4c4 r4c5 r5c3 r5c4 r6c3 r7c3
+caption: Pouring amber into this area swallows three neighbouring areas at once, and no fill on the board swallows more.
+~~~
+
+### centre | Growing from the centre
+
+Grow the most central area: the one with every other area the fewest steps away. Each fill reaches one step further, so the middle gets everywhere soonest.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+regions: aaaccbbb aaaccbbc aaabbbbc bbbbcbbc ccbbcbcc ccaacbcc ccbaabbb aabbaabb aabbbbcc cbbbbccc cbbbaabb cbbbaabb
+focus: r9c7 r9c8 r10c6 r10c7 r10c8
+caption: Every other area is at most two steps from this one, and none is more central. Teal joins the most neighbours. The biggest swallow falls short on this board.
+~~~

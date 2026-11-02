@@ -1,0 +1,24 @@
+# Arrows
+> Clear every arrow, without a bump
+
+## How to play
+
+Tap an arrow to send it off the board. A finger down tints the arrow you'd take. Lift on the same arrow to take it, or slide off to cancel.
+
+If something is in the way, the arrow bumps, shakes and flashes, and you lose a life. Lose all three and the board is lost: Try again starts it over with your lives back.
+
+On a keyboard, the arrow keys move between arrows, and Enter or Space taps the outlined one.
+
+Arrows has no hints and no undo. A free arrow can be seen to be free, and taking it never hurts, because taking an arrow away only ever opens the way for others. So every board can be cleared, in many different orders, and you can't get stuck: the challenge is care. Your first board opens on a walkthrough, and the "?" sheet takes you back to it. Restart asks first once you've made a move.
+
+## Rules
+
+- Clear every arrow off the board.
+- An arrow leaves the way its head points, and only if nothing is in its way to the edge.
+- Tapping an arrow with something in its way costs a life. Lose all three and the board is lost.
+
+## What changes per tier
+
+- Standard: 6x7 grid, short arrows. About 14 arrows.
+- Hard: 12x12 grid, longer arrows. About 33 arrows.
+- Expert: 14x17 grid, the longest arrows. About 49 arrows.

@@ -1,0 +1,176 @@
+# Atoms
+> Bond every atom into one molecule
+
+## How to play
+
+Tap between two atoms to go through none, one and two bonds, and back to none. Or drag from one atom towards another to bond them.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". A hint also points out a bond the board can't keep. Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Each atom's number is exactly how many bond-ends it must carry.
+- Bonds run straight, across or up and down, between two atoms.
+- At most two bonds may join the same pair, and bonds may never cross.
+- Every atom must end up connected into a single molecule.
+
+## What changes per tier
+
+- Standard: 7x7 grid, 10 atoms. Needs nothing past a neighbour that must take a bond.
+- Hard: 9x9 grid, 18 atoms. Needs a bond blocked by a crossing, or one that would close a group off.
+- Expert: 11x11 grid, 28 atoms. Needs a bond that would close a group off, or something deeper.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, the tinted atoms are where to look, rings mark the atoms the reasoning leans on, grey lines are bonds already drawn, and the coloured line is the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### one-neighbour | An atom with one neighbour left
+
+An atom with only one neighbour it can still bond with sends all it still needs there.
+
+~~~board
+. . . 2 . . .
+1 . 3 . . . .
+. . . . . . .
+2 . 5 4 . . 3
+. . . . . . .
+. . . 1 . . .
+. . 3 . . . 4
+draw: discs
+focus: r1c4
+cite: r4c4
+moves: r4c4=r1c4
+caption: This 2 sees just one other atom, the 4 below it, so both its bonds go there.
+~~~
+
+### all-forced | An atom that needs every bond
+
+Add up how many bonds each neighbour could still take. If that's exactly what the atom needs, it takes them all.
+
+~~~board
+. . . 2 . . .
+1 . 3 . . . .
+. . . . . . .
+2 . 5 4 . . 3
+. . . . . . .
+. . . 1 . . .
+. . 3 . . . 4
+draw: discs
+lines: r4c4=r1c4 r4c4-r6c4
+focus: r2c3
+cite: r2c1 r4c3
+moves: r2c1-r2c3 r2c3=r4c3
+caption: This 3 has two neighbours. The 1 on its left can take one bond and the 5 below can take two, which is exactly the three it needs.
+~~~
+
+### at-least-one | A neighbour that must take a bond
+
+The same sum with a little to spare. If the neighbours can take one more bond than the atom needs, the atom can skip only one, so any neighbour able to take two gets at least one. A 3 with two neighbours is the classic case.
+
+~~~board
+2 . . 2 . 2 .
+. 2 . . . . .
+. . . . . 4 .
+. 4 . . . . .
+. . . . . . .
+1 3 . 4 . 4 .
+. . . . . . .
+draw: discs
+lines: r6c6=r6c4 r6c6=r3c6 r3c6=r1c6 r6c2=r4c2 r4c2=r2c2
+focus: r1c1
+cite: r1c4 r6c1
+moves: r1c1-r1c4
+caption: This 2 has two neighbours, and between them they can take three bonds, so one is spare. The 2 on its right can take two, so it gets at least one.
+~~~
+
+### crossing | A bond blocked by a crossing
+
+A bond already drawn shuts every line that crosses it. Take those neighbours away, and one of the steps above can apply.
+
+~~~board
+3 . . . . 4 . . 1
+. 1 . . . . . . .
+. . . . . . . . .
+. 3 . 1 . . . . 1
+. . . . . . . . .
+. 5 . . . 4 . . 4
+2 . . . . . . . .
+. 4 . . . 3 . 1 .
+1 1 . . 3 . . . 4
+draw: discs
+focus: r4c4
+cite: r4c2 r4c9
+lines: r6c9=r9c9 r6c9-r6c6 r9c9=r9c5 r6c6-r6c2 r6c6-r1c6 r6c2=r8c2 r6c2-r4c2 r8c2=r8c6 r8c6-r8c8 r9c5-r9c2 r1c6=r1c1 r4c2-r2c2 r1c1-r7c1 r7c1-r9c1
+moves: r4c2-r4c4
+caption: The bond running up and down blocks the way to the 1 on the right. That leaves this 1 only the 3 on its left.
+~~~
+
+### isolation | A bond that would close a group off
+
+Every atom has to end up in one molecule. So a bond can't finish every atom in a group while others are left outside: two 1s can't bond each other, and neither can two 2s with a double. Rule that bond out, and one of the first steps can apply.
+
+~~~board
+. . 4 . 3 . . 1 .
+1 . . 1 . . . . 2
+. . . . . . . . .
+. . . 3 . . . . 4
+5 . 6 . . . . . .
+. . . . . . . . .
+. . 2 . . . . . 4
+3 . . 4 . . 1 . .
+. 1 . . 2 . . . 3
+draw: discs
+lines: r8c1-r8c4 r8c1=r5c1 r8c4=r4c4 r8c4-r8c7 r4c9-r2c9 r4c9=r7c9 r5c1-r2c1 r5c1=r5c3 r7c9=r9c9 r9c9-r9c5 r9c5-r9c2 r5c3=r1c3 r5c3=r7c3 r1c3=r1c5 r1c5-r1c8
+focus: r2c4
+cite: r4c4 r2c9
+moves: r2c4-r2c9
+caption: The 1 on the left of this 1 is already full. A bond to the ringed 3 below would finish that whole group and cut it off, so that's out. Its bond goes to the ringed 2 on its right.
+~~~
+
+### only-way-out | A group's only way out
+
+A group of atoms bonded together must join the rest somehow. If only one line is left that can leave the group, that line needs a bond. This comes up rarely, because the earlier steps usually get there first.
+
+~~~board
+1 . 4 . . . 5 . . 2 .
+. . . . . . . . . . 2
+2 . . . . . . 2 . . .
+. . . . . . 2 . 2 . .
+4 . 6 . . . . 4 . . .
+. . . 3 . . 3 . 3 3 .
+. . . . . . . . . . 3
+2 . . 3 . 2 3 . 3 . .
+. . . . . . . . . 2 .
+1 . . . . . . . 1 . .
+. . 3 . . . 3 . . . 2
+draw: discs
+focus: r8c7 r8c9 r6c9 r6c7 r4c9 r6c4 r8c4 r10c9 r8c6
+cite: r11c7
+lines: r11c3-r5c3 r11c3-r11c7 r5c3-r5c1 r5c3-r1c3 r5c3=r5c8 r5c1-r8c1 r5c1-r3c1 r8c1-r10c1 r1c3=r1c7 r1c7-r1c10 r1c7=r4c7 r11c7-r11c11 r8c7-r8c9 r8c7-r6c7 r11c11-r7c11 r1c10-r6c10 r5c8=r3c8 r7c11=r2c11 r8c9-r6c9 r8c9-r10c9 r6c10=r9c10 r6c9=r4c9 r6c7-r6c4 r6c4-r8c4 r8c4-r8c6
+moves: r11c7-r8c7
+caption: The tinted atoms are bonded to each other but not to the rest. The only line left that can leave them runs from the 3 to the ringed 3 below it, so it needs a bond.
+~~~
+
+### what-if | A what-if
+
+Suppose a line has no bond, and follow what that forces, no more than a couple of atoms along. If an atom can't reach its number or a group is closed off, your supposition was wrong, so the line needs a bond.
+
+~~~board
+. 2 . 4 . . . 4 . . 3
+4 . 3 . . . . . . 2 .
+. 2 . . . 1 . . . . .
+. . 1 . . . . . . 4 .
+. 3 . 5 . 3 . . . . 3
+. . . . 1 . . 3 . . .
+4 . . 5 . . . 2 . 4 .
+. . . . . . . . . . .
+. . . . 2 . . 3 . . 2
+. . . 2 . . . . . 3 .
+. . . . . . . . 2 . 3
+draw: discs
+lines: r5c4-r7c4 r5c4=r5c6 r5c4-r5c2 r1c4-r1c8 r1c4=r1c2 r7c4=r7c1 r7c8-r9c8 r1c8-r1c11 r1c8-r6c8 r1c11=r5c11 r10c4-r10c10 r5c11-r9c11 r5c6-r3c6 r10c10-r7c10 r7c1=r2c1 r5c2=r3c2 r9c11-r11c11 r7c10=r4c10 r9c8-r9c5 r2c1=r2c3 r2c3-r4c3 r11c11=r11c9 r4c10=r2c10
+focus: r6c5 r6c8
+cite: r9c8
+moves: r6c5-r6c8
+caption: Suppose this 1 and this 3 weren't bonded. The 1 must then bond the 2 below it, and that leaves the ringed 3 needing its last bond from the 2 above it. The 3 in the tint could then no longer reach its number. So they need a bond.
+~~~
