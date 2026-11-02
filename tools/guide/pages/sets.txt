@@ -1,0 +1,54 @@
+# Sets
+> All alike or all different, four ways
+
+## How to play
+
+Tap a card to pick it, and tap it again to let it go. Pick a third card and the three are judged at once: a set is claimed, and anything else clears with a "not a set" beside the count.
+
+Cards are never used up. A tinted card is one you've already used, and it can go into another set.
+
+Sets you've claimed sit above the board. Tap one to light up its three cards again.
+
+On a keyboard, the arrows move, and Space or Enter picks a card.
+
+Stuck? The first tap on Hint points at two cards, and the second works out the third one, trait by trait. You make the move yourself, unless you ask for "Show me". After a wrong pick, a hint says which trait broke it. If the cards you're holding can't lead to a new set, it says so and asks you to let them go.
+
+The count above the board is every set the cards hold, so a board can always be finished.
+
+## Rules
+
+- Find every set on the board. A set is three cards where each of the four traits, count, shape, shading and colour, is all the same or all different.
+- Two alike and one odd, on any trait, is not a set.
+
+## What changes per tier
+
+- Standard: 9 cards, 3 sets to find
+- Hard: 12 cards, 4 sets to find
+- Expert: 12 cards, 6 sets to find
+
+## Techniques
+
+Any two cards point to exactly one third, so you never need to try every three. Take two cards and work through the traits: where they match, the third matches too, and where they differ, the third is the value left over.
+
+### continue | Building on a pick
+
+If you've picked one or two cards, a hint builds on them. It finds a partner for a lone card, or names the one card that finishes your two.
+
+### fresh | A set of unused cards
+
+With nothing picked, a hint starts with a set of cards you haven't used, and among those the set with the most traits alike. Those are the easiest to spot, so they're a good place to look first.
+
+### reuse | That a used card still counts
+
+When no set of unused cards is left, every set still to find runs through a tinted card. Don't skip those cards: pair one with an untinted card and see what third card they ask for.
+
+~~~board
+3 2 1 1 1 1 3 2 1
+st so st ou st st ou st so
+am am te te am vi am am am
+ov di re ov di re di re di
+• . . • • • . • •
+focus: r1c2-r4c2 r1c5-r4c5
+answer: r1c7=3 r2c7=ou r3c7=am r4c7=di
+caption: Each column is a card: its count, shading (solid, outlined, striped), colour (amber, teal, violet) and shape (oval, diamond, rectangle). A dot marks a used card, and one of the two shaded cards has one. They share amber and diamond, so the third does too. Counts 2 and 1 ask for 3, and solid and striped ask for outlined.
+~~~

@@ -1,0 +1,91 @@
+# Sand
+> Pour every colour into a tube of its own
+
+## How to play
+
+Tap a tube to lift it, then tap another to pour into it. Tap the lifted tube again to put it down.
+
+A pour moves the colour on top, all of it or as much as fits. Every colour has its own symbol as well, so you never have to go by colour alone.
+
+There is no move limit, and Undo takes a pour back. If no pour is left at all, the board says so under the tubes.
+
+On a keyboard, keys 1 to 9 and 0 pick tubes 1 to 10: the first lifts, the second pours. Escape puts the tube down.
+
+Stuck? The first tap on Hint says where to look, and the second names the pour and what it's for. You make the move yourself, unless you ask for "Show me". A hint only ever offers a pour that leaves the board sortable.
+
+Boards have many answers, and every one you're dealt can be sorted. A pour can still lose it, though. If no order of pours can sort the board any more, a hint names the pour where it went wrong, and "Show me" goes back to the last board that could be sorted.
+
+## Rules
+
+- Finish with every tube holding one colour, or nothing.
+- A pour can only go onto the same colour or into an empty tube.
+
+## What changes per tier
+
+- Standard: 5 colours, 7 tubes. Each colour fills a tube of four layers, and two tubes start empty.
+- Hard: 7 colours, 9 tubes. Two tubes start empty here too.
+- Expert: 8 colours, 10 tubes. Two tubes start empty here too.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, a column is a tube with its mouth at the top, tube 1 on the left, and each layer is the start of its colour's name: br brown, cr cream, li lilac, vi violet, wi wine, mi mint, te teal, or orange. The tinted tube is the one to pour from, and the filled squares are where the sand lands. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### finish | Pouring to finish a tube
+
+If a tube needs only what's on top of another, pour it. A finished tube is out of your way for good.
+
+~~~board
+vi li wi . br . .
+vi li li . br cr .
+wi li vi . br cr .
+wi vi wi br cr cr .
+regions: abababa abababa abababa abababa
+focus: r1c5-r4c5
+answer: r1c4=br r2c4=br r3c4=br
+caption: Tube 4 holds one brown, and tube 5 has the other three on top. Pour them across and tube 4 is all brown.
+~~~
+
+### gather | Gathering onto a matching colour
+
+When two tubes show the same colour on top, pour one onto the other. Look first for a pour that also uncovers a colour with somewhere to go.
+
+~~~board
+. li wi cr vi . .
+vi br li li br . .
+wi li vi cr br . .
+wi vi wi br cr cr .
+regions: abababa abababa abababa abababa
+focus: r1c4-r4c4
+answer: r3c6=cr
+caption: Tubes 4 and 6 both show cream. Pour it onto tube 6, and that uncovers a lilac in tube 4, which can go in the empty tube 7.
+~~~
+
+### spare | Using an empty tube
+
+An empty tube takes anything, so it can free a colour that's buried. There are only two to begin with, so spend one when it opens something up, not just to tidy.
+
+~~~board
+cr li wi cr vi . .
+vi br li li br . .
+wi li vi cr br . .
+wi vi wi br cr . .
+regions: abababa abababa abababa abababa
+focus: r1c1-r4c1
+answer: r4c6=cr
+caption: Every other tube is full, so only the empty tubes can take a pour. Tube 1's cream goes into tube 6, and that frees the violet under it.
+~~~
+
+### plan | Planning a pour ahead
+
+Now and then nothing simple helps, and the way through starts with a pour that gets you no closer by itself. Read a pour or two ahead before you commit. You won't need this often.
+
+~~~board
+. . . . li br . wi . .
+li te or wi li br wi wi cr .
+li vi te cr mi vi br te cr mi
+te br vi vi or mi or or cr mi
+regions: ababababab ababababab ababababab ababababab
+focus: r1c5-r4c5
+answer: r1c1=li
+caption: There's no empty tube here, and tubes 1 and 5 both show lilac. Moving one layer across joins nothing up by itself, but the hint's search has found a way to sort the board that starts with this pour.
+~~~
