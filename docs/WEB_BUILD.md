@@ -37,7 +37,7 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   cache-first for the content-hashed `.wasm`; the page posts its resource list to the worker, since
   the first visit loads before the worker controls it. `manifest.webmanifest` and the icons make it
   installable to the home screen.
-  The player guide (`guide/`, `tools/guide/`) shares the scope and is passed through untouched: `cacheKey` would store its pages as the app's.
+  The player guide (`guide/`, `tools/guide/`) and the F-Droid repo (`fdroid/`) share the scope and are passed through untouched: `cacheKey` would store their pages, or an APK, as the app's.
 - **Favicon and link preview.** `favicon.svg` (the launcher mark simplified for a tab: no rays,
   bigger sun lifted clear of a wider book — a sun touching the book reads as a head), `favicon.ico`
   (16/32/48) and `icons/icon-16|32.png` are rendered from that SVG by hand (Chromium screenshot at
