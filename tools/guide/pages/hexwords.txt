@@ -3,7 +3,7 @@
 
 ## How to play
 
-Drag through touching hexes to spell a word, or tap them in turn and tap the word.
+Drag through touching hexes to spell a word, or tap them in turn and press Enter.
 
 On a keyboard, type a word that traces on the board. Tab tries another way to trace it, Enter takes it, Backspace deletes, and Escape clears.
 
@@ -74,5 +74,5 @@ _ _ J _ P _ A _ _
 focus: r5c3
 answer: r5c3=J
 cite: r4c2 r3c1 r3c3
-caption: 5 points to go, so four letters will do. No common word on these hexes gets there, but JAYS, ringed from the filled square, does.
+caption: 5 points to go. The common words on these hexes have three letters and all need the same A, so they stop at 3. JAYS, ringed from the filled square, has four and gets there.
 ~~~

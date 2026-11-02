@@ -3,7 +3,7 @@
 
 ## How to play
 
-Tap a card to pick it, and tap it again to let it go. Pick a third card and the three are judged at once: a set is claimed, and anything else clears with a "not a set" beside the count.
+Tap a card to pick it, and tap it again to let it go. Pick a third card and the three are judged at once: a set is claimed, one you already have clears with "already found" beside the count, and anything else clears with "not a set".
 
 Cards are never used up. A tinted card is one you've already used, and it can go into another set.
 
