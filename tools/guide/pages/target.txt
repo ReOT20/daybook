@@ -13,7 +13,7 @@ On a keyboard, type a tile's number, then + - * /, then another tile's number an
 
 Stuck? The first tap on Hint points at two tiles, and the second says what to do with them and how far that leaves you from the target. It always gives a step on a shortest way from where you stand, the one whose answer lands nearest the target. You make the move yourself, unless you ask for "Show me".
 
-There is more than one answer on every board, and a longer way round is fine. A hint only calls a step a mistake when no way of combining what's left can reach the target any more, and "Show me" then takes that step back, along with anything after it.
+Most boards have more than one answer, though Expert's can have just one, and where there's room a longer way round is fine. A hint only calls a step a mistake when no way of combining what's left can reach the target any more, and "Show me" then takes that step back, along with anything after it.
 
 ## Rules
 

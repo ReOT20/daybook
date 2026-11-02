@@ -87,5 +87,5 @@ bl br bl bl _ ○ ○ . .
 focus: r2c1-r2c4 r2c6-r2c9 r3c2
 cite: r2c6-r2c9
 answer: r3c2=bl
-caption: The second guess's two pips need both its colours in the code. It has no filled pip, so blue can't be in slots 1, 3 or 4. If slot 2 weren't blue, there'd be no blue anywhere, so slot 2 is blue.
+caption: The second guess has no filled pip, so blue can't be in slots 1, 3 or 4. If slot 2 weren't blue either, there'd be no blue anywhere, and its one brown couldn't earn two pips. So slot 2 is blue.
 ~~~

@@ -13,7 +13,7 @@ On a keyboard, the arrows move, ] or Tab and [ pick a domino, F or Space turns i
 
 A region's badge turns green when the region is covered and keeps its rule, and red, after a moment, once it can't.
 
-Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every hint ends in a placement. Every board has exactly one answer, and you never need to guess to find it.
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". If a domino you laid can't stay, Hint points at that first; every other hint ends in a placement. Every board has exactly one answer, and you never need to guess to find it.
 
 ## Rules
 

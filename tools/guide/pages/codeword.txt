@@ -5,7 +5,7 @@
 
 Tap a square or a number, then a letter. The letter goes in every square with that number. Tap the letter again to clear it. A given number can't be changed.
 
-The key under the grid shows each number's letter. In the A to Z keys, a letter another number holds is greyed, with its number beside it, but you can still use it.
+The key under the grid shows each number's letter. In the A to Z keys, a letter another number holds is greyed, with its number under it, but you can still use it.
 
 On a keyboard, with a number picked, type its letter (again to clear it). Backspace clears and the arrows walk the numbers.
 
