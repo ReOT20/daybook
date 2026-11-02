@@ -1,0 +1,104 @@
+# Codeword
+> Each number is a letter. Crack the grid.
+
+## How to play
+
+Tap a square or a number, then a letter. The letter goes in every square with that number. Tap the letter again to clear it. A given number can't be changed.
+
+The key under the grid shows each number's letter. In the A to Z keys, a letter another number holds is greyed, with its number beside it, but you can still use it.
+
+On a keyboard, with a number picked, type its letter (again to clear it). Backspace clears and the arrows walk the numbers.
+
+A word that nothing can match any more, or a letter on two numbers, turns red after a moment. Nothing is refused.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You place the letter yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Every number stands for one letter, the same letter wherever it appears. Different numbers are different letters.
+- Every word across and down must be a real word.
+- The letters you start with are given, and stay put.
+
+## What changes per tier
+
+- Standard: 7x7 grid. One word at a time is enough to finish it.
+- Hard: 9x9 grid. Needs a number cut by every word it's in.
+- Expert: 11x11 grid. Needs every word worked through together.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, a number is a square still open, a letter is one placed, the tinted squares are where to look, and the filled squares are the move.
+
+### one-word | A word only one word fits
+
+The word's pattern counts: equal numbers are equal letters, different numbers are different letters, and a letter another number holds is out. Sometimes that leaves one word.
+
+~~~board
+_ 4 U 1 _ _ _
+14 O N U 6 _ _
+O 1 3 15 10 13 _
+10 16 O _ N 15 8
+_ 15 N 3 2 12 15
+_ _ 15 10 8 15 N
+_ _ _ 3 9 15 _
+focus: r2c1-r2c5
+answer: r2c1=B
+caption: This word reads 14 O N U 6. Only BONUS fits, so 14 is B.
+~~~
+
+### run-agrees | A letter every fitting word shares
+
+You don't need to know the word. If every word that fits has the same letter for one number, that number is settled.
+
+~~~board
+_ _ _ 7 9 3 _
+_ _ 6 9 2 11 7
+_ S 11 8 I 2 E
+3 I 10 _ E 13 E
+2 E 8 I 10 11 _
+9 V E 2 8 _ _
+_ E 7 13 _ _ _
+focus: r6c1-r6c5
+answer: r2c5=R r3c6=R r5c1=R r6c4=R
+caption: AVERT and OVERT both fit 9 V E 2 8. Each has R for 2, so every 2 on the board is R.
+~~~
+
+### crossing | A number cut by every word it is in
+
+Each word a number is in allows only some letters for it. Put those lists side by side: the letter has to be on all of them.
+
+~~~board
+_ _ _ _ _ 2 15 4 12
+2 4 10 _ _ 11 6 10 11
+4 14 16 _ S 16 11 11 8
+1 2 11 S 8 15 _ _ _
+_ _ 11 9 13 4 16 _ _
+_ _ _ 13 5 6 15 5 11
+S 1 2 14 10 _ 10 13 3
+14 2 15 5 _ _ 15 5 11
+1 15 11 8 _ _ _ _ _
+focus: r3c9 r4c5 r9c4
+answer: r3c9=T r4c5=T r9c4=T
+caption: The words S 16 11 11 8, across in row 3, and 1 2 11 S 8 15, across in row 4, have only P and T in common for 8. No word reading S 9 13 14 5 8, down column 4, can end in P, so 8 is T.
+~~~
+
+### all-words | Every word worked through together
+
+When no one word or number settles anything, work them all at once. Each word rules out letters for its numbers, and a letter pinned to one number is taken from the rest, until a number has one letter left.
+
+~~~board
+_ _ 6 1 9 _ _ _ 9 8 7
+2 3 1 15 8 _ _ _ 6 7 19
+7 5 6 8 8 _ _ 7 11 6 10
+16 6 7 _ _ 16 11 15 3 19 _
+_ 8 13 18 _ 13 3 P _ _ _
+_ _ _ 11 19 7 19 8 _ _ _
+_ _ _ 13 11 2 _ 19 3 4 _
+_ 7 19 14 13 8 _ _ 17 7 9
+P 13 3 10 _ _ 15 9 7 11 6
+11 9 15 _ _ _ 8 7 6 13 10
+9 3 10 _ _ _ 4 6 10 _ _
+focus: r1c4 r2c3
+answer: r1c4=U r2c3=U
+caption: Only P is given, and no single word settles a number. Worked through together, the words leave 1 only U.
+~~~
