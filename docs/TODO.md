@@ -338,5 +338,4 @@ Shikaku, Dominoes and LITS; Mosaic has its own judge
 
 ## Player guide
 
-- Links from the app to its pages (`guide/<id>#<technique>`).
 - `sw.js` stores every in-scope navigation as the app's page. `guide/` is excluded; a browser navigation to `fdroid/repo/` (an APK link, say) by a visitor the worker controls still overwrites the cached app until the next online visit. Not reproduced for `fdroid/`; same code path.

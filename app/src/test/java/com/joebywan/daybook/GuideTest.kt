@@ -1,5 +1,6 @@
 package com.joebywan.daybook
 
+import com.joebywan.daybook.ui.play.guideUrl
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.PuzzleRegistry
@@ -873,6 +874,20 @@ class GuideTest {
     @Test
     fun `every registered puzzle has a page, and every page is a puzzle`() {
         assertEquals(PuzzleRegistry.all.map { it.id }.toSet(), pages.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `the app's links name a real page and heading`() {
+        fun parts(url: String) = Regex("https://knowhowit\\.com\\.au/daybook/guide/([^/#]+)/(?:#(.+))?").matchEntire(url)
+            ?.destructured ?: error("not a guide link in the slash form: $url")
+        for (puzzle in PuzzleRegistry.all) {
+            assertEquals(puzzle.id to "", parts(guideUrl(puzzle.id)).let { (id, anchor) -> id to anchor })
+            for (technique in praisedTechniquesOf(puzzle.id)) {
+                val (id, anchor) = parts(guideUrl(puzzle.id, technique))
+                val page = pages.first { it.id == id }
+                assertTrue("$id has no heading for #$anchor", page.lines.any { it.startsWith("### $anchor |") })
+            }
+        }
     }
 
     @Test
