@@ -1,0 +1,78 @@
+# Hexwords
+> Spend the letters well: every word uses them up
+
+## How to play
+
+Drag through touching hexes to spell a word, or tap them in turn and press Enter.
+
+On a keyboard, type a word that traces on the board. Tab tries another way to trace it, Enter takes it, Backspace deletes, and Escape clears.
+
+The line above the board shows the points to go. A word's letters leave the board and nothing falls into the holes, so the board you study is the board you play. A word may come again from other letters.
+
+Nothing is lost for trying: Undo puts a word back. If the target can no longer be reached, the line says so in red, and you can undo a word or start over.
+
+Stuck? The first tap on Hint says where to look, and the second explains why, with a clue to the word. Only "Show me" spells it.
+
+## Rules
+
+- Reach the target score.
+- A word has three to seven letters, runs through touching hexes, and uses a hex once. Its letters are then gone.
+- Three letters score 3, four 5, five 8, six 12 and seven 17.
+
+## What changes per tier
+
+- Standard: 19 hexes; biggest word first often gets there.
+- Hard: 29 hexes; biggest word first always falls short.
+- Expert: 44 hexes; looking one word ahead falls short too.
+
+## Techniques
+
+These are the steps the hints teach. Each board shows the hexes as staggered squares: a square touches its neighbours along the row, across the gap, and on the diagonals. An empty square is a hex already spent. The filled square is where the hint's word starts.
+
+### biggest | The biggest word that keeps the target
+
+Long words score far more than short ones, so look for the biggest word first. Then ask whether the letters it leaves can still make up the rest.
+
+~~~board
+_ _ A _ E _ S _ _
+_ G _ X _ B _ R _
+O _ I _ U _ C _ U
+_ P _ F _ K _ N _
+_ _ U _ L _ L _ _
+focus: r3c7
+answer: r3c7=C
+cite: r3c9 r2c8 r1c7 r1c5
+caption: 16 points to go. CURSE, ringed from the filled square, is as big as any word here. It scores 8, and what it leaves can still make the other 8.
+~~~
+
+### hold-back | Holding back a costly word
+
+The biggest word can break up the words around it. When it would leave too little, take a smaller word first. This is the game's lesson.
+
+~~~board
+_ _ P _ U _ . _ _
+_ M _ . _ . _ T _
+Y _ S _ O _ L _ K
+_ A _ K _ A _ C _
+_ _ J _ P _ A _ _
+focus: r5c5
+cite: r3c5 r3c7 r4c4 r4c6 r4c8
+answer: r5c5=P
+caption: 13 points to go. CLOAK, ringed, is the biggest word, but what it leaves can't make up the rest. PACK, from the filled square, scores less now and keeps the target in reach.
+~~~
+
+### rare | A less common word that saves the target
+
+After a few words, the common ones may not be enough any more. Any word in the word list scores, so a less common one can still get you there. If you can't see one, undoing a word gives you more choice.
+
+~~~board
+_ _ . _ . _ . _ _
+_ . _ . _ . _ . _
+Y _ S _ . _ . _ K
+_ A _ K _ A _ . _
+_ _ J _ P _ A _ _
+focus: r5c3
+answer: r5c3=J
+cite: r4c2 r3c1 r3c3
+caption: 5 points to go. The common words on these hexes have three letters and all need the same A, so they stop at 3. JAYS, ringed from the filled square, has four and gets there.
+~~~

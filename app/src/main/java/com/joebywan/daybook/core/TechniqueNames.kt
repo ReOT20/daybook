@@ -245,7 +245,9 @@ private val NAMES: Map<String, Map<String, String>> = mapOf(
 /**
  * Steps that are not a skill the player now has: "You learned <name>." would not make sense of them. They point at a word,
  * a guess, a set or a move rather than teach a way of seeing one, so a solve whose hints showed only these keeps the
- * generic hint line.
+ * generic hint line. A few are here because a hint can never give them, so the Techniques page could never tick them:
+ * Cipher's only letter (ten letters; no listed sum has more than nine), Pearls' two ways in (the pearl's own rule always
+ * speaks first), Tents' grass around a tent (the game sprouts it, and the teacher reads the sprouted board).
  */
 private val NOT_PRAISED: Map<String, Set<String>> = mapOf(
     "mosaic" to setOf("keeps-in-limit", "finish"),
@@ -258,6 +260,9 @@ private val NOT_PRAISED: Map<String, Set<String>> = mapOf(
     "dwindle" to setOf("clue"),
     "mini" to setOf("clue"),
     "sand" to setOf("finish"),
+    "cipher" to setOf("only-letter"),
+    "pearls" to setOf("pearl-ways"),
+    "tents" to setOf("touch"),
 )
 
 /** The techniques of [puzzleId] that praise may name. */

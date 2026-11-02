@@ -1,0 +1,143 @@
+# Sun & Moon
+> Balance two symbols, never three alike in a line
+
+## How to play
+
+Tap a square to cycle it through moon, sun and empty. The symbols you start with stay put.
+
+On a keyboard, the arrows move, Space cycles, M puts a moon, S a sun, and Backspace clears.
+
+A broken rule is shown in red, a moment after it happens, but nothing stops you making one.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Fill every square with a sun or a moon.
+- Each row and column holds equal numbers of suns and moons.
+- Never more than two of the same symbol side by side, in a row or column.
+- A = between two squares means they match; an x means they differ.
+
+## What changes per tier
+
+- Standard: 6x6 grid. The first four techniques below finish every board.
+- Hard: 8x8 grid. Needs a line one symbol short at least once, and never a what-if.
+- Expert: 10x10 grid. Needs a what-if at least once.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, S is a sun and M a moon, the tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### pair | A pair of matching symbols
+
+Two alike side by side: the squares at either end must be the other symbol, or there would be three together.
+
+~~~board
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+. S S M . .
+S . . S . .
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+focus: r5c2 r5c3
+cite: r5c2 r5c3
+answer: r5c1=M
+caption: Two suns sit side by side in row 5. Another sun on the open end would make three, so it's a moon.
+~~~
+
+### sandwich | A gap between two matching symbols
+
+A single gap between two alike must be the other symbol, for the same reason.
+
+~~~board
+. . . . . .
+M . . . . .
+S S M . . .
+S . . . . .
+M S S M . .
+S . . S . .
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+focus: r3c2 r4c2 r5c2
+cite: r3c2 r5c2
+answer: r4c2=M
+caption: Column 2 has a sun above and below the gap. A sun there would make three together, so it is a moon.
+~~~
+
+### link | An = or x link
+
+A printed link with one end filled gives you the other end: = copies the symbol, and x gives the opposite.
+
+~~~board
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+S . . S . .
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+focus: r5c4 r6c4
+cite: r6c4
+answer: r5c4=M
+caption: The x says these two squares differ. The lower one is a sun, so the upper one is a moon.
+~~~
+
+### quota-met | A line with all of one symbol placed
+
+A line holds half of each symbol. Once it has its half of one, every other square in it is the other.
+
+~~~board
+M M S M . .
+M . S M . .
+S S M S . .
+S M . . . .
+M S S M . .
+S . . S . .
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+focus: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6
+cite: r1c1 r1c2 r1c4
+answer: r1c5=S r1c6=S
+caption: Row 1 already has its three moons, so its last two squares are suns.
+~~~
+
+### quota-almost-met | A line one symbol short
+
+When a line needs one more of a symbol, try that last one on each open square. If putting it on a square would leave three of the other symbol together, that square must be the other symbol.
+
+~~~board
+S S M M S M M S
+S S M S M S M M
+M M S M S M S S
+S . . . M S S M
+. . . . M S M S
+. . . . S M M S
+. . . . S M S M
+. . . . M S S M
+edges: r2c1-r2c2== r7c7-r8c7== r5c7-r6c7== r4c6-r5c6== r2c5-r3c5=x r4c8-r5c8=x r4c5-r5c5== r3c1-r4c1=x r5c8-r6c8== r7c3-r8c3=x r1c5-r1c6=x r1c4-r2c4=x r7c6-r7c7=x r2c8-r3c8=x r6c6-r6c7== r3c8-r4c8=x r6c7-r6c8=x r1c7-r1c8=x r5c1-r6c1=x r5c3-r6c3== r1c1-r2c1== r2c4-r2c5=x r1c3-r1c4==
+focus: r4c1 r4c2 r4c3 r4c4 r4c5 r4c6 r4c7 r4c8
+cite: r4c3 r4c4 r4c5
+answer: r4c2=M
+caption: Row 4 needs one more sun and has three squares open. A sun on the filled square would make the other two moons, and with the ringed moon that is three together. So it's a moon.
+~~~
+
+### what-if | A what-if
+
+Suppose one symbol on a square and follow one round of the rules above. If that makes the board break a rule, the square is the other symbol. This isn't guessing: you only write it down once the first has been shown to break.
+
+~~~board
+. . . . . . . M S .
+. . . . . . . . M .
+. . . . . . . . M .
+. . . . . . . . S .
+. . . . . . . . . .
+. . . . . . . . . .
+. . . . . S . . . .
+. . . . . M S . . .
+. . . . S M M S . .
+. . . . . S . . . .
+edges: r1c6-r1c7== r7c2-r8c2== r2c7-r2c8=x r9c6-r9c7== r7c6-r8c6=x r8c7-r9c7=x r2c9-r3c9== r2c5-r3c5== r10c7-r10c8== r9c3-r10c3=x r4c10-r5c10== r7c9-r7c10=x r5c6-r6c6== r4c4-r4c5== r1c6-r2c6=x r1c8-r1c9=x r2c10-r3c10== r8c8-r8c9== r8c6-r8c7=x r2c8-r3c8== r9c9-r9c10==
+focus: r1c6
+cite: r1c7 r1c8
+answer: r1c6=S
+caption: If this were a moon, the = would make the square to its right a moon too. But that square sits between this moon and the moon in column 8, so it would also have to be a sun. It can't be both, so this is a sun.
+~~~

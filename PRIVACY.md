@@ -8,6 +8,9 @@ Daybook collects nothing.
   when you uninstall the app.
 - Nothing you do in the app is transmitted to the developer or to anyone else.
 
+A few links, such as "Read more in the guide" on a puzzle's rules, open a web page in your browser. The
+app itself sends nothing; the browser's request is handled like any other visit to that site.
+
 Daily puzzles are generated on your device from the date. They are not downloaded, so the app never
 contacts a server to fetch them.
 

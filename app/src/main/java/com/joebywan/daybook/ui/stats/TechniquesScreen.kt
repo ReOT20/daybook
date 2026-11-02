@@ -33,11 +33,14 @@ import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.Training
 import com.joebywan.daybook.data.PuzzleTechniques
 import com.joebywan.daybook.platform.BackButton
+import com.joebywan.daybook.platform.rememberOpenUrl
+import com.joebywan.daybook.ui.play.guideUrl
 
 /**
  * Per puzzle that teaches, its techniques in the teacher's order; the ones a hint has explained carry a tick. The rest
  * are plain, never greyed or locked: this is a record of what hints showed, not a list to work through (no drills).
- * A technique Training has carries a "Practise" link ([onPractise]: puzzle id, technique), which opens its practice.
+ * Each has a "Guide" link to its heading in the player guide; one Training has also a "Practise" link ([onPractise]:
+ * puzzle id, technique), which opens its practice.
  */
 @Composable
 fun TechniquesScreen(
@@ -46,6 +49,7 @@ fun TechniquesScreen(
     onPractise: (String, String) -> Unit = { _, _ -> },
 ) {
     val scheme = MaterialTheme.colorScheme
+    val openUrl = rememberOpenUrl()
     Column(
         Modifier.fillMaxSize().background(scheme.background).windowInsetsPadding(WindowInsets.safeDrawing),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,17 +93,26 @@ fun TechniquesScreen(
                                 color = if (t.met) scheme.primary else scheme.onSurface,
                                 modifier = Modifier.weight(1f),
                             )
-                            if (t.id in trained) Text(
-                                "Practise",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = scheme.primary,
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { onPractise(p.puzzleId, t.id) }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                            )
+                        }
+                        // Under the name, not beside it: two links beside a long name squeeze it to a word a line.
+                        // 16dp + a link's own 10dp padding starts them under the name.
+                        Row(Modifier.padding(start = 16.dp)) {
+                            TechniqueLink("Guide") { openUrl(guideUrl(p.puzzleId, t.id)) }
+                            if (t.id in trained) TechniqueLink("Practise") { onPractise(p.puzzleId, t.id) }
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TechniqueLink(label: String, onClick: () -> Unit) {
+    Text(
+        label,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(horizontal = 10.dp, vertical = 6.dp),
+    )
 }
