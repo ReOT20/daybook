@@ -43,6 +43,10 @@ answer: r1c3=7
 notes: r2c1=27
 struck: r1c1=4
 lines: r1c1-r1c2 r1c2-r2c2
+edges: r1c1-r1c2=< r1c1-r2c1=x
+cages: aab acc
+corners: r1c1=12
+filled: r2c3
 caption: One or two sentences saying what the board shows. Required.
 ~~~
 ```
@@ -52,6 +56,9 @@ caption: One or two sentences saying what the board shows. Required.
 - `focus` the tint (the step's `focus`), `cite` a ring (what the reasoning leans on), `answer` the filled square that is the move.
 - `notes` small marks, a digit in its pencil place; `struck` the same, crossed out. Never on the `answer` square.
 - `lines` thick lines between square centres (bonds, loops, paths).
+- `edges` something printed between two neighbours: `<` and `>` (the first is smaller, bigger) draw a chevron, anything else short is text.
+- `cages` one string a row, one letter a square: a dashed outline per letter, with `box` walls still drawn. `corners` small text in a square's top-left (a cage total).
+- `filled` solid squares (a picture being filled in). `.` in `regions` means no tint and no walls between such squares, so a clue margin can be a region of its own.
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 
 For what these cannot draw (a hex, a wheel, a tube): first try tokens in a grid (Cipher's sum is rows of letters). If that really cannot

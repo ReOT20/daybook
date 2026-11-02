@@ -77,7 +77,8 @@ def board(lines, where):
     for line in lines:
         key, colon, value = line.partition(":")
         if colon:
-            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption"):
+            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption",
+                                "edges", "cages", "corners", "filled"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():
@@ -91,7 +92,15 @@ def board(lines, where):
     get = lambda key, parse: parse(fields.get(key, ""), where, w, h)
     focus, cite = set(get("focus", cells)), get("cite", cells)
     answer, notes, struck = get("answer", marks), get("notes", marks), get("struck", marks)
+    filled = set(get("filled", cells))
+    filled = set(get("filled", cells))
     regions = fields.get("regions", "").split()
+    cages = fields.get("cages", "").split()
+    if cages and (len(cages) != h or {len(r) for r in cages} != {w}):
+        fail(where, "cages needs one string per row, one letter per square")
+    cages = fields.get("cages", "").split()
+    if cages and (len(cages) != h or {len(r) for r in cages} != {w}):
+        fail(where, "cages needs one string per row, one letter per square")
     if regions and (len(regions) != h or {len(r) for r in regions} != {w}):
         fail(where, "regions needs one string per row, one letter per square")
     box = int(fields.get("box", 0))
@@ -104,9 +113,13 @@ def board(lines, where):
                 continue
             x, y = c * CELL, r * CELL
             svg.append(f'<rect class="sq" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
-            if regions:
+            if regions and regions[r][c] != ".":  # "." has no tint, and no walls between its squares
                 hue = hues.setdefault(regions[r][c], len(hues) % 5)
                 svg.append(f'<rect class="hue{hue}" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
+            if (r, c) in filled:
+                svg.append(f'<rect class="filled" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
+            if (r, c) in filled:
+                svg.append(f'<rect class="filled" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             if (r, c) in focus:
                 svg.append(f'<rect class="focus" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             # A wall on the right and the bottom of any square whose neighbour is another region (or nothing).
@@ -120,6 +133,34 @@ def board(lines, where):
                 walls.append((x, y, x + CELL, y))
     svg += [f'<line class="wall" x1="{a}" y1="{b}" x2="{c}" y2="{d}"/>' for a, b, c, d in walls]
     centre = lambda r, c: (c * CELL + CELL // 2, r * CELL + CELL // 2)
+    # A dashed outline just inside each cage: a side wherever the neighbour is another cage, joined round its corners.
+    inset, half = 4, CELL // 2
+    in_cage = lambda r, c, k: 0 <= r < h and 0 <= c < w and cages[r][c] == k
+    for r in range(h if cages else 0):
+        for c in range(w):
+            k = cages[r][c]
+            for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                if in_cage(r + dr, c + dc, k):
+                    continue
+                tr, tc = abs(dc), abs(dr)
+                reach = lambda s: (half - inset if not in_cage(r + s * tr, c + s * tc, k)
+                                   else half + inset if in_cage(r + s * tr + dr, c + s * tc + dc, k) else half)
+                x, y = centre(r, c)
+                x, y = x + dc * (half - inset), y + dr * (half - inset)
+                svg.append(f'<line class="cage" x1="{x - tc * reach(-1)}" y1="{y - tr * reach(-1)}" x2="{x + tc * reach(1)}" y2="{y + tr * reach(1)}"/>')
+    # A dashed outline just inside each cage: a side wherever the neighbour is another cage, joined round its corners.
+    inset, half = 4, CELL // 2
+    in_cage = lambda r, c, k: 0 <= r < h and 0 <= c < w and cages[r][c] == k
+    for r in range(h if cages else 0):
+        for c in range(w):
+            k = cages[r][c]
+            for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                if in_cage(r + dr, c + dc, k):
+                    continue
+                reach = lambda s: half - inset if not in_cage(r + s * dc, c + s * dr, k) else half + inset if in_cage(r + s * dc + dr, c + s * dr + dc, k) else half
+                x, y = centre(r, c)
+                x, y = x + dc * (half - inset), y + dr * (half - inset)
+                svg.append(f'<line class="cage" x1="{x - dr and x - dc * 0}" y1="{y}" x2="{x}" y2="{y}"/>')
     for part in fields.get("lines", "").split():
         (r1, c1), (r2, c2) = (cells(end, where, w, h)[0] for end in part.split("-"))
         (x1, y1), (x2, y2) = centre(r1, c1), centre(r2, c2)
@@ -128,6 +169,25 @@ def board(lines, where):
         svg.append(f'<rect class="cite" x="{c * CELL + 3}" y="{r * CELL + 3}" width="{CELL - 6}" height="{CELL - 6}" rx="6"/>')
     for r, c in answer:
         svg.append(f'<rect class="answer" x="{c * CELL + 2}" y="{r * CELL + 2}" width="{CELL - 4}" height="{CELL - 4}" rx="6"/>')
+    # Something printed between two neighbours: `r1c1-r1c2=<` says the first is smaller, and the chevron's point is at it.
+    for part in fields.get("edges", "").split():
+        square, _, value = part.partition("=")
+        pair = cells(square, where, w, h)
+        if len(pair) != 2 or not value or abs(pair[0][0] - pair[1][0]) + abs(pair[0][1] - pair[1][1]) != 1:
+            fail(where, f"an edge is two neighbours and what is between them: {part}")
+        (x1, y1), (x2, y2) = centre(*pair[0]), centre(*pair[1])
+        x, y = (x1 + x2) // 2, (y1 + y2) // 2
+        if value in "<>":
+            point = -1 if value == "<" else 1
+            across = x1 == x2  # one above the other
+            ax, ay = (0, point * 5) if across else (point * 5, 0)
+            bx, by = (8, 0) if across else (0, 8)
+            shape = f"{x - ax - bx},{y - ay - by} {x + ax},{y + ay} {x - ax + bx},{y - ay + by}"
+            svg.append(f'<polyline class="edge-back" points="{shape}"/><polyline class="edge" points="{shape}"/>')
+        else:
+            svg.append(f'<text class="edge-text" x="{x}" y="{y}">{html.escape(value)}</text>')
+    for (r, c), value in get("corners", marks).items():
+        svg.append(f'<text class="corner" x="{c * CELL + 6}" y="{r * CELL + 11}">{html.escape(value)}</text>')
     for r in range(h):
         for c in range(w):
             x, y = centre(r, c)

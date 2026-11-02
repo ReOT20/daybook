@@ -4,12 +4,27 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.Verdict
 import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
+import com.joebywan.daybook.puzzles.Block
+import com.joebywan.daybook.puzzles.CageLogic
+import com.joebywan.daybook.puzzles.CageTeacher
+import com.joebywan.daybook.puzzles.InequalityLogic
+import com.joebywan.daybook.puzzles.InequalityTeacher
+import com.joebywan.daybook.puzzles.NonogramLogic
+import com.joebywan.daybook.puzzles.NonogramTeacher
 import com.joebywan.daybook.puzzles.PuzzleState
+import com.joebywan.daybook.puzzles.RegionsLayout
+import com.joebywan.daybook.puzzles.RegionsLogic
+import com.joebywan.daybook.puzzles.RegionsTeacher
+import com.joebywan.daybook.puzzles.ShikakuTeacher
+import com.joebywan.daybook.puzzles.Sign
 import com.joebywan.daybook.puzzles.Sudoku
 import com.joebywan.daybook.puzzles.SudokuTeacher
+import com.joebywan.daybook.puzzles.TallyLogic
+import com.joebywan.daybook.puzzles.TallyTeacher
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,12 +48,21 @@ class GuideTest {
             (n[0]..r2).flatMap { r -> (n[1]..c2).map { c -> r * width + c } }
         }.toSet()
 
+        /** `aab acc` as a number per square, numbered by first square as the puzzles do; `.` is -1. */
+        fun letters(key: String): List<Int> {
+            val seen = HashMap<Char, Int>()
+            return fields[key].orEmpty().filter { it != ' ' }.map { if (it == '.') -1 else seen.getOrPut(it) { seen.size } }
+        }
+
         /** `r3c4=17` as square to "17". */
         fun marks(key: String): Map<Int, String> = fields[key].orEmpty().split(' ').filter { it.isNotEmpty() }.associate { part ->
             val n = Regex("\\d+").findAll(part.substringBefore('=')).map { it.value.toInt() - 1 }.toList()
             n[0] * width + n[1] to part.substringAfter('=')
         }
     }
+
+    /** A teacher's step with its highlights mapped to the board's squares: clues in a margin, signs it draws differently. */
+    private class Mapped(step: TeachStep, override val focus: Set<Int>, override val targets: Set<Int> = step.targets) : TeachStep by step
 
     private class Page(val id: String, val text: String) {
         val lines = text.lines()
@@ -81,6 +105,12 @@ class GuideTest {
      */
     private val teachers: Map<String, (Board) -> TeachStep?> = mapOf(
         "sudoku" to ::sudokuStep,
+        "inequality" to ::inequalityStep,
+        "regions" to ::regionsStep,
+        "cages" to ::cagesStep,
+        "tally" to ::tallyStep,
+        "nonogram" to ::nonogramStep,
+        "shikaku" to ::shikakuStep,
     )
 
     private fun sudokuStep(b: Board): PlacementStep? {
@@ -94,6 +124,151 @@ class GuideTest {
             assertTrue("${b.technique}: $d is no pencil mark for square $cell", seen.none { cells[it] == d.digitToInt() })
         }
         return step
+    }
+
+    private fun inequalityStep(b: Board): TeachStep? {
+        val n = b.width
+        val cells = b.rows.flatten().map { it.toIntOrNull() ?: 0 }
+        val signs = b.fields["edges"].orEmpty().split(' ').filter { it.isNotEmpty() }.map { part ->
+            val (first, second) = Regex("r(\\d+)c(\\d+)").findAll(part).map { (it.groupValues[1].toInt() - 1) * n + it.groupValues[2].toInt() - 1 }.toList()
+            if (part.endsWith("<")) Sign(first, second) else Sign(second, first)
+        }
+        assertEquals("${b.technique}: a position with one answer", 1, InequalityLogic.countSolutions(n, cells, signs))
+        val step = InequalityTeacher.deduce(n, cells, signs) ?: return null
+        assertEquals("${b.technique}: the digit placed", step.digit.toString(), b.marks("answer")[step.cell])
+        return Mapped(step, step.focus.filter { it < n * n }.toSet())
+    }
+
+    private fun regionsStep(b: Board): TeachStep? {
+        val layout = RegionsLayout(b.width, b.letters("regions"))
+        val cells = b.rows.flatten().map { it.toIntOrNull() ?: 0 }
+        assertEquals("${b.technique}: a position with one answer", 1, RegionsLogic.countSolutions(layout, cells))
+        val step = RegionsTeacher.deduce(layout, cells) ?: return null
+        assertEquals("${b.technique}: the digit placed", step.digit.toString(), b.marks("answer")[step.cell])
+        return step
+    }
+
+    private fun cagesStep(b: Board): TeachStep? {
+        val cageOf = b.letters("cages")
+        val corners = b.marks("corners")
+        val sums = List(cageOf.max() + 1) { k -> corners.getValue(cageOf.indexOf(k)).toInt() }
+        val board = CageLogic.Board(cageOf, sums)
+        val cells = b.rows.flatten().map { it.toIntOrNull() ?: 0 }
+        assertTrue("${b.technique}: a position with one answer", CageLogic.solutions(board, cells) is Verdict.ExactlyOne)
+        val step = CageTeacher.deduce(board, cells) ?: return null
+        assertEquals("${b.technique}: the digit placed", step.digit.toString(), b.marks("answer")[step.cell])
+        return step
+    }
+
+    /** A margin of targets right and below. A ring is a circled number, `struck` a removed one; both must agree with the one answer. */
+    private fun tallyStep(b: Board): TeachStep? {
+        val n = b.width - 1
+        fun board(i: Int) = i / n * b.width + i % n
+        val digits = IntArray(n * n) { b.rows[it / n][it % n].toInt() }
+        val targets = List(n) { b.rows[it][n].toInt() } + List(n) { b.rows[n][it].toInt() }
+        val kept = b.squares("cite")
+        val gone = b.marks("struck").keys
+        val marks = String(CharArray(n * n) {
+            when (board(it)) {
+                in kept -> TallyLogic.KEPT
+                in gone -> TallyLogic.REMOVED
+                else -> TallyLogic.UNMARKED
+            }
+        })
+        val answer = TallyLogic.countSolutions(n, digits, targets)
+        assertTrue("${b.technique}: a position with one answer", answer is Verdict.ExactlyOne)
+        val keep = (answer as Verdict.ExactlyOne).value
+        for (i in 0 until n * n) {
+            if (board(i) in kept) assertEquals("${b.technique}: a ring the answer removes", '1', keep[i])
+            if (board(i) in gone) assertEquals("${b.technique}: a strike the answer keeps", '0', keep[i])
+        }
+        val step = TallyTeacher.deduce(n, digits, targets, marks) ?: return null
+        for (i in step.targets) assertEquals("${b.technique}: the number marked", digits[i].toString(), b.marks("answer")[board(i)])
+        fun mapped(i: Int) = when {
+            i < n * n -> board(i)
+            i < n * n + n -> (i - n * n) * b.width + n
+            else -> n * b.width + i - n * n - n
+        }
+        return Mapped(step, step.focus.map(::mapped).toSet(), step.targets.map(::mapped).toSet())
+    }
+
+    /** Clues in margins above and to the left: `.` or `_` where a line has fewer. An answer of `.` is a fill, `x` a cross. */
+    private fun nonogramStep(b: Board): TeachStep? {
+        val height = b.rows.size
+        val n = listOf(5, 10, 15).last { it <= minOf(b.width, height) }
+        val left = b.width - n
+        val top = height - n
+        fun clue(tokens: List<String>) = tokens.mapNotNull { it.toIntOrNull() }
+        val rows = List(n) { clue(b.rows[top + it].take(left)) }
+        val cols = List(n) { c -> clue(List(top) { b.rows[it][left + c] }) }
+        fun board(i: Int) = (i / n + top) * b.width + i % n + left
+        val filled = b.squares("filled")
+        val start = String(CharArray(n * n) {
+            when {
+                board(it) in filled -> NonogramLogic.FILLED
+                b.rows[it / n + top][it % n + left] == "x" -> NonogramLogic.CROSSED
+                else -> NonogramLogic.UNMARKED
+            }
+        })
+        val step = NonogramTeacher.deduce(n, n, rows, cols, start) ?: return null
+        val answer = b.marks("answer")
+        for (i in step.fills) assertEquals("${b.technique}: a fill", ".", answer[board(i)])
+        for (i in step.crosses) assertEquals("${b.technique}: a cross", "x", answer[board(i)])
+        // Lines alone finish it from here, and the picture has the clues it shows: so it is the board's one answer.
+        val cells = start.toCharArray()
+        var next: NonogramTeacher.Step? = step
+        while (next != null) {
+            next.fills.forEach { cells[it] = NonogramLogic.FILLED }
+            next.crosses.forEach { cells[it] = NonogramLogic.CROSSED }
+            next = NonogramTeacher.deduce(n, n, rows, cols, String(cells))
+        }
+        fun runs(line: List<Char>) = line.joinToString("").split(Regex("[^#]+")).filter { it.isNotEmpty() }.map { it.length }
+        for (i in 0 until n) {
+            assertEquals("${b.technique}: row ${i + 1} finished", rows[i], runs(List(n) { cells[i * n + it] }))
+            assertEquals("${b.technique}: column ${i + 1} finished", cols[i], runs(List(n) { cells[it * n + i] }))
+        }
+        fun mapped(i: Int) = when {
+            i < n * n -> setOf(board(i))
+            i < n * n + n -> List(left) { ((i - n * n) + top) * b.width + it }.toSet()
+            else -> List(top) { it * b.width + left + i - n * n - n }.toSet()
+        }
+        return Mapped(step, step.focus.flatMap(::mapped).toSet(), step.targets.map(::board).toSet())
+    }
+
+    /** `regions` are the rectangles drawn, `.` the squares still open. The answer is proved here by trying every rectangle. */
+    private fun shikakuStep(b: Board): TeachStep? {
+        val w = b.width
+        val h = b.rows.size
+        val clues = b.rows.flatten().map { it.toIntOrNull() }
+        val region = b.letters("regions").ifEmpty { List(w * h) { -1 } }
+        val blocks = (0..(region.maxOrNull() ?: -1)).map { k ->
+            val at = region.indices.filter { region[it] == k }
+            val block = Block(at.minOf { it / w }, at.minOf { it % w }, at.maxOf { it / w }, at.maxOf { it % w })
+            assertEquals("${b.technique}: a drawn region is a rectangle", block.area, at.size)
+            assertEquals("${b.technique}: a drawn rectangle's number", block.area, at.firstNotNullOf { clues[it] })
+            block
+        }
+        val taken = BooleanArray(w * h) { region[it] >= 0 }
+        fun tilings(): Int {
+            val first = taken.indexOfFirst { !it }
+            if (first < 0) return 1
+            var found = 0
+            val r0 = first / w
+            val c0 = first % w
+            // The first open square in reading order is the top-left of whatever covers it.
+            for (r1 in r0 until h) for (c1 in c0 until w) {
+                val inside = (r0..r1).flatMap { r -> (c0..c1).map { r * w + it } }
+                if (inside.any { taken[it] }) continue
+                val number = inside.mapNotNull { clues[it] }
+                if (number.size != 1 || number[0] != inside.size) continue
+                inside.forEach { taken[it] = true }
+                found += tilings()
+                inside.forEach { taken[it] = false }
+            }
+            return found
+        }
+        assertEquals("${b.technique}: a position with one answer", 1, tilings())
+        return ShikakuTeacher.deduce(w, h, clues, blocks)
     }
 
     @Test

@@ -53,4 +53,11 @@ svg text { fill: var(--ink); text-anchor: middle; dominant-baseline: central; fo
 .note { font-size: 13px; font-weight: 600; fill: var(--primary); }
 svg text.struck { fill: var(--error); }
 .strike { stroke: var(--error); stroke-width: 2; stroke-linecap: round; }
+.filled { fill: var(--ink); }
+.cage { stroke: var(--ink2); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.edge, .edge-back { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.edge { stroke: var(--ink); stroke-width: 3; }
+.edge-back { stroke: var(--surface); stroke-width: 7; }
+svg text.edge-text { font-size: 16px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+svg text.corner { font-size: 10.5px; font-weight: 600; text-anchor: start; }
 svg text.on { fill: var(--on-primary); }
