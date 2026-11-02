@@ -7,9 +7,20 @@ import com.joebywan.daybook.core.TeachStep
 import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
+import com.joebywan.daybook.core.Verdict
+import com.joebywan.daybook.puzzles.Card
+import com.joebywan.daybook.puzzles.CipherLogic
+import com.joebywan.daybook.puzzles.CipherSum
+import com.joebywan.daybook.puzzles.CipherTeacher
+import com.joebywan.daybook.puzzles.Feedback
 import com.joebywan.daybook.puzzles.PuzzleState
+import com.joebywan.daybook.puzzles.Sand
+import com.joebywan.daybook.puzzles.SandLogic
+import com.joebywan.daybook.puzzles.SandTeacher
+import com.joebywan.daybook.puzzles.SetsTeacher
 import com.joebywan.daybook.puzzles.Sudoku
 import com.joebywan.daybook.puzzles.SudokuTeacher
+import com.joebywan.daybook.puzzles.TowerTeacher
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -81,6 +92,11 @@ class GuideTest {
      */
     private val teachers: Map<String, (Board) -> TeachStep?> = mapOf(
         "sudoku" to ::sudokuStep,
+        "cipher" to ::cipherStep,
+        "target" to { _ -> null }, // Nothing praised, so no boards: see its page.
+        "sets" to ::setsStep,
+        "tower" to ::towerStep,
+        "sand" to ::sandStep,
     )
 
     private fun sudokuStep(b: Board): PlacementStep? {
@@ -94,6 +110,84 @@ class GuideTest {
             assertTrue("${b.technique}: $d is no pencil mark for square $cell", seen.none { cells[it] == d.digitToInt() })
         }
         return step
+    }
+
+    /** A step whose highlights have been mapped onto the board's squares, for a teacher that numbers them its own way. */
+    private class Shown(step: TeachStep, override val focus: Set<Int>, override val targets: Set<Int>) : TeachStep by step
+
+    /** Rows are the words, right-aligned; a placed letter's token is the letter and its digit (`E7`). */
+    private fun cipherStep(b: Board): TeachStep? {
+        val tokens = b.rows.map { row -> row.filter { it != "_" } }
+        val sum = CipherSum(tokens.map { row -> row.joinToString("") { it.take(1).lowercase() } })
+        val answer = (CipherLogic.prove(sum) as? Verdict.ExactlyOne)?.value ?: error("${b.technique}: a sum with one answer")
+        val digits = sum.letters.indices.map { l ->
+            tokens.flatten().firstOrNull { it[0].lowercaseChar() == sum.letters[l] }?.drop(1)?.toIntOrNull() ?: CipherLogic.EMPTY
+        }
+        digits.forEachIndexed { l, d -> if (d != CipherLogic.EMPTY) assertEquals("${b.technique}: a placed digit", answer[l], d) }
+        val step = CipherTeacher.deduce(sum, digits) ?: return null
+        assertEquals("${b.technique}: the digit placed", answer[step.letter], step.digit)
+        val name = "${sum.letters[step.letter].uppercaseChar()}${step.digit}"
+        assertEquals("${b.technique}: the move", setOf(name), b.marks("answer").values.toSet())
+        fun square(tile: Int) = tile / CipherLogic.TILE_ROW * b.width + b.width - 1 - tile % CipherLogic.TILE_ROW
+        return object : TeachStep {
+            override val technique = step.technique
+            override val nudge = step.nudge
+            override val explanation = step.explanation
+            override val focus = step.focus.map(::square).toSet()
+            override val cited = step.cited.map(::square).toSet()
+            override val targets = sum.tilesOf(step.letter).map(::square).toSet()
+        }
+    }
+
+    /** Each column is a card: count, shading, colour, shape, then a dot if a set found (below) has used it. */
+    private fun setsStep(b: Board): TeachStep? {
+        val shadings = listOf("so", "ou", "st")
+        val colours = listOf("am", "te", "vi")
+        val shapes = listOf("ov", "di", "re")
+        val found = listOf(listOf(0, 4, 7), listOf(3, 5, 8)) // The one board's sets already claimed.
+        val cards = (0 until b.width).map { c ->
+            val shown = b.rows.map { it[c] }
+            Card(shown[0].toInt() - 1, shapes.indexOf(shown[3]), shadings.indexOf(shown[1]), colours.indexOf(shown[2]))
+        }
+        assertEquals("${b.technique}: the dots are the used cards", found.flatten().toSet(), (0 until b.width).filter { b.rows[4][it] == "•" }.toSet())
+        val step = SetsTeacher.deduce(cards, found, emptyList()) ?: return null
+        fun column(card: Int) = (0..3).map { it * b.width + card }
+        for (card in step.targets) for (r in 0..3) assertEquals("${b.technique}: the card", b.rows[r][card], b.marks("answer")[r * b.width + card])
+        return Shown(step, step.focus.flatMap(::column).toSet(), step.targets.flatMap(::column).toSet())
+    }
+
+    private val towerColours = listOf("bl", "go", "br", "te", "mi", "li", "wi", "cr")
+
+    /** A row a guess, its pegs then a gap then its pips (`●` filled, `○` hollow); the last row the one being built. */
+    private fun towerStep(b: Board): TeachStep? {
+        val slots = (b.width - 1) / 2
+        val colours = if (slots == 4) 5 else 6 // Expert (8 colours) has no board here.
+        fun pegs(row: List<String>) = row.take(slots).map(towerColours::indexOf)
+        val guesses = b.rows.dropLast(1).map(::pegs)
+        val feedback = b.rows.dropLast(1).map { row -> Feedback(row.count { it == "●" }, row.count { it == "○" }) }
+        val step = TowerTeacher.deduce(slots, colours, guesses, feedback, pegs(b.rows.last())) ?: return null
+        (step.move as? TowerTeacher.Move.Place)?.let { m ->
+            assertEquals("${b.technique}: the colour placed", towerColours[m.colour], b.marks("answer")[guesses.size * b.width + m.slot])
+        }
+        fun squares(i: Int): List<Int> = when {
+            i >= TowerTeacher.CURRENT -> listOf(guesses.size * b.width + i - TowerTeacher.CURRENT)
+            i >= TowerTeacher.PIPS -> (slots + 1 until b.width).map { (i - TowerTeacher.PIPS) * b.width + it }
+            else -> listOf(i / slots * b.width + i % slots)
+        }
+        return Shown(step, step.focus.flatMap(::squares).toSet(), step.targets.flatMap(::squares).toSet())
+    }
+
+    /** A column a tube, top row its mouth; a pour's `answer` is where its sand lands. */
+    private fun sandStep(b: Board): TeachStep? {
+        val colours = Sand.colourNames.map { it.take(2) }
+        val height = b.rows.size
+        val tubes = (0 until b.width).map { t -> b.rows.reversed().map { it[t] }.filter { it != "." }.map(colours::indexOf) }
+        val road = (SandLogic.solve(tubes, height, SandTeacher.HINT_BUDGET) as? SandLogic.Verdict.Solvable)?.path
+            ?: error("${b.technique}: a board that sorts")
+        val step = SandTeacher.deduce(tubes, height, road) ?: return null
+        val landed = (tubes[step.to].size until step.after[step.to].size).map { (height - 1 - it) * b.width + step.to }
+        for (square in landed) assertEquals("${b.technique}: the sand", colours[tubes[step.from].last()], b.marks("answer")[square])
+        return Shown(step, step.focus.flatMap { t -> (0 until height).map { it * b.width + t } }.toSet(), landed.toSet())
     }
 
     @Test
@@ -184,9 +278,11 @@ class GuideTest {
         val out = StringBuilder()
         for (seed in 1L..400L) for (tier in Difficulty.entries) {
             var state = puzzle.generate(seed, tier)
-            while (true) {
+            // Capped: following Sand's hints can go round for ever (Expert, seed 71).
+            for (n in 1..200) {
                 val step = puzzle.teach(state) ?: break
-                if (step.mistake || step.fallback) break
+                // Codebreaker's "fallback" is a row that fits every score, never the answer, and most of its techniques come after one.
+                if (step.mistake || (step.fallback && id != "tower")) break
                 if (found.merge(step.technique, 1, Int::plus)!! <= 40) {
                     out.append("== ${step.technique}  seed $seed $tier\n")
                     out.append("focus ${step.focus.sorted()}\ncited ${step.cited.sorted()}\ntargets ${step.targets.sorted()}\n")
