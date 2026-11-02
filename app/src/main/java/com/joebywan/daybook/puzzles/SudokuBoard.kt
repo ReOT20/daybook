@@ -159,6 +159,7 @@ internal fun SudokuGridBoard(
                 val action = digitKeyAction(key, 9) ?: return@boardKeys false
                 if (!repeat || action is DigitKeyAction.Move) {
                     if (action is DigitKeyAction.Digit) notePress(action.digit)
+                    if (action is DigitKeyAction.Clear) notedAt = null
                     onKey(action, notesMode)
                 }
                 true
@@ -239,12 +240,13 @@ internal fun SudokuGridBoard(
                                 val ink = if (isSelected) a.selected.ink else a.givenInk
                                 // A square that carries a label (a cage's total) gives its top band to it.
                                 val band = topBand(i)
-                                val style = BoardGlyph.NOTE.style(cell * (1f - band * 0.5f)).copy(color = ink, textAlign = TextAlign.Center)
+                                // Three rows fit under the label and above the selected square's border; a square with no label is untouched.
+                                val style = BoardGlyph.NOTE.style(cell * (1f - band * 0.75f)).copy(color = ink, textAlign = TextAlign.Center)
                                 // Drawn, not composed: nine Text nodes in each of up to eighty-one
                                 // cells would be a lot of layout for a board that redraws on every tap.
                                 Canvas(Modifier.fillMaxSize()) {
                                     val sub = size.width / 3f
-                                    val rowHeight = size.height * (1f - band) / 3f
+                                    val rowHeight = (size.height * (1f - band) - if (band > 0f) 2.dp.toPx() else 0f) / 3f
                                     for (d in 1..9) {
                                         if (noted and (1 shl (d - 1)) == 0) continue
                                         val laid = measurer.measure(d.toString(), style, maxLines = 1)
@@ -338,7 +340,10 @@ internal fun SudokuGridBoard(
                     SudokuTeacher.NOTES_KEY, highlight, glow, pulse,
                     fill = Color.Transparent,
                     enabled = interactive,
-                    onClick = { notesMode = !notesMode },
+                    onClick = {
+                        notesMode = !notesMode
+                        notedAt = null
+                    },
                     modifier = Modifier.semantics { contentDescription = if (notesMode) "Notes on" else "Notes off" }.then(
                         if (notesMode) Modifier.arcadeLift(a.selected, 10.dp).background(a.selected.brush, keyShape).border(2.dp, a.selectedEdge, keyShape)
                         else Modifier.background(a.given, keyShape)
