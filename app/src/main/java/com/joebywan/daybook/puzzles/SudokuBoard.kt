@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
@@ -134,7 +135,16 @@ internal fun SudokuGridBoard(
     // The digit picked first (issue #384): with no square selected, a key arms and each tap on a square enters it. Not a state, as notesMode.
     var armed by rememberSaveable { mutableStateOf<Int?>(null) }
     val armedDigit = armed.takeIf { s.selected == null }
-    val selectedValue = armedDigit ?: s.selected?.let { s.cells[it] } ?: 0
+    // The last digit noted and its square (issue #407), so a note press highlights as a filled square does. Not a state, as notesMode.
+    var notedDigit by rememberSaveable { mutableStateOf(0) }
+    var notedAt by rememberSaveable { mutableStateOf<Int?>(null) }
+    // Forgotten as soon as the selection moves, so coming back to the square does not bring it back.
+    if (notedAt != s.selected) notedAt = null
+    val notePress = { digit: Int ->
+        notedAt = s.selected?.takeIf { notesMode && s.canNote(it) }
+        notedDigit = digit
+    }
+    val selectedValue = highlightedDigit(s.cells, s.selected, armedDigit, notesMode, notedAt, notedDigit)
     val measurer = rememberTextMeasurer()
     // The keyboard (web, or a hardware keyboard on Android): digits, clear and arrows, mapped by
     // digitKeyAction and applied through the same state functions the pad and a tap use. See boardKeys.
@@ -147,7 +157,10 @@ internal fun SudokuGridBoard(
             .padding(horizontal = 12.dp)
             .boardKeys(interactive) { key, _, repeat ->
                 val action = digitKeyAction(key, 9) ?: return@boardKeys false
-                if (!repeat || action is DigitKeyAction.Move) onKey(action, notesMode)
+                if (!repeat || action is DigitKeyAction.Move) {
+                    if (action is DigitKeyAction.Digit) notePress(action.digit)
+                    onKey(action, notesMode)
+                }
                 true
             },
         contentAlignment = Alignment.Center,
@@ -201,8 +214,9 @@ internal fun SudokuGridBoard(
                                 // left alone. Shading them restyled twenty of the eighty-one
                                 // squares on every tap, so the board had to be re-read after
                                 // each selection to find the 3x3 structure again -- the cost
-                                // outweighed the help. Only the selection itself and cells
-                                // holding the same digit react.
+                                // outweighed the help. Only the selection itself, cells
+                                // holding the same digit and notes of that digit (a disc behind
+                                // the note, the square's own fill unchanged) react.
                                 .background(fill.brush)
                                 .then(
                                     when {
@@ -230,17 +244,26 @@ internal fun SudokuGridBoard(
                                 // cells would be a lot of layout for a board that redraws on every tap.
                                 Canvas(Modifier.fillMaxSize()) {
                                     val sub = size.width / 3f
+                                    val rowHeight = size.height * (1f - band) / 3f
                                     for (d in 1..9) {
                                         if (noted and (1 shl (d - 1)) == 0) continue
                                         val laid = measurer.measure(d.toString(), style, maxLines = 1)
                                         val r = (d - 1) / 3
                                         val c = (d - 1) % 3
+                                        val twin = d == selectedValue
+                                        val top = band * size.height + r * rowHeight
+                                        // A disc as well as the ink: a state by colour also changes shape. Its radius keeps it inside its third.
+                                        if (twin) {
+                                            val radius = minOf(sub, rowHeight) / 2f
+                                            val centre = Offset(c * sub + sub / 2f, top + rowHeight / 2f)
+                                            drawCircle(SudokuTwin.brush(centre - Offset(radius, radius), Size(radius * 2f, radius * 2f)), radius, centre)
+                                        }
                                         drawText(
                                             laid,
+                                            color = if (twin) SudokuTwin.ink else ink,
                                             topLeft = Offset(
                                                 c * sub + (sub - laid.size.width) / 2f,
-                                                band * size.height + r * (size.height * (1f - band) / 3f) +
-                                                    (size.height * (1f - band) / 3f - laid.size.height) / 2f,
+                                                top + (rowHeight - laid.size.height) / 2f,
                                             ),
                                         )
                                     }
@@ -284,6 +307,7 @@ internal fun SudokuGridBoard(
                         onClick = {
                             // In notes mode the keys are dimmed and inert on a filled or given cell
                             // (above), so a refusal here is never silent.
+                            notePress(digit)
                             if (at != null) onEnter(at, digit, notesMode)
                             else armed = digit.takeIf { it != armedDigit }
                         },
