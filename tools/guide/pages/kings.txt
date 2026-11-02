@@ -1,0 +1,126 @@
+# Kings
+> One crown per row, column and colour
+
+## How to play
+
+Tap a square to pencil it out, and tap it again to rub the mark away. Drag across a run of squares to mark them all in one sweep.
+
+Double-tap or long-press a square to crown a king there, or to take the crown back.
+
+Squares a king already rules out are crossed off for you.
+
+On a keyboard, the arrows move, Space pencils a square out, K or Enter crowns it, and Backspace empties it.
+
+A king that breaks a rule turns red, but nothing stops you placing one.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Place exactly one king in every row, every column and every coloured region.
+- No two kings may touch, not even diagonally.
+
+## What changes per tier
+
+- Standard: 7x7 grid, seven colours. The first three techniques below finish every board.
+- Hard: 8x8 grid, eight colours. Needs two colours confined to two lines at least once, and nothing wider.
+- Expert: 9x9 grid, nine colours. Needs three or more colours confined to as many lines, or a what-if.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, K is a king, x is a square crossed out, the darker squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### last-square | The last open square for a king
+
+A row, a column or a colour with one open square left has to have its king there.
+
+~~~board
+x x . . x x x
+x x x x . x x
+. . . . . . x
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . x
+regions: ccaabbb cccbbdb ccddddb ccdddge cffffge cffggge fffgggg
+focus: r1c5 r1c6 r1c7 r2c4 r2c5 r2c7 r3c7
+answer: r2c5=K
+caption: Every other square of this colour is crossed out, so its king goes on the one left.
+~~~
+
+### locked-to-a-line | A colour locked to one line
+
+If all of a colour's open squares lie in one row or column, that line's king has to be that colour, so the rest of the line can be crossed out. It works the other way too: if all of a line's open squares are one colour, that colour's king is in that line, and the rest of the colour can be crossed out.
+
+~~~board
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . .
+regions: ccaabbb cccbbdb ccddddb ccdddge cffffge cffggge fffgggg
+focus: r1c3 r1c4
+answer: r1c1=x r1c2=x r1c5=x r1c6=x r1c7=x
+caption: The colour with two squares in row 1 has no others, so row 1's king is one of them. Everything else in the row is crossed out.
+~~~
+
+### would-empty | A king that would leave no room
+
+Look at a colour, row or column with few open squares left. A king on a square that touches or lines up with all of them would rule them all out, so no king can go on that square.
+
+~~~board
+x x . . x x x
+x x x . . x x
+. . . . . . x
+. . . . . . .
+. . . . . . .
+. . . . . . .
+. . . . . . x
+regions: ccaabbb cccbbdb ccddddb ccdddge cffffge cffggge fffgggg
+focus: r1c3 r1c4
+answer: r2c4=x
+caption: The colour in row 1 has two open squares left. A king on the filled square would touch both, leaving that colour nowhere for its king, so it's crossed out.
+~~~
+
+### confined | Colours confined to as many lines
+
+The same idea as a colour locked to one line, with more of them. If two colours fit only in two rows, those two rows' kings are theirs, and nothing else in those rows can hold a king. Three colours in three lines work the same way, and so do lines that only reach as many colours.
+
+~~~board
+x . . . . . . .
+x . x . . . . .
+x . . . . . . .
+x . . . . . . .
+x . . . . . . .
+x . . x . . . .
+x x . . . . . .
+K x x x x x x x
+regions: aaacbbbb aaccbbbb daccccbb ddcccccb dddddeee ddgdeeff ggggeeff hgggeeef
+focus: r6c3 r6c7 r6c8 r7c1 r7c2 r7c3 r7c4 r7c7 r7c8 r8c2 r8c3 r8c4 r8c8
+cite: r6c3 r6c7 r6c8 r7c3 r7c4 r7c7 r7c8
+answer: r6c2=x r6c5=x r6c6=x r7c5=x r7c6=x
+caption: The two darker colours' open squares, ringed, all lie in rows 6 and 7, so the kings of those rows are theirs. The other open squares in the two rows are crossed out.
+~~~
+
+### what-if | A what-if
+
+Suppose a king on an open square and follow what that forces, no more than a couple of last squares. If some row, column or colour ends up with nowhere for its king, the square can be crossed out. This isn't guessing: you only cross it out once a king there has been shown to break.
+
+~~~board
+. . . . . . . . .
+. x . . . . . x x
+. x . . . . x x x
+. x . . . x x x x
+x x x x x x x . .
+. x . . . . . x x
+. . . . . . . . .
+. x . x . . . . .
+x x . . . . . . .
+regions: ddbbbaaaa dbbbccaff dbbcccfff dbbccffff dddcfffee ghhhfffff ggihhffff giihhffff iiiihhhff
+focus: r7c7
+cite: r1c2 r1c6 r1c7 r1c8 r1c9 r2c7
+answer: r7c7=x
+caption: A king on the filled square would rule out column 2's square in row 7, leaving only the ringed square at its top. A king there, with this one, would rule out all of the colour ringed at the top right. So the filled square is crossed out.
+~~~

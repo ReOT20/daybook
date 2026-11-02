@@ -18,6 +18,15 @@ import com.joebywan.daybook.puzzles.InequalityLogic
 import com.joebywan.daybook.puzzles.InequalityTeacher
 import com.joebywan.daybook.puzzles.NonogramLogic
 import com.joebywan.daybook.puzzles.NonogramTeacher
+import com.joebywan.daybook.puzzles.KingsTeacher
+import com.joebywan.daybook.puzzles.LampsLogic
+import com.joebywan.daybook.puzzles.LampsTeacher
+import com.joebywan.daybook.puzzles.Link
+import com.joebywan.daybook.puzzles.Lits
+import com.joebywan.daybook.puzzles.LitsTeacher
+import com.joebywan.daybook.puzzles.MamboTeacher
+import com.joebywan.daybook.puzzles.Mark
+import com.joebywan.daybook.puzzles.MinesTeacher
 import com.joebywan.daybook.puzzles.PuzzleState
 import com.joebywan.daybook.puzzles.RegionsLayout
 import com.joebywan.daybook.puzzles.RegionsLogic
@@ -45,6 +54,9 @@ import com.joebywan.daybook.puzzles.WhosWhoTeacher
 import com.joebywan.daybook.puzzles.WhosWhoWords
 import com.joebywan.daybook.puzzles.TallyLogic
 import com.joebywan.daybook.puzzles.TallyTeacher
+import com.joebywan.daybook.puzzles.Sym
+import com.joebywan.daybook.puzzles.TentsLogic
+import com.joebywan.daybook.puzzles.TentsTeacher
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -141,6 +153,12 @@ class GuideTest {
         // No techniques and so no boards (hints are off): these two lines are never asked.
         "snap" to { _ -> null },
         "pointers" to { _ -> null },
+        "kings" to ::kingsStep,
+        "mambo" to ::mamboStep,
+        "tents" to ::tentsStep,
+        "lamps" to ::lampsStep,
+        "mines" to ::minesStep,
+        "lits" to ::litsStep,
     )
 
     /** A step's squares as a board draws them, for a teacher whose highlights are not all squares (or whose move is a line). */
@@ -493,6 +511,86 @@ class GuideTest {
         }
         assertEquals("${b.technique}: a position with one answer", 1, tilings())
         return ShikakuTeacher.deduce(w, h, clues, blocks)
+    /** `regions:` as the game's numbering: `a` is region 0. */
+    private fun regionsOf(b: Board) = b.fields.getValue("regions").replace(" ", "").map { it - 'a' }
+
+    private fun kingsStep(b: Board): TeachStep? {
+        val marks = b.rows.flatten().map { when (it) { "K" -> Mark.KING; "x" -> Mark.BLOCKED; else -> Mark.EMPTY } }
+        val step = KingsTeacher.deduce(b.width, regionsOf(b), marks) ?: return null
+        assertEquals("${b.technique}: the move", step.kings.associateWith { "K" } + step.crosses.associateWith { "x" }, b.marks("answer"))
+        return step
+    }
+
+    private fun mamboStep(b: Board): TeachStep? {
+        val cells = b.rows.flatten().map { when (it) { "S" -> Sym.SUN; "M" -> Sym.MOON; else -> Sym.NONE } }
+        val links = b.fields.getValue("between").split(' ').map { part ->
+            val n = Regex("\\d+").findAll(part).map { it.value.toInt() - 1 }.toList()
+            Link(n[0] * b.width + n[1], n[2] * b.width + n[3], part.endsWith("=="))
+        }
+        val step = MamboTeacher.deduce(b.width, cells, links) ?: return null
+        assertEquals("${b.technique}: the move", step.places.mapValues { (_, s) -> if (s == Sym.SUN) "S" else "M" }, b.marks("answer"))
+        return step
+    }
+
+    /** The clues are a top row and a left column, so the teacher's squares and clues move into the board's numbering. */
+    private fun tentsStep(b: Board): TeachStep? {
+        val n = b.width - 1
+        val grid = b.rows.drop(1).map { it.drop(1) }.flatten()
+        val rowCounts = b.rows.drop(1).map { it[0].toInt() }
+        val colCounts = b.rows[0].drop(1).map { it.toInt() }
+        val marks = grid.map { when (it) { "▲" -> TentsLogic.TENT; "x" -> TentsLogic.GRASS; else -> 0 } }
+        val step = TentsTeacher.deduce(n, grid.map { it == "♣" }, rowCounts, colCounts, marks) ?: return null
+        fun drawn(i: Int) = when {
+            i < n * n -> (i / n + 1) * b.width + i % n + 1
+            i < n * n + n -> (i - n * n + 1) * b.width
+            else -> i - n * n - n + 1
+        }
+        val mark = if (step.value == TentsLogic.TENT) "▲" else "x"
+        assertEquals("${b.technique}: the move", step.targets.map(::drawn).associateWith { mark }, b.marks("answer"))
+        return object : TeachStep by step {
+            override val focus = step.focus.map(::drawn).toSet()
+            override val cited = step.cited.map(::drawn).toSet()
+            override val targets = step.targets.map(::drawn).toSet()
+        }
+    }
+
+    private fun lampsStep(b: Board): TeachStep? {
+        val tokens = b.rows.flatten()
+        val solid = b.squares("solid")
+        val isWall = tokens.indices.map { it in solid }
+        val walls = tokens.indices.joinToString("") { i -> if (!isWall[i]) "." else if (tokens[i] == ".") "#" else tokens[i] }
+        val marks = tokens.indices.joinToString("") { i -> if (isWall[i]) "." else when (tokens[i]) { "●" -> "L"; "x" -> "x"; else -> "." } }
+        val lit = LampsLogic.lit(b.width, walls, BooleanArray(tokens.size) { marks[it] == 'L' })
+        for (i in tokens.indices) if (!isWall[i] && tokens[i] in listOf(".", "·")) {
+            assertEquals("${b.technique}: the dot on square $i", lit[i], tokens[i] == "·")
+        }
+        val step = LampsTeacher.deduce(b.width, walls, marks) ?: return null
+        assertEquals("${b.technique}: the move", step.targets.associateWith { if (step.value == LampsLogic.LAMP) "●" else "x" }, b.marks("answer"))
+        return step
+    }
+
+    private fun minesStep(b: Board): TeachStep? {
+        val tokens = b.rows.flatten()
+        val hidden = b.squares("solid")
+        val num = IntArray(tokens.size) { if (it in hidden) -1 else tokens[it].toIntOrNull() ?: 0 }
+        val total = mapOf(64 to 10, 80 to 16, 90 to 21).getValue(tokens.size)
+        val step = MinesTeacher.deduce(
+            b.width, b.rows.size, num, BooleanArray(tokens.size), BooleanArray(tokens.size) { tokens[it] == "F" }, total,
+        ) ?: return null
+        assertEquals("${b.technique}: the move", step.safe.associateWith { "✓" } + step.mines.associateWith { "F" }, b.marks("answer"))
+        return step
+    }
+
+    private fun litsStep(b: Board): TeachStep? {
+        val tokens = b.rows.flatten()
+        val region = regionsOf(b)
+        val shaded = tokens.map { it != "." && it != "x" }
+        val letters = Lits.letters(b.width, b.rows.size, region, shaded)
+        for (i in tokens.indices) if (shaded[i]) assertEquals("${b.technique}: square $i", letters[i]?.name ?: "■", tokens[i])
+        assertEquals("${b.technique}: the crosses", Lits.impossible(b.width, b.rows.size, region, shaded), tokens.indices.filter { tokens[it] == "x" }.toSet())
+        val step = LitsTeacher.deduce(b.width, b.rows.size, region, shaded) ?: return null
+        assertEquals("${b.technique}: the move", step.shades.associateWith { "■" }, b.marks("answer"))
+        return step
     }
 
     @Test

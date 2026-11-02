@@ -1,0 +1,157 @@
+# Tents
+> A tent beside every tree, none touching
+
+## How to play
+
+Tap a square for grass, a note that a tent can't go there, and tap again to clear it. Drag to lay grass across squares.
+
+Double-tap or long-press a square for a tent, and grass sprouts around it by itself. Tap a tent to remove it.
+
+On a keyboard, the arrows move, T or Enter places a tent, X, G or Space lays grass, and Backspace clears.
+
+A number gets a tick when its line has all its tents. Touching tents, and a row or column with too many, turn red about a second later, but nothing stops you placing them.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Put one tent beside every tree, up, down, left or right of it. Each tent belongs to one tree.
+- Tents never touch each other, not even at a corner.
+- The numbers say how many tents each row and column holds.
+
+## What changes per tier
+
+- Standard: 6x6 grid, 7 tents.
+- Hard: 8x8 grid, 13 tents. Needs a tree with one spot left, or a step beyond it, at least once.
+- Expert: 10x10 grid, 20 tents. Needs a square touching all of a tree's spots, or a square whose trees all have tents.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, ♣ is a tree, ▲ a tent and x is grass, with each row's and column's number along the edge. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it, except where it says so.
+
+### no-tree | Grass where no tree is beside it
+
+A tent sits right beside its tree, so a square with no tree above, below, left or right of it can only be grass. Corners do not count.
+
+~~~board
+_ 2 0 1 1 0 3
+2 . . . . . .
+1 ♣ . ♣ . . ♣
+1 . . . . . .
+2 . ♣ . . . ♣
+0 ♣ . . . . .
+1 . . . . ♣ .
+focus: r2c3 r2c5 r2c6 r4c5 r4c6 r5c5 r6c4 r6c5 r7c3 r7c4
+answer: r2c3=x r2c5=x r2c6=x r4c5=x r4c6=x r5c5=x r6c4=x r6c5=x r7c3=x r7c4=x
+caption: None of the filled squares has a tree directly beside it, so they are all grass.
+~~~
+
+### line-done | A line with all its tents
+
+When a row or column has all its tents, or its number is 0, everything else in it is grass.
+
+~~~board
+_ 2 0 1 1 0 3
+2 . x . x x .
+1 ♣ . ♣ . . ♣
+1 . . . x x .
+2 . ♣ . x . ♣
+0 ♣ . x x . .
+1 . x x . ♣ .
+focus: r6c2 r6c3 r6c4 r6c5 r6c6 r6c7 r6c1
+answer: r6c3=x r6c6=x r6c7=x
+caption: Row 5's number is 0, so no tent can go in it. Its open squares are grass.
+~~~
+
+### line-full | A line with just room for its tents
+
+When a row or column has exactly as many squares left as tents it still needs, every one of them is a tent.
+
+~~~board
+_ 2 0 1 1 0 3
+2 . x . x x .
+1 ♣ x ♣ . x ♣
+1 . x . x x .
+2 . ♣ . x x ♣
+0 ♣ x x x x x
+1 . x x . ♣ .
+focus: r3c2 r3c3 r3c4 r3c5 r3c6 r3c7 r3c1
+answer: r3c5=▲
+caption: Row 2 needs 1 tent, and the filled square is the only one in it still free.
+~~~
+
+### touch | Grass around a tent
+
+Tents never touch, not even at a corner, so all eight squares around a tent are grass. The game does this for you: place a tent and the grass sprouts by itself, so a hint never needs to say it. This board is a real one with that grass held back, to show what the sprouting means.
+
+~~~board
+_ 2 1 1 1 1 1
+2 ▲ ♣ ▲ x x x
+1 x . ♣ . ♣ .
+1 . . ♣ ♣ x x
+1 ♣ . x . x x
+1 . x x x x .
+1 x x x x ▲ ♣
+focus: r2c2 r3c3
+cite: r2c2
+answer: r3c3=x
+caption: The filled square touches the ringed tent at a corner, so it can only be grass.
+~~~
+
+### one-spot | A tree with one spot left
+
+A tree needs a tent beside it. If every other square beside the tree is a tree, off the board or grass, its tent goes on the one left.
+
+~~~board
+_ 1 1 1 1 2 1
+0 x x x x x x
+2 x . . x ▲ ♣
+0 x ♣ ♣ x x ♣
+3 . . x ▲ x ▲
+0 ♣ x x ♣ x x
+2 . x . ♣ ▲ x
+focus: r3c4 r4c4
+cite: r4c4
+answer: r3c4=▲
+caption: The ringed tree has a tree on its left and grass on its right and below, the grass below sprouted by the tent beside it. Its tent goes above it.
+~~~
+
+### shared | A square touching all a tree's spots
+
+When a tree has only a few spots left, a tent on a square that touches all of them would leave the tree none. That square is grass.
+
+~~~board
+_ 3 1 2 1 1 2 1 2
+0 ♣ x x x x x x x
+4 ▲ x ▲ x ♣ ▲ ♣ ▲
+0 x x ♣ x x x x x
+1 . . x x x x x ♣
+3 ♣ ♣ ♣ ▲ x ▲ ♣ ▲
+1 . . ♣ x x x ♣ x
+3 x . . x ▲ x ▲ x
+1 . ♣ . x ♣ x x x
+focus: r7c3 r7c4 r8c3 r8c4
+cite: r7c3 r7c4 r8c4
+answer: r8c3=x
+caption: The ringed tree's tent goes on one of the other two ringed squares. A tent on the filled square would touch both, so it is grass.
+~~~
+
+### served | A square whose trees all have tents
+
+A tent on a square beside no tree without a tent would have no tree of its own, so the square is grass.
+
+~~~board
+_ 2 2 1 3 1 2 0 2
+2 . ♣ x ▲ x . ♣ .
+1 x . x ♣ x . x x
+1 x ♣ ♣ ▲ x ♣ x x
+3 . . x x x . x .
+0 ♣ x x x x x x ♣
+2 . . ♣ ▲ x x x .
+0 x x x x x x x x
+4 ▲ ♣ ▲ ♣ ▲ ♣ ♣ ▲
+focus: r7c3 r7c4
+cite: r7c4 r7c5
+answer: r7c3=x
+caption: The only tree beside the filled square is the ringed one, and the ringed tent can only be that tree's, as no other tree touches it. A tent here would have no tree of its own, so it is grass.
+~~~
