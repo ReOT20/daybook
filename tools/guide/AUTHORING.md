@@ -18,7 +18,7 @@ python3 tools/guide/build.py --out /tmp/guide    # then serve /tmp/guide and loo
 | `## How to play` | Working the screen: its `rules` (the gestures), `keyboardHelp`, what feedback looks like, the "Teaching" notes in `CLAUDE.md`. No hints or undo? Say so (Arrows, Mines) |
 | `## Rules` | What the player must do to succeed, and nothing else: its `rules` with the gestures taken out. No controls, feedback, strategy or promises about the board |
 | `## What changes per tier` | `- Standard: `, `- Hard: `, `- Expert: `, each starting with the exact line from `core/TierNotes.kt`, then anything else the player can see, from `CLAUDE.md` |
-| `## Techniques` | `core/TechniqueNames.kt`: every id, in that order, under `### id \| Name`, the name with its first letter capitalised, as Training shows it. Nothing else: mistakes and fallbacks have no name and no entry. A puzzle with no names has no Techniques section |
+| `## Techniques` | `core/TechniqueNames.kt`: every id, in that order, under `### id \| Name`, the name with its first letter capitalised, as Training shows it. Nothing else: mistakes and fallbacks have no name and no entry. A step in `NOT_PRAISED` only points at a word or a guess, so include it only if there is something real to say, in prose; it needs no board. A puzzle with nothing to say has no Techniques section |
 | What a technique means | the teacher's own `explanation` and the comment at the top of `puzzles/<Name>Teacher.kt` |
 
 Those four sections, in that order, nothing else. Voice: plain, friendly, specific, and short. Never "harder": say what changes. No genre or
@@ -29,7 +29,7 @@ Format: blank lines separate paragraphs, `- ` lists, `**bold**`. Nothing else is
 
 ## Boards
 
-Every technique has at least one. A board is real text, drawn as an inline SVG, so it follows light and dark and needs no capture when the art changes:
+Every praised technique has at least one. A board is real text, drawn as an inline SVG, so it follows light and dark and needs no capture when the art changes:
 
 ```
 ~~~board

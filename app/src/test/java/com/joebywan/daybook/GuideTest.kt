@@ -4,6 +4,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
 import com.joebywan.daybook.puzzles.PuzzleState
@@ -106,7 +107,7 @@ class GuideTest {
     fun `a page has the sections in order and the puzzle's own name and tagline`() {
         for (p in pages) {
             val puzzle = PuzzleRegistry.all.first { it.id == p.id }
-            val techniques = if (techniqueNamesOf(p.id).isEmpty()) emptyList() else listOf("Techniques")
+            val techniques = if (praisedTechniquesOf(p.id).isEmpty() && p.techniques.isEmpty()) emptyList() else listOf("Techniques")
             assertEquals(p.id, listOf("How to play", "Rules", "What changes per tier") + techniques, p.headings)
             assertEquals(p.id, "# ${puzzle.displayName}", p.lines.first { it.startsWith("# ") }.trim())
             assertEquals(p.id, "> ${puzzle.tagline}", p.lines.first { it.startsWith("> ") }.trim())
@@ -128,7 +129,9 @@ class GuideTest {
     fun `a page has the teacher's techniques, no others, in order, under the app's names`() {
         for (p in pages) {
             val names = techniqueNamesOf(p.id)
-            assertEquals("${p.id}: technique ids", names.keys.toList(), p.techniques.map { it[0] })
+            val ids = p.techniques.map { it[0] }
+            // A step that only points at a word or a guess (NOT_PRAISED) is not reasoning: a page may leave it out.
+            assertEquals("${p.id}: technique ids", names.keys.filter { it in ids || it in praisedTechniquesOf(p.id) }, ids)
             for ((id, shown) in p.techniques) {
                 assertEquals("${p.id}#$id", names.getValue(id).replaceFirstChar { it.uppercase() }, shown)
             }
@@ -138,10 +141,9 @@ class GuideTest {
     @Test
     fun `every technique has a board, and the teacher gives that technique on it`() {
         for (p in pages) {
-            assertEquals(
-                "${p.id}: a technique without a board",
-                p.techniques.map { it[0] }.toSet(), p.boards.map { it.technique }.toSet(),
-            )
+            val drawn = p.boards.map { it.technique }.toSet()
+            assertTrue("${p.id}: a technique without a board", drawn.containsAll(praisedTechniquesOf(p.id)))
+            assertTrue("${p.id}: a board outside a technique", p.techniques.map { it[0] }.containsAll(drawn))
             val teacher = teachers[p.id] ?: error("${p.id}: add it to GuideTest.teachers")
             for (b in p.boards) {
                 val step = teacher(b) ?: error("${p.id}#${b.technique}: the teacher has no step here")
