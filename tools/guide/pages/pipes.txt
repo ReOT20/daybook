@@ -1,0 +1,102 @@
+# Pipes
+> Rotate until every pipe joins up
+
+## How to play
+
+Tap a tile to turn it a quarter turn clockwise. Every tile's pipework is fixed: only which way round it sits is up to you.
+
+On a keyboard, the arrows move, and Space, Enter or R turns the tile.
+
+Water comes in at the ringed tile, and every pipe joined back to it runs full, so you can watch the network grow. Wet doesn't mean right, though: a hint will point out a tile you turned that runs full but sits the wrong way for the finished network.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and the reasoning below always reaches it.
+
+## Rules
+
+- Finish with no loose ends: every pipe opening must meet another.
+- All the pipework must form one connected network.
+
+## What changes per tier
+
+- Standard: 5x7 grid.
+- Hard: 6x9 grid.
+- Expert: 8x11 grid.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, the tinted tile is where to look, rings mark the tiles the reasoning leans on, and the filled square shows the tile turned the way it must sit. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### border | The edge rule
+
+No pipe can point off the board. In a corner a bend has only one way round, a straight against the edge has to run along it, and a T's flat side has to face the edge. Start here: these tiles need nothing else.
+
+~~~board
+dl ud rl u d
+urd l r u ud
+ud ur udl urdl ur
+rl urd d udl ul
+rd rd l rl rl
+r ud urdl ul ud
+r rl rdl d l
+draw: spokes
+focus: r1c1
+answer: r1c1=rd
+caption: A bend in the top-left corner can't point up or left, so it can only join right and down.
+~~~
+
+### set-neighbour | Matching a set neighbour's opening
+
+An opening has to meet an opening. So once a neighbour is set, the side you share is settled: open if it points at this tile, shut if it doesn't. Add that to what the edge tells you, and a tile can be left with one way round.
+
+~~~board
+rd rl rl u d
+urd l r u ud
+ud ur udl urdl ur
+ud urd d udl ul
+rd rd l rl ud
+r ud urdl ul ud
+r rl url d l
+draw: spokes
+focus: r1c4
+cite: r1c3
+answer: r1c4=l
+caption: This tile is a single end, and it can't point up off the board. The ringed straight is set and points into it from the left, so that's where its opening goes.
+~~~
+
+### whichever-way | A tile forced whichever way it turns
+
+A neighbour doesn't have to be set to settle a side. If every turn it has left agrees on the side you share, that side is settled already.
+
+~~~board
+u l rd ur l
+urd ul ud rl d
+ud ul dl ud ud
+urd udl u rdl ur
+ud d ul rd d
+urd url url r udl
+l r dl rl ul
+draw: spokes
+focus: r2c4
+cite: r1c4
+answer: r2c4=ud
+caption: The ringed bend sits on the top edge. Whichever way it ends up, it must point down, and that's into this straight, so the straight runs up and down.
+~~~
+
+### no-loop | Avoiding a closed loop
+
+The tiles have just enough openings to join every one of them with no pipe to spare, so a closed loop would leave something else cut off. If two neighbouring tiles are already joined the long way round, they can't also join directly.
+
+~~~board
+rd rl dl rd dl
+urd l urd udl u
+u l urd rd d
+r url udl ur d
+rd udl rdl url l
+ud u ur rl dl
+u r rl rl ul
+draw: spokes
+focus: r3c3
+cite: r2c3 r2c4 r3c4
+answer: r3c3=udl
+caption: Follow the ringed tiles: this T is joined upwards, then across, then down into the tile on its right. A direct join would close a loop, so the T's flat side faces right. That last ringed bend hasn't been turned yet, but the tile above it is set and points into it.
+~~~
