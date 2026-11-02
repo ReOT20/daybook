@@ -1,0 +1,237 @@
+# Cage Sudoku
+> Sudoku where dashed cages must add up
+
+## How to play
+
+Tap a square, then tap a digit. Tap the digit again to clear it.
+
+Or pick the digit first: with no square selected, tap a digit, then every square it goes in. Tap the selected square to let go of it, and the digit again to finish.
+
+Tap the pencil to take notes. While it is lit, a digit is pencilled small in the square instead of placed, and placing a digit clears it from the notes of the squares it sees and of its cage.
+
+On a keyboard, the arrows move, 1 to 9 place a digit (or a note in pencil mode), and Backspace clears.
+
+Clashing digits, and cages that are over their total or finished wrong, are shown in red, but nothing stops you placing one.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". If a digit you placed is wrong, Hint points at that first. Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Fill every square with a digit from 1 to 9.
+- No digit may repeat within a row, a column or a 3x3 box.
+- The dashed outlines are cages. The digits in a cage add up to the small number in its corner, and a cage never repeats a digit.
+- Any digits you start with are given, and stay put.
+
+## What changes per tier
+
+- Standard: Cages of 2 to 4 squares, some digits given. About 28 cages and 14 digits.
+- Hard: Cages up to 5 squares, fewer digits given. About 24 cages and 8 digits.
+- Expert: Cages up to 7 squares, no digits given. About 24 cages, and the totals are all you start from.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, the tinted squares are where to look, rings mark the digits the reasoning leans on, and the filled square is the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### full-house | The last square in a row, column or box
+
+A row, column or box with one empty square is missing one digit, so that digit goes there.
+
+~~~board
+9 5 4 1 3 2 6 8 7
+6 3 2 7 . . 1 4 9
+8 1 7 4 9 6 2 . .
+1 2 3 6 4 9 . 7 8
+4 9 8 2 7 5 . 1 6
+7 6 5 8 1 3 . . .
+. . 9 3 6 . . . .
+. . 1 . . 7 . 6 .
+. . 6 . . . . . .
+box: 3
+cages: aaabccdde ffgbhhdde iiggghhjj kllmmnnoo kppqmrsoo ttqqmrsuu vvwqxrsyu zzwAxryyu BBBAxCCCC
+corners: r1c1=18 r1c4=8 r1c5=5 r1c7=19 r1c9=16 r2c1=9 r2c3=22 r2c5=21 r3c1=9 r3c8=8 r4c1=5 r4c2=5 r4c4=18 r4c6=14 r4c8=22 r5c2=17 r5c4=18 r5c6=16 r5c7=14 r6c1=13 r6c8=18 r7c1=10 r7c3=10 r7c5=16 r7c8=19 r8c1=9 r8c4=14 r9c1=16 r9c6=16
+focus: r4c1-r4c9
+answer: r4c7=5
+caption: Row 4 has one empty square left, and 5 is the only digit it's missing.
+~~~
+
+### cage-last | The last square of a cage
+
+A cage with one empty square needs its total less what the others add up to.
+
+~~~board
+. . . . . 2 6 8 .
+. . 2 . . . . 4 9
+. . 7 . . . . . .
+. . . . . . . . .
+4 . . . . . . 1 6
+. 6 . . . . . . .
+. . 9 . 6 . . . .
+. . . . . 7 . . .
+. . . . . . . . .
+box: 3
+cages: aaabccdde ffgbhhdde iiggghhjj kllmmnnoo kppqmrsoo ttqqmrsuu vvwqxrsyu zzwAxryyu BBBAxCCCC
+corners: r1c1=18 r1c4=8 r1c5=5 r1c7=19 r1c9=16 r2c1=9 r2c3=22 r2c5=21 r3c1=9 r3c8=8 r4c1=5 r4c2=5 r4c4=18 r4c6=14 r4c8=22 r5c2=17 r5c4=18 r5c6=16 r5c7=14 r6c1=13 r6c8=18 r7c1=10 r7c3=10 r7c5=16 r7c8=19 r8c1=9 r8c4=14 r9c1=16 r9c6=16
+focus: r1c5-r1c6
+answer: r1c5=3
+caption: This cage totals 5 and already has a 2, so its other square is 3.
+~~~
+
+### hidden-single-box | A digit's only place in a box
+
+Pick a box and a digit it still needs. Every empty square in the box that already sees that digit, in its row, column, box or cage, is ruled out. If only one square is left, the digit goes there.
+
+~~~board
+9 5 4 1 3 2 6 8 7
+6 3 2 7 . . 1 4 9
+8 1 7 . . 6 . . .
+1 . . . . . . . .
+4 . . . . . . 1 6
+7 6 . . . . . . .
+. . 9 . 6 . . . .
+. . 1 . . 7 . 6 .
+. . 6 . . . . . .
+box: 3
+cages: aaabccdde ffgbhhdde iiggghhjj kllmmnnoo kppqmrsoo ttqqmrsuu vvwqxrsyu zzwAxryyu BBBAxCCCC
+corners: r1c1=18 r1c4=8 r1c5=5 r1c7=19 r1c9=16 r2c1=9 r2c3=22 r2c5=21 r3c1=9 r3c8=8 r4c1=5 r4c2=5 r4c4=18 r4c6=14 r4c8=22 r5c2=17 r5c4=18 r5c6=16 r5c7=14 r6c1=13 r6c8=18 r7c1=10 r7c3=10 r7c5=16 r7c8=19 r8c1=9 r8c4=14 r9c1=16 r9c6=16
+focus: r4c4-r6c6
+cite: r3c6 r5c9 r6c2 r7c5
+answer: r4c4=6
+caption: The centre box needs a 6. The ringed 6s rule out rows 5 and 6 and columns 5 and 6, which leaves one square.
+~~~
+
+### hidden-single-line | A digit's only place in a row or column
+
+The same idea along a line: every other empty square in the row or column already sees the digit, so there is only one place for it.
+
+~~~board
+9 5 4 1 3 2 6 8 7
+6 3 2 7 . . 1 4 9
+8 1 7 . . 6 2 . .
+1 2 3 6 . . . . .
+4 9 8 . 7 . . 1 6
+7 6 5 . . . . . .
+. . 9 . 6 . . . .
+. . 1 . . 7 . 6 .
+. . 6 . . . . . .
+box: 3
+cages: aaabccdde ffgbhhdde iiggghhjj kllmmnnoo kppqmrsoo ttqqmrsuu vvwqxrsyu zzwAxryyu BBBAxCCCC
+corners: r1c1=18 r1c4=8 r1c5=5 r1c7=19 r1c9=16 r2c1=9 r2c3=22 r2c5=21 r3c1=9 r3c8=8 r4c1=5 r4c2=5 r4c4=18 r4c6=14 r4c8=22 r5c2=17 r5c4=18 r5c6=16 r5c7=14 r6c1=13 r6c8=18 r7c1=10 r7c3=10 r7c5=16 r7c8=19 r8c1=9 r8c4=14 r9c1=16 r9c6=16
+focus: r5c1-r5c9
+cite: r1c6 r3c7
+answer: r5c4=2
+caption: Row 5 needs a 2. Its other two empty squares are in the columns of the ringed 2s, so the 2 goes here.
+~~~
+
+### naked-single | A square with one digit left
+
+Start from a square. Its row, column, box and cage between them may hold every digit but one.
+
+~~~board
+5 . . . . 7 8 . 4
+. . . . . 6 . . .
+2 . 7 4 . . . . 6
+6 . . . . . . . .
+. . . . . . . . .
+. . . . 3 1 6 . .
+8 . . . . . 7 . .
+7 . . . . . 4 . 1
+4 . . . . . . . 3
+box: 3
+cages: abcddeefg bbccdehff ibjjkhhfl imnnkhool pmqrrsssl ppqrttuvl wxxyzzuvv wxxyyzuAB CCCDDEEAB
+corners: r1c1=5 r1c2=18 r1c3=18 r1c4=12 r1c6=21 r1c8=17 r1c9=4 r2c7=18 r3c1=8 r3c3=11 r3c5=10 r3c9=30 r4c2=11 r4c3=17 r4c7=4 r5c1=12 r5c3=8 r5c4=21 r5c6=11 r6c5=4 r6c7=17 r6c8=15 r7c1=15 r7c2=15 r7c4=14 r7c5=15 r8c8=17 r8c9=4 r9c1=15 r9c4=8 r9c6=10
+focus: r6c1
+cite: r1c1 r3c1 r4c1 r6c5 r6c6 r6c7 r7c1 r8c1 r9c1
+answer: r6c1=9
+caption: The ringed digits are what this square sees in its row and column. They hold every digit except 9.
+~~~
+
+### cage-combination | A cage's digit combinations
+
+Only some digits add up to what a cage still needs. Two squares totalling 3 can only be 1 and 2; two totalling 5 are 1 and 4, or 2 and 3. Rule out the combinations the digits around the cage won't allow, and see what is left.
+
+~~~board
+9 5 4 1 3 2 6 8 7
+6 3 2 7 . . 1 4 9
+8 1 7 . . 6 2 . .
+1 . . 6 . . . . .
+4 . . . . . . 1 6
+7 6 . . . . . . .
+. . 9 . 6 . . . .
+. . 1 . . 7 . 6 .
+. . 6 . . . . . .
+box: 3
+cages: aaabccdde ffgbhhdde iiggghhjj kllmmnnoo kppqmrsoo ttqqmrsuu vvwqxrsyu zzwAxryyu BBBAxCCCC
+corners: r1c1=18 r1c4=8 r1c5=5 r1c7=19 r1c9=16 r2c1=9 r2c3=22 r2c5=21 r3c1=9 r3c8=8 r4c1=5 r4c2=5 r4c4=18 r4c6=14 r4c8=22 r5c2=17 r5c4=18 r5c6=16 r5c7=14 r6c1=13 r6c8=18 r7c1=10 r7c3=10 r7c5=16 r7c8=19 r8c1=9 r8c4=14 r9c1=16 r9c6=16
+focus: r4c2-r4c3
+cite: r2c2 r4c1
+answer: r4c2=2
+caption: These two squares total 5. Row 4 has a 1, so they aren't 1 and 4; they are 2 and 3. Column 2 has a 3, so this one is 2.
+~~~
+
+### forty-five | The 45 rule
+
+Every row, column and box adds up to 45. Take off the cages wholly inside one, and what is left over has a known total. It works the other way too: cages that spill out of it tell you what the squares sticking out total. The same holds for several rows, columns or boxes taken together.
+
+~~~board
+. . 9 . . . . 3 .
+. . . . . . . . .
+. . . . . 3 . . .
+. . 8 9 . . 3 1 .
+1 . 3 . . . . . 9
+. . . . 3 1 . . .
+. . . 3 . . . . .
+. . . 6 5 . . 8 .
+. . . . . . . 9 .
+box: 3
+cages: aabccddee aabbcdfee gahhhffei gjkkhflli mjjnnoooi mmjnppqri msstuuqrr mssttuqvw xxxyyzzvw
+corners: r1c1=23 r1c3=18 r1c4=12 r1c6=21 r1c8=21 r2c7=18 r3c1=8 r3c3=21 r3c9=30 r4c2=19 r4c3=17 r4c7=4 r5c1=27 r5c4=21 r5c6=11 r6c5=4 r6c7=17 r6c8=15 r7c2=15 r7c4=14 r7c5=15 r8c8=17 r8c9=4 r9c1=15 r9c4=8 r9c6=10
+focus: r9c1-r9c9
+cite: r9c8
+answer: r9c9=3
+caption: Row 9 holds 45, and the three cages inside it add up to 15 + 8 + 10 = 33. So its last two squares total 12, and with the ringed 9 this one is 3.
+~~~
+
+### linked-totals | Totals that share squares
+
+Two or three totals may not settle anything alone but do together, each cutting the digits of a square the next one uses. Work them through one after another.
+
+~~~board
+. . . . . . 8 7 .
+. . . . . 8 . . .
+8 . . . . . . . .
+. . 8 9 5 . . . .
+. . 1 8 . . . . .
+6 . 5 . . 2 . 8 .
+. 6 . . . . . . 8
+. 8 . . 4 . . . .
+. . . . 8 . . . .
+box: 3
+cages: aabbbcddd aaabbcdde fgggcchee ffigcjhhe fkigjjhle kkimmnnlo ppqmrrnlo spqmrrnlo spqtttnuu
+corners: r1c1=20 r1c3=28 r1c6=26 r1c7=24 r2c9=27 r3c1=17 r3c2=30 r3c7=16 r4c3=14 r4c6=17 r5c2=22 r5c8=14 r6c4=13 r6c6=28 r6c9=17 r7c1=28 r7c3=9 r7c5=21 r8c1=8 r9c4=15 r9c8=11
+focus: r5c8-r8c8 r6c7 r6c9
+answer: r5c8=2
+caption: The cage totalling 14 has an 8, so its other squares are 1, 2 and 3, and row 5's 1 leaves this one 2 or 3. The two right-hand boxes hold 90 and their whole cages 67, so this square, the 8 and the squares either side of it total 23; a 3 here would need 3 and 9 beside the 8, repeating the 3 in the box, so it's 2.
+~~~
+
+### cage-chain | Every cage worked through together
+
+The last resort: every total and every digit around it, worked through together until a square has one digit left. Sometimes one cage has to be gone over twice, on what its first pass left.
+
+~~~board
+. . 5 2 . 3 1 4 .
+. . . . . 5 8 7 .
+. . . . . . 2 5 3
+. . . . . . 3 . .
+. . . . 9 . 4 . 7
+. . . . . . 9 1 5
+. . . . . . . . 4
+. . . . . . . . .
+. . . . . . . 3 .
+box: 3
+cages: aabbcddee aaaccddee ffghhijje fkgghijll kkggmmlll knommpqqq rnooppstq rnnoppstt ruuuuustt
+corners: r1c1=21 r1c3=7 r1c5=19 r1c6=17 r1c8=29 r3c1=19 r3c3=31 r3c4=14 r3c6=9 r3c7=10 r4c2=19 r4c8=27 r5c5=21 r6c2=14 r6c3=20 r6c6=27 r6c7=19 r7c1=13 r7c7=18 r7c8=23 r9c2=28
+focus: r1c5-r2c5 r2c4
+cite: r5c5
+answer: r1c5=6
+caption: This cage totals 19. Its top square can only be 6, 7 or 8 (the ringed 9 is in its column), which leaves 13, 12 or 11 for the two below. Their row, column and box let them make 13, as 9 and 4, but not 12 or 11, so the top one is 6.
+~~~
