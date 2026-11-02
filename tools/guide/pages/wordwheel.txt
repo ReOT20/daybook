@@ -1,0 +1,71 @@
+# Word Wheel
+> Spell every word in the grid from the wheel
+
+## How to play
+
+Swipe across the wheel's letters to spell a word, and lift to try it. Or tap the letters in turn and press Enter.
+
+On a keyboard, type letters from the wheel, Backspace deletes, Enter tries the word, and Escape clears it.
+
+A word the grid holds fills its slot. Any other real word from the wheel is a bonus word: it is counted and shown, but never needed. Tap the bonus line to see them all, A to Z.
+
+A word that won't do is refused with a note saying why, and costs nothing. Shuffle moves the letters round the wheel and changes nothing else. There are no lives, and no way to lose.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. A hint gives a word as a crossword-style clue, and only "Show me" types it.
+
+## Rules
+
+- Fill every slot in the grid with a word spelled from the wheel.
+- A word uses each letter on the wheel at most once.
+- No word is shorter than the grid's shortest slot.
+
+## What changes per tier
+
+- Standard: Five-letter wheel, 4 to 6 words.
+- Hard: Six-letter wheel, 6 to 8 words.
+- Expert: Seven-letter wheel, 8 to 11 words. The grid also has a six-letter word, besides the one that uses the whole wheel.
+
+## Techniques
+
+These are the steps the hints teach. On each board, the tinted squares are the slot, rings mark what the reasoning leans on, the filled squares are the word, and the bottom row is the wheel.
+
+### clue | A word from its clue
+
+Often several words fit every open slot, and only knowing the word will settle it. The hint then picks the slot the fewest words fit and gives its clue. It reads the board's own word to do that, and says so.
+
+### pinned | A slot only one word fits
+
+A slot's length, the letters already in it and the wheel can leave only one well-known word. A slot as long as the wheel is a good place to begin.
+
+~~~board
+. . . . _
+_ _ . _ _
+D A I L Y
+. _ . _ _
+. _ _ _ _
+. . . . _
+_ _ _ _ _
+L D Y I A
+focus: r3c1-r6c1
+cite: r3c1
+answer: r3c1=D r4c1=I r5c1=A r6c1=L
+caption: This slot is D and three letters. From this wheel, DIAL is the only well-known word that fits.
+~~~
+
+### crossing | The word a crossing slot leaves
+
+When several words fit a slot, try each against the slots that cross it. A word that leaves a crossing slot with nothing to hold can't be the one.
+
+~~~board
+_ _ _ _ R
+_ _ . _ I
+G R A I N
+_ _ . _ G
+. . . . _
+_ _ _ _ _
+A I G R N
+focus: r5c1-r5c4
+cite: r2c3 r3c3 r4c3 r5c3
+answer: r5c1=R r5c2=A r5c3=N r5c4=G
+caption: GAIN, GRIN, RAIN and RANG all fit the bottom slot. The first three would end the ringed slot in I, and no word from the wheel fits _ A _ I. That leaves RANG.
+~~~

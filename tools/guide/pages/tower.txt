@@ -1,0 +1,91 @@
+# Codebreaker
+> Break the hidden colour code
+
+## How to play
+
+Tap a colour to put it in the next empty slot, or tap a slot to put the chosen colour there. Tap Submit on a full row to score it.
+
+Pegs are numbered as well as coloured. On a keyboard, number keys fill the next peg with that colour, Backspace removes the last, and Enter submits.
+
+Each scored guess shows its pips beside it. The pips are not lined up with the pegs, so working out which peg earned which pip is the puzzle. Run out of guesses and the code is shown.
+
+Stuck? The first tap on Hint says where to look, and the second gives the reason. You place the peg yourself, unless you ask for "Show me". Hints read only the scores on the board, never the code. If a peg you've placed can't be right, a hint says why.
+
+## Rules
+
+- Find the secret row of coloured pegs before your guesses run out. Colours may repeat in it.
+- A filled pip means one peg is the right colour in the right slot.
+- A hollow pip means one peg is the right colour in the wrong slot.
+
+## What changes per tier
+
+- Standard: 4 pegs, 5 colours, 10 guesses
+- Hard: 5 pegs, 6 colours, 12 guesses
+- Expert: 5 pegs, 8 colours, 14 guesses
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, a row is a guess, with its pips to the right: ● filled, ○ hollow. A peg is the start of its colour's name: bl blue, go gold, br brown. The bottom row is the one you're building. The tinted squares are where to look, and the filled square is the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### opener | A good opening guess
+
+With nothing scored, any first guess tells you something. A few colours used twice each, like blue, blue, gold, gold, tells you a lot.
+
+### consistent-guess | A guess that fits every score
+
+When no slot can be read off yet, play a row that could be the code: check it against every score so far, as if it were the secret. A hint offers one when it has no shorter reason to give.
+
+### one-change | Comparing guesses one slot apart
+
+Two guesses that differ in one slot only are a free experiment. If the filled pips moved, the slot was right in the guess that scored higher.
+
+~~~board
+bl bl go go _ ● ● ● .
+bl bl go br _ ● ● ○ .
+. . . . _ _ _ _ _
+focus: r1c1-r1c4 r1c6-r1c9 r2c1-r2c4 r2c6-r2c9
+cite: r1c4 r2c4
+answer: r3c4=go
+caption: These guesses differ only in slot 4, and the second has one filled pip fewer. So the first guess's gold was right: slot 4 is gold.
+~~~
+
+### only-colour-left | The only colour left for a slot
+
+Rule colours out of one slot until one is left. A guess that scores nothing has none of its colours in the code. A pip for every peg means the code uses only that guess's colours. And no filled pips means none of its pegs is in its right place.
+
+~~~board
+bl bl go go _ ○ ○ ○ ○
+. . . . _ _ _ _ _
+focus: r1c1 r2c1
+cite: r1c1 r1c6-r1c9
+answer: r2c1=go
+caption: Four pips means the code is only blue and gold. None is filled, so slot 1 isn't blue. That leaves gold.
+~~~
+
+### pips-accounted | Accounting for every pip
+
+A guess's filled pips have to sit on pegs that haven't been ruled out. If exactly that many are left, those pegs are all right.
+
+~~~board
+bl bl go go _ ● ● . .
+bl bl bl br _ . . . .
+. . . . _ _ _ _ _
+focus: r1c1-r1c4 r1c6-r1c9
+cite: r2c6-r2c9
+answer: r3c3=go
+caption: The second guess scored nothing, so there's no blue in the code. The first guess's two filled pips can only be its golds, so slot 3 is gold, and slot 4 too.
+~~~
+
+### what-if | A what-if
+
+Suppose a slot is anything but one colour, and follow it for a step or two. If some guess can no longer score what it scored, the slot has to be that colour.
+
+~~~board
+bl bl go go _ ● ○ . .
+bl br bl bl _ ○ ○ . .
+. . . . _ _ _ _ _
+focus: r2c1-r2c4 r2c6-r2c9 r3c2
+cite: r2c6-r2c9
+answer: r3c2=bl
+caption: The second guess has no filled pip, so blue can't be in slots 1, 3 or 4. If slot 2 weren't blue either, there'd be no blue anywhere, and its one brown couldn't earn two pips. So slot 2 is blue.
+~~~

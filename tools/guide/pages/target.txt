@@ -1,0 +1,28 @@
+# Target
+> Six numbers make the target
+
+## How to play
+
+Tap a number, tap + − × ÷, then tap another number. The answer takes the first number's place as a new tile, ready to use in the next step.
+
+Subtract and divide put the bigger tile first whichever you tap first, so there is no order to get wrong.
+
+Undo takes a step back.
+
+On a keyboard, type a tile's number, then + - * /, then another tile's number and Enter. Backspace steps back.
+
+Stuck? The first tap on Hint points at two tiles, and the second says what to do with them and how far that leaves you from the target. It always gives a step on a shortest way from where you stand, the one whose answer lands nearest the target. You make the move yourself, unless you ask for "Show me".
+
+Most boards have more than one answer, though Expert's can have just one, and where there's room a longer way round is fine. A hint only calls a step a mistake when no way of combining what's left can reach the target any more, and "Show me" then takes that step back, along with anything after it.
+
+## Rules
+
+- Make a tile equal to the target. Combine two tiles with + − × ÷, and the answer replaces them as a new tile.
+- Each number is used once, and you need not use them all.
+- Every answer must be a whole number from 1 to 9,999: no negatives, fractions or zero.
+
+## What changes per tier
+
+- Standard: Three large numbers among the six. The large numbers are 25, 50, 75 and 100. The target takes three or four steps at the least.
+- Hard: Two large numbers among the six. The target takes four or five steps at the least.
+- Expert: One large number, and the answer uses all six. The target takes five steps at the least, and there are only a few ways to make it.

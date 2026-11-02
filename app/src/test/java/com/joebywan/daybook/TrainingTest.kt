@@ -186,8 +186,7 @@ class TrainingTest {
         // The teacher's praised techniques in its order (Mosaic's finish and fill-within-the-limit are not praised), less
         // only those no practice search reaches (listed in the spec).
         val unreached = mapOf(
-            "pearls" to listOf("pearl-ways"), "atoms" to listOf("only-way-out"), "cipher" to listOf("only-letter"),
-            "mines" to listOf("count"), "tents" to listOf("touch"),
+            "atoms" to listOf("only-way-out"), "mines" to listOf("count"),
         )
         for (c in Training.COURSES) assertEquals(c.id, praisedTechniquesOf(c.id).toList() - unreached[c.id].orEmpty().toSet(), c.techniques)
         assertEquals(Training.seed(0), CagesTraining.examSeed)

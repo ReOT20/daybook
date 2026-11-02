@@ -1,0 +1,98 @@
+# Cipher
+> Each letter is a digit. Make the sum true.
+
+## How to play
+
+Tap a letter, then a digit. Tap the digit again to clear it. The row of keys under the sum shows each letter's digit, and a digit another letter already holds is greyed on the pad with that letter beneath it, though you can still choose it.
+
+On a keyboard, type a letter to pick it (H too, when the sum has an H), then a digit. Backspace clears, and the arrows walk the letters.
+
+Two letters on one digit, a word starting with 0, or a column that doesn't add up turns red after a moment. Nothing stops you placing a digit.
+
+Stuck? The first tap on Hint says where to look, and the second shows the working. You make the move yourself, unless you ask for "Show me". Every sum has exactly one answer, and the hints can always reach it without a guess.
+
+## Rules
+
+- Each letter stands for one digit, 0 to 9, the same digit everywhere it appears.
+- Different letters are different digits, and no word starts with 0.
+- Give every letter its digit so the sum is true.
+
+## What changes per tier
+
+- Standard: Each digit follows from a column or two. Every sum on every tier is two four-letter words making a five-letter one.
+- Hard: Some digits need every column at once.
+- Expert: Some digits need a what-if across two columns.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, the top two words add up to the bottom one, and a placed letter shows its digit beside it. The tinted squares are where to look, rings mark the columns the reasoning reads, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### leading-carry | The leading carry
+
+The total is longer than the words above it, so its first letter has nothing to add. It can only be the carry from the column before, and two digits and a carry make at most 19. So it's 1. Start here on every board.
+
+~~~board
+_ K N E E
+_ P I N T
+P I E T Y
+focus: r2c2 r3c1
+cite: r1c2 r2c2 r3c2
+answer: r2c2=P1 r3c1=P1
+caption: P stands alone at the front of the total, so it's the carry out of the thousands. P is 1, here and in PINT.
+~~~
+
+### column | One column and its carry
+
+Take one column and ask what its letters can be. A carry is only ever 0 or 1, so a column often leaves one digit even before you know its carry. Watch for a letter that shows up in its own total: X + Y ending in X means Y adds nothing to the last digit.
+
+~~~board
+_ G1 E A R
+_ R E A R
+G1 L0 O A T
+focus: r1c4 r2c4 r3c4
+cite: r1c4 r2c4 r3c4
+answer: r1c4=A9 r2c4=A9 r3c4=A9
+caption: In the tens, A + A and any carry ends in A. Only 0 (with no carry) or 9 (with one) can do that, and L already has 0. So A is 9.
+~~~
+
+### column-pair | Two columns through their carry
+
+When one column can't settle anything alone, read it with its neighbour. The carry between them is what joins them: one column may fix the carry, and that finishes the other.
+
+~~~board
+_ F1 E7 E7 T8
+_ T8 W I0 G
+F1 I0 F1 T8 H
+focus: r2c3
+cite: r1c3 r2c3 r3c3 r1c4 r2c4 r3c4
+answer: r2c3=W4
+caption: In the tens, 7 + 0 and any carry ends in 8. So 1 comes in and nothing goes on to the hundreds. There, 7 + W ends in 1, so W is 4.
+~~~
+
+### columns-together | Every column worked through together
+
+Sometimes no two columns are enough, and the answer comes from letting every column rule out what it can, passing each carry along and giving no two letters the same digit. The hint names this when it happens, and shows the shortest working it can.
+
+~~~board
+_ M A S H
+_ R1 E A M
+R1 O0 D E O0
+focus: r1c2 r2c5
+cite: r1c2 r2c2 r3c2 r1c4 r2c4 r3c4 r1c5 r2c5 r3c5
+answer: r1c2=M8 r2c5=M8
+caption: In the thousands, M + 1 and any carry ends in 0, so M is 9 with no carry or 8 with one. If M were 9, the units' H + 9 ending in 0 would make H 1, which R has. So M is 8.
+~~~
+
+### pair-what-if | A what-if on two columns
+
+Here you try the digits a letter could still be, one at a time, following only what it does to its column and the next. Each that breaks is out. This isn't guessing: you only write down the digit once the others have been shown to fail.
+
+~~~board
+_ C6 H5 E1 F
+_ C6 H5 I C6
+E1 L3 E1 G0 Y
+focus: r1c5
+cite: r1c4 r2c4 r3c4 r1c5 r2c5 r3c5
+answer: r1c5=F2
+caption: The hundreds' 5 + 5 ends in 1, so the tens carry 1, and there 1 + I and the units' carry make 10. F could be 2, 4, 7, 8 or 9. 4 makes Y 0, 7 makes Y 3 and 9 makes Y 5, all taken. 8 makes Y 4 and carries, so I would be 8 as well. Only 2 is left.
+~~~

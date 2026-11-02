@@ -1,0 +1,20 @@
+# Trail
+> One line, every square, numbers in order
+
+## How to play
+
+Drag to draw the line, starting from 1. Lift off whenever you like and carry on from the end. Drag back along the line, or start again from a square on it, to rub it out.
+
+Trail has no hints. Your first board opens on a walkthrough that teaches the reasoning, and the "?" sheet takes you back to it. Every board has exactly one answer.
+
+## Rules
+
+- Draw one continuous line from 1 to the highest number.
+- The line must pass through every square exactly once.
+- It must reach the numbered squares in ascending order.
+
+## What changes per tier
+
+- Standard: 5x5 grid.
+- Hard: 6x6 grid.
+- Expert: 6x7 grid.

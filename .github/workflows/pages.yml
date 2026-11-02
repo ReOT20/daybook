@@ -55,6 +55,11 @@ jobs:
             cp -r fdroid-branch/repo web/build/dist/wasmJs/productionExecutable/fdroid/repo
           fi
 
+      # The player guide (tools/guide/): static pages at guide/ and guide/<puzzle id>. After web parity, which
+      # has no need of them. sw.js leaves guide/ alone, so a page read never replaces the cached app.
+      - name: Add the player guide to the site
+        run: python3 tools/guide/build.py
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: web/build/dist/wasmJs/productionExecutable

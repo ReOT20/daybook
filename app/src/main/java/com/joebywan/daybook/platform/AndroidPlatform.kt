@@ -320,6 +320,13 @@ private fun installerOf(context: Context): String? = try {
     null
 }
 
+/** Opens a web page in the browser; with no browser the tap does nothing. */
+@Composable
+fun rememberOpenUrl(): (String) -> Unit {
+    val context = LocalContext.current
+    return remember(context) { { url -> openUri(context, url) } }
+}
+
 /** Opens [uri] in whatever app handles it, else [fallback]; with neither (no store app, no browser) the tap does nothing. */
 private fun openUri(context: Context, uri: String, fallback: String? = null) {
     try {

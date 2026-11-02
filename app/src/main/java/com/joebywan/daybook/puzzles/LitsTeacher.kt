@@ -15,9 +15,9 @@ import com.joebywan.daybook.core.orthogonal
  * The rules reasoned from are the win check's, [Lits.isSolved]: one L, I, T or S per region, no 2x2
  * of shading, no two tetrominoes of one letter edge to edge across a wall. **Not** connectivity: the
  * win check stopped asking for it (PR #15), so a step that leaned on "the shading must join up" would
- * be arguing from a rule the board does not have. The generator still proves uniqueness only among
- * connected shadings, which leaves a sixth to a half of boards (by tier) with more than one answer under the real
- * rules; on those, reasoning runs out where the answers part, and the fallback says so.
+ * be arguing from a rule the board does not have. The generator's carve searches connected shadings, but a finished
+ * board is proved again without that rule ([Lits.generateVerified]), so a shipped board has one answer under the real
+ * rules. The fallback, which says so openly, is for where reasoning runs out.
  *
  * The player has one mark — shading — and the board crosses off what can't be shaded by itself
  * ([Lits.impossible]). So every step here ends in squares to shade; ruling a square out is never a

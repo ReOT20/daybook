@@ -593,6 +593,13 @@ fun rememberRateLink(): RateLink {
     return remember(uri) { githubRateLink(uri::openUri) }
 }
 
+/** Opens a web page in a new tab, so the game stays where it was. */
+@Composable
+fun rememberOpenUrl(): (String) -> Unit {
+    val uri = LocalUriHandler.current
+    return remember(uri) { uri::openUri }
+}
+
 /** A page cannot notify reliably once it is closed, so the daily reminder is not offered on the web. */
 const val OFFERS_REMINDER: Boolean = false
 
