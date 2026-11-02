@@ -51,6 +51,9 @@ caption: One or two sentences saying what the board shows. Required.
 - `box: n` thick walls every n squares; `regions:` one string a row, one letter a square: a tint and walls per letter.
 - `focus` the tint (the step's `focus`), `cite` a ring (what the reasoning leans on), `answer` the filled square that is the move.
 - `notes` small marks, a digit in its pencil place; `struck` the same, crossed out. Never on the `answer` square.
+- `notes` with a comma (`r2c3=cat,dog`) stacks small words down the square instead.
+- `top` and `left` label the columns and rows, outside the grid, one space-separated label each (`top: a b c d e f g h`, `left: Ann Ben`).
+- A token over three characters is drawn small, and `_` in an `answer` value is a space (`r3c1=not_4`).
 - `lines` thick lines between square centres (bonds, loops, paths).
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 

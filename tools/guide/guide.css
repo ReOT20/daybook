@@ -50,7 +50,10 @@ figcaption { max-width: 380px; margin: 8px auto 0; color: var(--ink2); font-size
 .answer { fill: var(--primary); }
 svg text { fill: var(--ink); text-anchor: middle; dominant-baseline: central; font-family: Fredoka, system-ui, sans-serif; }
 .big { font-size: 22px; }
+.small { font-size: 12px; font-weight: 600; }
+.label { font-size: 13px; fill: var(--ink2); }
 .note { font-size: 13px; font-weight: 600; fill: var(--primary); }
+.word { font-size: 8.5px; }
 svg text.struck { fill: var(--error); }
 .strike { stroke: var(--error); stroke-width: 2; stroke-linecap: round; }
 svg text.on { fill: var(--on-primary); }

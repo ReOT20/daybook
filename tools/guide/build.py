@@ -77,7 +77,7 @@ def board(lines, where):
     for line in lines:
         key, colon, value = line.partition(":")
         if colon:
-            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption"):
+            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "top", "left", "caption"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():
@@ -88,6 +88,9 @@ def board(lines, where):
         fail(where, "a board needs a caption")
     w, h = len(rows[0]), len(rows)
     W, H = w * CELL, h * CELL
+    top, left = fields.get("top", "").split(), fields.get("left", "").split()
+    if (top and len(top) != w) or (left and len(left) != h):
+        fail(where, "top needs one label per column, left one per row")
     get = lambda key, parse: parse(fields.get(key, ""), where, w, h)
     focus, cite = set(get("focus", cells)), get("cite", cells)
     answer, notes, struck = get("answer", marks), get("notes", marks), get("struck", marks)
@@ -133,23 +136,37 @@ def board(lines, where):
             x, y = centre(r, c)
             token = answer.get((r, c), rows[r][c])
             if token not in (".", "_"):
-                kind = "big on" if (r, c) in answer else "big"
-                svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(token)}</text>')
+                size = "small" if len(token) > 3 else "big"
+                kind = f"{size} on" if (r, c) in answer else size
+                shown = token.replace("_", " ")  # An answer's value cannot hold a space: not_4.
+                svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(shown)}</text>')
     # A note sits where the app pencils that digit, a 3x3 inside the square; a note that is not a digit, in the middle.
     for table, kind in ((notes, "note"), (struck, "note struck")):
         for (r, c), value in table.items():
             if (r, c) in answer:
                 fail(where, "no pencil marks on the answer's square: they cannot be read over its digit")
-            for ch in value:
+            # Words, comma-separated, stack down the square: a pencil place means nothing for "cat,dog".
+            words = value.split(",") if "," in value else None
+            for i, ch in enumerate(words or value):
                 x, y = centre(r, c)
+                if words:
+                    y += (i - (len(words) - 1) / 2) * min(9, 36 / len(words))
+                    svg.append(f'<text class="note word" x="{x}" y="{y}">{html.escape(ch)}</text>')
+                    continue
                 if ch.isdigit() and ch != "0":
                     x += ((int(ch) - 1) % 3 - 1) * 12
                     y += ((int(ch) - 1) // 3 - 1) * 12
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{ch}</text>')
                 if kind != "note":
                     svg.append(f'<line class="strike" x1="{x - 6}" y1="{y + 5}" x2="{x + 6}" y2="{y - 5}"/>')
+    # Labels sit outside the grid. A narrow labelled board gets side margins, or it would scale up to fill the page.
+    side = max(len(label) for label in left) * 8 + 6 if left else 0
+    head = 18 if top else 0
+    svg += [f'<text class="label" x="{c * CELL + CELL // 2}" y="{-head // 2}">{html.escape(t)}</text>' for c, t in enumerate(top)]
+    svg += [f'<text class="label" x="{-side // 2}" y="{r * CELL + CELL // 2}">{html.escape(t)}</text>' for r, t in enumerate(left)]
+    pad = max(0, 240 - W - side) // 2 if top or left else 0
     caption = inline(fields["caption"])
-    return (f'<figure><svg viewBox="-2 -2 {W + 4} {H + 4}" role="img" aria-label="{html.escape(fields["caption"])}">'
+    return (f'<figure><svg viewBox="{-2 - side - pad} {-2 - head} {W + 4 + side + 2 * pad} {H + 4 + head}" role="img" aria-label="{html.escape(fields["caption"])}">'
             + "".join(svg) + f"</svg><figcaption>{caption}</figcaption></figure>")
 
 
