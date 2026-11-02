@@ -268,8 +268,9 @@ techniques), `tierFor` (usually `tierByIndex(...)`), a `Drill`, the trained badg
 - **Techniques no practice search reaches are left out**, and named in the course's file and here: Pearls' "a pearl with
   two ways in" and Atoms' "a group's only way out" (0 of 30 walks on any tier; the rungs before them always settle those
   squares and lines first), and Cipher's "only letter" (never reached on any tier's walk: with ten letters, a column or the
-  leading carry always settles the last letter first). A course's techniques are the teacher's named ones, in order, less
-  these (`TrainingTest` lists them); a hint's "Practise this" is not offered for them.
+  leading carry always settles the last letter first; no listed sum has ten letters). Tents' "grass around a tent" and the Pearls and Cipher ones above are in
+  `NOT_PRAISED` as well, since no hint gives them. A course's techniques are the teacher's praised ones, in order, less
+  the rest (`TrainingTest` lists them); a hint's "Practise this" is not offered for them.
 - **Mosaic** (`MosaicDrill`, `core/training/MosaicTraining.kt`) walks as `MoveDrill` does (from
   `MosaicTeacher.deduce`, which sees the board, the palette and the fills left) and judges by the same rule as
   `MoveDrill(next, every)`, in its own drill for two reasons. The teacher's whole hint (lost-board check plus a search

@@ -8,90 +8,84 @@ import com.joebywan.daybook.core.Verdict
 import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
-import com.joebywan.daybook.puzzles.ChessPosition
-import com.joebywan.daybook.puzzles.ChessRules
-import com.joebywan.daybook.puzzles.ChessTeacher
+import com.joebywan.daybook.puzzles.Atom
+import com.joebywan.daybook.puzzles.AtomsTeacher
 import com.joebywan.daybook.puzzles.Block
 import com.joebywan.daybook.puzzles.CageLogic
 import com.joebywan.daybook.puzzles.CageTeacher
+import com.joebywan.daybook.puzzles.Card
+import com.joebywan.daybook.puzzles.ChessPosition
+import com.joebywan.daybook.puzzles.ChessRules
+import com.joebywan.daybook.puzzles.ChessTeacher
+import com.joebywan.daybook.puzzles.CipherLogic
+import com.joebywan.daybook.puzzles.CipherSum
+import com.joebywan.daybook.puzzles.CipherTeacher
+import com.joebywan.daybook.puzzles.CodewordLogic
+import com.joebywan.daybook.puzzles.CodewordTeacher
+import com.joebywan.daybook.puzzles.Domino
+import com.joebywan.daybook.puzzles.DominoLogic
+import com.joebywan.daybook.puzzles.DominoTeacher
+import com.joebywan.daybook.puzzles.DwindleTeacher
+import com.joebywan.daybook.puzzles.Feedback
+import com.joebywan.daybook.puzzles.HexTake
+import com.joebywan.daybook.puzzles.HexwordsState
+import com.joebywan.daybook.puzzles.HexwordsTeacher
 import com.joebywan.daybook.puzzles.InequalityLogic
 import com.joebywan.daybook.puzzles.InequalityTeacher
-import com.joebywan.daybook.puzzles.NonogramLogic
-import com.joebywan.daybook.puzzles.NonogramTeacher
 import com.joebywan.daybook.puzzles.KingsTeacher
 import com.joebywan.daybook.puzzles.LampsLogic
 import com.joebywan.daybook.puzzles.LampsTeacher
+import com.joebywan.daybook.puzzles.LexiconMark
+import com.joebywan.daybook.puzzles.LexiconTeacher
 import com.joebywan.daybook.puzzles.Link
 import com.joebywan.daybook.puzzles.Lits
 import com.joebywan.daybook.puzzles.LitsTeacher
 import com.joebywan.daybook.puzzles.MamboTeacher
 import com.joebywan.daybook.puzzles.Mark
 import com.joebywan.daybook.puzzles.MinesTeacher
-import com.joebywan.daybook.puzzles.CodewordLogic
-import com.joebywan.daybook.puzzles.CodewordTeacher
-import com.joebywan.daybook.puzzles.DwindleTeacher
-import com.joebywan.daybook.puzzles.HexTake
-import com.joebywan.daybook.puzzles.HexwordsState
-import com.joebywan.daybook.puzzles.HexwordsTeacher
-import com.joebywan.daybook.puzzles.LexiconMark
-import com.joebywan.daybook.puzzles.LexiconTeacher
 import com.joebywan.daybook.puzzles.MiniLogic
 import com.joebywan.daybook.puzzles.MiniTeacher
-import com.joebywan.daybook.puzzles.PuzzleState
-import com.joebywan.daybook.puzzles.RegionsLayout
-import com.joebywan.daybook.puzzles.RegionsLogic
-import com.joebywan.daybook.puzzles.RegionsTeacher
-import com.joebywan.daybook.puzzles.ShikakuTeacher
-import com.joebywan.daybook.puzzles.Sign
-import com.joebywan.daybook.puzzles.Atom
-import com.joebywan.daybook.puzzles.AtomsTeacher
-import com.joebywan.daybook.puzzles.Domino
-import com.joebywan.daybook.puzzles.DominoLogic
-import com.joebywan.daybook.puzzles.DominoTeacher
 import com.joebywan.daybook.puzzles.MosaicTeacher
+import com.joebywan.daybook.puzzles.NonogramLogic
+import com.joebywan.daybook.puzzles.NonogramTeacher
 import com.joebywan.daybook.puzzles.Pair2
 import com.joebywan.daybook.puzzles.PearlsTeacher
 import com.joebywan.daybook.puzzles.PipesTeacher
 import com.joebywan.daybook.puzzles.Placement
 import com.joebywan.daybook.puzzles.PuzzleState
 import com.joebywan.daybook.puzzles.RegionRule
+import com.joebywan.daybook.puzzles.RegionsLayout
+import com.joebywan.daybook.puzzles.RegionsLogic
+import com.joebywan.daybook.puzzles.RegionsTeacher
 import com.joebywan.daybook.puzzles.RuleKind
-import com.joebywan.daybook.puzzles.Sudoku
-import com.joebywan.daybook.puzzles.SudokuTeacher
-import com.joebywan.daybook.puzzles.WhosWhoLogic
-import com.joebywan.daybook.puzzles.WhosWhoState
-import com.joebywan.daybook.puzzles.WhosWhoTeacher
-import com.joebywan.daybook.puzzles.WhosWhoWords
-import com.joebywan.daybook.puzzles.TallyLogic
-import com.joebywan.daybook.puzzles.TallyTeacher
-import com.joebywan.daybook.puzzles.Sym
-import com.joebywan.daybook.puzzles.TentsLogic
-import com.joebywan.daybook.puzzles.TentsTeacher
-import com.joebywan.daybook.puzzles.WordWheelTeacher
-import com.joebywan.daybook.core.Verdict
-import com.joebywan.daybook.puzzles.Card
-import com.joebywan.daybook.puzzles.CipherLogic
-import com.joebywan.daybook.puzzles.CipherSum
-import com.joebywan.daybook.puzzles.CipherTeacher
-import com.joebywan.daybook.puzzles.Feedback
-import com.joebywan.daybook.puzzles.PuzzleState
 import com.joebywan.daybook.puzzles.Sand
 import com.joebywan.daybook.puzzles.SandLogic
 import com.joebywan.daybook.puzzles.SandTeacher
 import com.joebywan.daybook.puzzles.SetsTeacher
+import com.joebywan.daybook.puzzles.ShikakuTeacher
+import com.joebywan.daybook.puzzles.Sign
 import com.joebywan.daybook.puzzles.Sudoku
 import com.joebywan.daybook.puzzles.SudokuTeacher
+import com.joebywan.daybook.puzzles.Sym
+import com.joebywan.daybook.puzzles.TallyLogic
+import com.joebywan.daybook.puzzles.TallyTeacher
+import com.joebywan.daybook.puzzles.TentsLogic
+import com.joebywan.daybook.puzzles.TentsTeacher
 import com.joebywan.daybook.puzzles.TowerTeacher
+import com.joebywan.daybook.puzzles.WhosWhoLogic
+import com.joebywan.daybook.puzzles.WhosWhoState
+import com.joebywan.daybook.puzzles.WhosWhoTeacher
+import com.joebywan.daybook.puzzles.WhosWhoWords
+import com.joebywan.daybook.puzzles.WordWheelTeacher
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
-import java.io.File
 
 /**
- * The player guide (`tools/guide/pages/<puzzle id>.txt`, see `tools/guide/AUTHORING.md`) against the app: only pages
- * that exist are checked. Gradle knows the pages as an input (`app/build.gradle.kts`), so a page-only change re-runs this.
+ * The player guide (`tools/guide/pages/<puzzle id>.txt`, see `tools/guide/AUTHORING.md`) against the app. Gradle knows the pages as an input (`app/build.gradle.kts`), so a page-only change re-runs this.
  */
 class GuideTest {
 
@@ -253,13 +247,7 @@ class GuideTest {
         val edges = CharArray(2 * n * (n - 1)) { '.' }
         for (d in b.drawn("lines")) edges[edge(d)] = if (d.second == 'x') 'x' else '-'
         val marks = edges.concatToString()
-        // A pearl with two ways in is never the hint itself: a pearl's own rule always speaks first (black-pearl on this
-        // board), so that heading alone asks the teacher for the steps of its technique rather than for its next step.
-        val step = if (b.technique == "pearl-ways") {
-            PearlsTeacher.steps(n, pearls, marks, b.technique).first { s -> s.focus.filter { it < n * n }.toSet() == b.squares("focus") }
-        } else {
-            PearlsTeacher.deduce(n, pearls, marks) ?: return null
-        }
+        val step = PearlsTeacher.deduce(n, pearls, marks) ?: return null
         val moved = b.drawn("moves")
         assertEquals("${b.technique}: the lines", moved.filter { it.second != 'x' }.map(::edge).toSet(), step.lines.toSet())
         assertEquals("${b.technique}: the crosses", moved.filter { it.second == 'x' }.map(::edge).toSet(), step.crosses.toSet())
@@ -282,7 +270,7 @@ class GuideTest {
         val w = b.width
         val grid = b.rows.take(w).flatten()
         val regions = b.fields.getValue("regions").split(' ').take(w).joinToString("")
-        val badges = b.marks("badges")
+        val badges = b.marks("corners")
         val regionOf = regions.map { if (it == '.') -1 else it - 'a' }
         val rules = (0..regionOf.max()).map { r ->
             val rule = badges.entries.first { regionOf[it.key] == r }.value
@@ -404,6 +392,8 @@ class GuideTest {
         val cells = { set: Set<Int> -> set.filter { it < WhosWhoTeacher.CLUE_BASE }.toSet() }
         assertEquals("${b.technique}: rings", cells(step.cited), b.squares("cite"))
         return mapped(step, cells(step.focus), cells(step.cited), step.targets)
+    }
+
     private fun inequalityStep(b: Board): TeachStep? {
         val n = b.width
         val cells = b.rows.flatten().map { it.toIntOrNull() ?: 0 }
@@ -480,7 +470,7 @@ class GuideTest {
         val rows = List(n) { clue(b.rows[top + it].take(left)) }
         val cols = List(n) { c -> clue(List(top) { b.rows[it][left + c] }) }
         fun board(i: Int) = (i / n + top) * b.width + i % n + left
-        val filled = b.squares("filled")
+        val filled = b.squares("solid")
         val start = String(CharArray(n * n) {
             when {
                 board(it) in filled -> NonogramLogic.FILLED
@@ -547,6 +537,8 @@ class GuideTest {
         }
         assertEquals("${b.technique}: a position with one answer", 1, tilings())
         return ShikakuTeacher.deduce(w, h, clues, blocks)
+    }
+
     /** `regions:` as the game's numbering: `a` is region 0. */
     private fun regionsOf(b: Board) = b.fields.getValue("regions").replace(" ", "").map { it - 'a' }
 
@@ -559,7 +551,7 @@ class GuideTest {
 
     private fun mamboStep(b: Board): TeachStep? {
         val cells = b.rows.flatten().map { when (it) { "S" -> Sym.SUN; "M" -> Sym.MOON; else -> Sym.NONE } }
-        val links = b.fields.getValue("between").split(' ').map { part ->
+        val links = b.fields.getValue("edges").split(' ').map { part ->
             val n = Regex("\\d+").findAll(part).map { it.value.toInt() - 1 }.toList()
             Link(n[0] * b.width + n[1], n[2] * b.width + n[3], part.endsWith("=="))
         }
@@ -575,7 +567,12 @@ class GuideTest {
         val rowCounts = b.rows.drop(1).map { it[0].toInt() }
         val colCounts = b.rows[0].drop(1).map { it.toInt() }
         val marks = grid.map { when (it) { "▲" -> TentsLogic.TENT; "x" -> TentsLogic.GRASS; else -> 0 } }
-        val step = TentsTeacher.deduce(n, grid.map { it == "♣" }, rowCounts, colCounts, marks) ?: return null
+        // Grass around a tent sprouts by itself: the teacher reads the board with it, as `TentsState.seen` does.
+        val seen = marks.toMutableList()
+        for (i in marks.indices) if (marks[i] == TentsLogic.TENT) {
+            for (j in TentsLogic.around(n, i)) if (marks[j] == 0 && grid[j] != "♣") seen[j] = TentsLogic.GRASS
+        }
+        val step = TentsTeacher.deduce(n, grid.map { it == "♣" }, rowCounts, colCounts, seen) ?: return null
         fun drawn(i: Int) = when {
             i < n * n -> (i / n + 1) * b.width + i % n + 1
             i < n * n + n -> (i - n * n + 1) * b.width
@@ -627,6 +624,8 @@ class GuideTest {
         val step = LitsTeacher.deduce(b.width, b.rows.size, region, shaded) ?: return null
         assertEquals("${b.technique}: the move", step.shades.associateWith { "■" }, b.marks("answer"))
         return step
+    }
+
     /** A teacher's step with its highlights mapped to the board's squares. */
     private fun step(from: TeachStep, focus: Set<Int>, targets: Set<Int>): TeachStep = object : TeachStep by from {
         override val focus = focus
@@ -791,6 +790,8 @@ class GuideTest {
         val taught = HexwordsTeacher.teach(state) ?: return null
         assertEquals("${b.technique}: the first letter", taught.word[0].uppercase(), b.marks("answer")[cells[taught.path[0]]])
         return step(taught, taught.focus.map { cells[it] }.toSet(), taught.targets.map { cells[it] }.toSet())
+    }
+
     /** A step whose highlights have been mapped onto the board's squares, for a teacher that numbers them its own way. */
     private class Shown(step: TeachStep, override val focus: Set<Int>, override val targets: Set<Int>) : TeachStep by step
 
@@ -870,10 +871,8 @@ class GuideTest {
     }
 
     @Test
-    fun `there is a page to check, and every page is a puzzle`() {
-        assertTrue(pages.isNotEmpty())
-        val ids = PuzzleRegistry.all.map { it.id }
-        for (p in pages) assertTrue("${p.id} is not a puzzle id", p.id in ids)
+    fun `every registered puzzle has a page, and every page is a puzzle`() {
+        assertEquals(PuzzleRegistry.all.map { it.id }.toSet(), pages.map { it.id }.toSet())
     }
 
     @Test
@@ -903,7 +902,7 @@ class GuideTest {
         for (p in pages) {
             val names = techniqueNamesOf(p.id)
             val ids = p.techniques.map { it[0] }
-            // A step that only points at a word or a guess (NOT_PRAISED) is not reasoning: a page may leave it out.
+            // A step in NOT_PRAISED (it only points at a word or a guess, or a hint never gives it): a page may leave it out.
             assertEquals("${p.id}: technique ids", names.keys.filter { it in ids || it in praisedTechniquesOf(p.id) }, ids)
             for ((id, shown) in p.techniques) {
                 assertEquals("${p.id}#$id", names.getValue(id).replaceFirstChar { it.uppercase() }, shown)

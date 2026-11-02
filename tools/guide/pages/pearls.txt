@@ -26,7 +26,7 @@ Stuck? The first tap on Hint says where to look, and the second explains why. Yo
 
 ## Techniques
 
-These are the steps the hints teach, simplest first. On each board, the tinted squares are where to look, grey lines and crosses are already drawn, and the coloured line or cross is the move. Every board here is a real position from the game, and this is the step the hint gives on it, except where one says otherwise.
+These are the steps the hints teach, simplest first. On each board, the tinted squares are where to look, grey lines and crosses are already drawn, and the coloured line or cross is the move. Every board here is a real position from the game, and this is the step the hint gives on it.
 
 ### black-pearl | A black pearl's straight arms
 
@@ -100,25 +100,6 @@ focus: r1c6
 lines: r2c5xr2c6 r3c1xr3c2 r3c2-r3c3 r3c3-r3c4 r3c4xr3c5 r3c5xr3c6 r4c2xr4c3 r4c3-r4c4 r4c4-r4c5 r6c1-r6c2 r6c2-r6c3 r1c1xr2c1 r1c4-r2c4 r1c6-r2c6 r2c1-r3c1 r2c4-r3c4 r2c6-r3c6 r3c1-r4c1 r3c6-r4c6 r4c1-r5c1 r4c3-r5c3 r4c6xr5c6 r5c1-r6c1 r5c3-r6c3
 moves: r1c5-r1c6
 caption: The line comes up into this corner, and the only way left is to the left.
-~~~
-
-### pearl-ways | A pearl with two ways in
-
-The loop passes every pearl, and needs two ways in to do it. A pearl with only two ways left takes both.
-
-The hints don't name this one: whenever it applies, the pearl's own rule above says the same thing first. It's still a quick thing to spot.
-
-~~~board
-b . . . . .
-. . . w . .
-. . w w . .
-w . . . w .
-. . b . . w
-. . . . . .
-draw: pearls
-focus: r1c1
-moves: r1c1-r1c2 r1c1-r2c1
-caption: This corner pearl has only two ways in, so both are lines. A hint on this board names the black pearl's rule instead, and takes the lines further.
 ~~~
 
 ### dead-end | A dead end

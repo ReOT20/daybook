@@ -24,7 +24,7 @@ Stuck? The first tap on Hint says where to look, and the second explains why. Yo
 
 - Standard: 8x8 field, 10 mines. Single numbers are enough.
 - Hard: 8x10 field, 16 mines. Needs one number's squares inside another's, or two numbers that share squares, at least once.
-- Expert: 8x12 field, 22 mines. Needs the numbers counted against the mines left, or a what-if, at least once.
+- Expert: 9x10 field, 21 mines. Needs the numbers counted against the mines left, or a what-if, at least once.
 
 ## Techniques
 

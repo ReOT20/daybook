@@ -18,7 +18,7 @@ python3 tools/guide/build.py --out /tmp/guide    # then serve /tmp/guide and loo
 | `## How to play` | Working the screen: its `rules` (the gestures), `keyboardHelp`, what feedback looks like, the "Teaching" notes in `CLAUDE.md`. No hints or undo? Say so (Arrows, Mines) |
 | `## Rules` | What the player must do to succeed, and nothing else: its `rules` with the gestures taken out. No controls, feedback, strategy or promises about the board |
 | `## What changes per tier` | `- Standard: `, `- Hard: `, `- Expert: `, each starting with the exact line from `core/TierNotes.kt`, then anything else the player can see, from `CLAUDE.md` |
-| `## Techniques` | `core/TechniqueNames.kt`: every id, in that order, under `### id \| Name`, the name with its first letter capitalised, as Training shows it. Nothing else: mistakes and fallbacks have no name and no entry. A step in `NOT_PRAISED` only points at a word or a guess, so include it only if there is something real to say, in prose; it needs no board. A puzzle with nothing to say has no Techniques section |
+| `## Techniques` | `core/TechniqueNames.kt`: every id, in that order, under `### id \| Name`, the name with its first letter capitalised, as Training shows it. Nothing else: mistakes and fallbacks have no name and no entry. A step in `NOT_PRAISED` only points at a word or a guess, or a hint never gives it, so include it only if there is something real to say, in prose; it needs no board. A puzzle with nothing to say has no Techniques section |
 | What a technique means | the teacher's own `explanation` and the comment at the top of `puzzles/<Name>Teacher.kt` |
 
 Those four sections, in that order, nothing else. Voice: plain, friendly, specific, and short. Never "harder": say what changes. No genre or
@@ -43,6 +43,10 @@ answer: r1c3=7
 notes: r2c1=27
 struck: r1c1=4
 lines: r1c1-r1c2 r1c2-r2c2
+edges: r1c1-r1c2=<
+cages: aab acc
+corners: r1c1=12
+solid: r2c3
 caption: One or two sentences saying what the board shows. Required.
 ~~~
 ```
@@ -51,7 +55,18 @@ caption: One or two sentences saying what the board shows. Required.
 - `box: n` thick walls every n squares; `regions:` one string a row, one letter a square: a tint and walls per letter.
 - `focus` the tint (the step's `focus`), `cite` a ring (what the reasoning leans on), `answer` the filled square that is the move.
 - `notes` small marks, a digit in its pencil place; `struck` the same, crossed out. Never on the `answer` square.
-- `lines` thick lines between square centres (bonds, loops, paths).
+- `notes` with a comma (`r2c3=cat,dog`) stacks small words down the square instead.
+- `lines` thick lines between square centres (bonds, loops, paths): `r1c1-r1c4` one line, `r1c1=r1c4` two side by side, `r1c1xr1c2` a cross on the edge between two squares. A board with `lines` gives its digits a halo.
+- `moves` the same, drawn over `lines` (which turn grey) in the move's colour, for a move that is a line rather than a square.
+- `edges` something printed between two neighbours: `r1c1-r1c2=<` and `>` draw a chevron (the first is smaller, bigger), anything else short sits on a disc (`r1c1-r2c1=x`).
+- `cages` one string a row, one letter a square: a dashed outline per letter, with `box` walls still drawn.
+- `corners` small text in a square's top-left (a cage total, a region's rule).
+- `solid` squares filled dark in both schemes, their text reversed (a wall, a hidden square, a filled square of a picture).
+- `tiles` marks on a guess: `r1c1=right`, `near` or `out`, each its own shape as well as a colour.
+- `draw` how a token is drawn: `spokes` (a pipe tile, its arms named from `urdl`), `discs` (a number in a disc, so lines pass behind it), `pearls` (`b` and `w`).
+- `top` and `left` label the columns and rows, outside the grid, one space-separated label each (`top: a b c d e f g h`, `left: Ann Ben`). A narrow board with labels gets side margins.
+- In `regions`, `.` is a square in no region: no tint, and no walls between such squares (a clue margin).
+- A token over three characters is drawn small, and `_` inside a longer token is a space (`r3c1=not_4`).
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 
 For what these cannot draw (a hex, a wheel, a tube): first try tokens in a grid (Cipher's sum is rows of letters). If that really cannot

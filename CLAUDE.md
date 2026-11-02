@@ -23,7 +23,7 @@ sounded. Do not turn it off.
 
 - `core/PuzzleType.kt` — the contract. Adding a puzzle is one file in `puzzles/` plus one line
   in `core/PuzzleRegistry.kt` (and its place in `PuzzleOrder.GENTLEST`, the new player's order); home grid, archive, streaks, stats, hints and saves pick it up.
-  What every puzzle must have beyond that (tiers, proof, hints, walkthrough, tests): `docs/PUZZLE_STANDARDS.md`.
+  What every puzzle must have beyond that (tiers, proof, hints, walkthrough, tests, a guide page, which `GuideTest` requires): `docs/PUZZLE_STANDARDS.md`.
 - Four puzzles show players a different name from their code and `id`: Snap is **Trail**, Mambo **Sun & Moon**, Tower
   **Codebreaker**, Pointers **Arrows** (`displayName`, the owner's choice, 2026-10-25). This file uses the code names.
 - `generate(seed, difficulty)` **must be pure**. Daily boards come from
@@ -1110,7 +1110,7 @@ Full detail (seam, storage, fonts, harnesses, parity, lessons): `docs/WEB_BUILD.
 ## Player guide (`tools/guide/`)
 
 Read-only web pages at `knowhowit.com.au/daybook/guide/` and `guide/<puzzle id>`, one source file per puzzle (`pages/<id>.txt`, never `.md`: `pages.yml` ignores those),
-built by `build.py` (stdlib) in `pages.yml`; adding a file adds it to the index. To write one: `tools/guide/AUTHORING.md`. Anchors are the ids in `core/TechniqueNames.kt`.
+built by `build.py` (stdlib) in `pages.yml`; adding a file adds it to the index. To write one, and the diagram keys a board can use: `tools/guide/AUTHORING.md`. Every registered puzzle has a page. Anchors are the ids in `core/TechniqueNames.kt`.
 
 - **`GuideTest` holds a page to the app:** title and tagline, `TierNotes`' lines, exactly the named techniques in order, no banned name, and every board is a real position on which the
   teacher gives that technique (`GuideTest.teachers`). So a renamed technique or a changed tier line goes red until the page changes. Pages are a declared input of the test task, or the build cache would replay a pass.

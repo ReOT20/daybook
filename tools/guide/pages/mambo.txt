@@ -39,7 +39,7 @@ Two alike side by side: the squares at either end must be the other symbol, or t
 . . . . . .
 . S S M . .
 S . . S . .
-between: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
 focus: r5c2 r5c3
 cite: r5c2 r5c3
 answer: r5c1=M
@@ -57,7 +57,7 @@ S S M . . .
 S . . . . .
 M S S M . .
 S . . S . .
-between: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
 focus: r3c2 r4c2 r5c2
 cite: r3c2 r5c2
 answer: r4c2=M
@@ -75,7 +75,7 @@ A printed link with one end filled gives you the other end: = copies the symbol,
 . . . . . .
 . . . . . .
 S . . S . .
-between: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
 focus: r5c4 r6c4
 cite: r6c4
 answer: r5c4=M
@@ -93,7 +93,7 @@ S S M S . .
 S M . . . .
 M S S M . .
 S . . S . .
-between: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
+edges: r4c1-r5c1=x r5c4-r6c4=x r2c3-r3c3=x r5c2-r5c3== r3c1-r4c1== r3c1-r3c2== r1c4-r2c4== r2c3-r2c4=x r1c6-r2c6=x r5c3-r5c4=x r1c1-r1c2== r1c1-r2c1==
 focus: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6
 cite: r1c1 r1c2 r1c4
 answer: r1c5=S r1c6=S
@@ -113,7 +113,7 @@ S . . . M S S M
 . . . . S M M S
 . . . . S M S M
 . . . . M S S M
-between: r2c1-r2c2== r7c7-r8c7== r5c7-r6c7== r4c6-r5c6== r2c5-r3c5=x r4c8-r5c8=x r4c5-r5c5== r3c1-r4c1=x r5c8-r6c8== r7c3-r8c3=x r1c5-r1c6=x r1c4-r2c4=x r7c6-r7c7=x r2c8-r3c8=x r6c6-r6c7== r3c8-r4c8=x r6c7-r6c8=x r1c7-r1c8=x r5c1-r6c1=x r5c3-r6c3== r1c1-r2c1== r2c4-r2c5=x r1c3-r1c4==
+edges: r2c1-r2c2== r7c7-r8c7== r5c7-r6c7== r4c6-r5c6== r2c5-r3c5=x r4c8-r5c8=x r4c5-r5c5== r3c1-r4c1=x r5c8-r6c8== r7c3-r8c3=x r1c5-r1c6=x r1c4-r2c4=x r7c6-r7c7=x r2c8-r3c8=x r6c6-r6c7== r3c8-r4c8=x r6c7-r6c8=x r1c7-r1c8=x r5c1-r6c1=x r5c3-r6c3== r1c1-r2c1== r2c4-r2c5=x r1c3-r1c4==
 focus: r4c1 r4c2 r4c3 r4c4 r4c5 r4c6 r4c7 r4c8
 cite: r4c3 r4c4 r4c5
 answer: r4c2=M
@@ -135,7 +135,7 @@ Suppose one symbol on a square and follow one round of the rules above. If that 
 . . . . . M S . . .
 . . . . S M M S . .
 . . . . . S . . . .
-between: r1c6-r1c7== r7c2-r8c2== r2c7-r2c8=x r9c6-r9c7== r7c6-r8c6=x r8c7-r9c7=x r2c9-r3c9== r2c5-r3c5== r10c7-r10c8== r9c3-r10c3=x r4c10-r5c10== r7c9-r7c10=x r5c6-r6c6== r4c4-r4c5== r1c6-r2c6=x r1c8-r1c9=x r2c10-r3c10== r8c8-r8c9== r8c6-r8c7=x r2c8-r3c8== r9c9-r9c10==
+edges: r1c6-r1c7== r7c2-r8c2== r2c7-r2c8=x r9c6-r9c7== r7c6-r8c6=x r8c7-r9c7=x r2c9-r3c9== r2c5-r3c5== r10c7-r10c8== r9c3-r10c3=x r4c10-r5c10== r7c9-r7c10=x r5c6-r6c6== r4c4-r4c5== r1c6-r2c6=x r1c8-r1c9=x r2c10-r3c10== r8c8-r8c9== r8c6-r8c7=x r2c8-r3c8== r9c9-r9c10==
 focus: r1c6
 cite: r1c7 r1c8
 answer: r1c6=S

@@ -55,10 +55,6 @@ answer: r1c4=A9 r2c4=A9 r3c4=A9
 caption: In the tens, A + A and any carry ends in A. Only 0 (with no carry) or 9 (with one) can do that, and L already has 0. So A is 9.
 ~~~
 
-### only-letter | The only letter left for a digit
-
-A sum with ten letters would use every digit, so a digit no letter has would belong to one of those left. Today's sums have nine letters at most, so you won't meet this one yet.
-
 ### column-pair | Two columns through their carry
 
 When one column can't settle anything alone, read it with its neighbour. The carry between them is what joins them: one column may fix the carry, and that finishes the other.

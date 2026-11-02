@@ -27,7 +27,7 @@ Stuck? The first tap on Hint says where to look, and the second explains why. Yo
 
 ## Techniques
 
-These are the steps the hints teach, simplest first. Try them in this order. On each board, ♣ is a tree, ▲ a tent and x is grass, with each row's and column's number along the edge. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it, except where it says so.
+These are the steps the hints teach, simplest first. Try them in this order. On each board, ♣ is a tree, ▲ a tent and x is grass, with each row's and column's number along the edge. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
 
 ### no-tree | Grass where no tree is beside it
 
@@ -78,24 +78,6 @@ _ 2 0 1 1 0 3
 focus: r3c2 r3c3 r3c4 r3c5 r3c6 r3c7 r3c1
 answer: r3c5=▲
 caption: Row 2 needs 1 tent, and the filled square is the only one in it still free.
-~~~
-
-### touch | Grass around a tent
-
-Tents never touch, not even at a corner, so all eight squares around a tent are grass. The game does this for you: place a tent and the grass sprouts by itself, so a hint never needs to say it. This board is a real one with that grass held back, to show what the sprouting means.
-
-~~~board
-_ 2 1 1 1 1 1
-2 ▲ ♣ ▲ x x x
-1 x . ♣ . ♣ .
-1 . . ♣ ♣ x x
-1 ♣ . x . x x
-1 . x x x x .
-1 x x x x ▲ ♣
-focus: r2c2 r3c3
-cite: r2c2
-answer: r3c3=x
-caption: The filled square touches the ringed tent at a corner, so it can only be grass.
 ~~~
 
 ### one-spot | A tree with one spot left
