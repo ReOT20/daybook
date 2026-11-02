@@ -1,0 +1,107 @@
+# Nonogram
+> Numbers reveal the picture
+
+## How to play
+
+Pick Fill or Cross under the board and tap squares. Drag along a row or column to sweep several at once.
+
+A cross just means "empty": it is a note to yourself and never counts against you.
+
+On a big board, pinch to zoom in. Zoomed in, a drag moves around the board instead of sweeping, and the corner button shows the whole board again. On the web, Ctrl and the wheel zoom too.
+
+On a keyboard, the arrows move, F fills, X crosses, Space cycles, and Backspace clears. Shift and an arrow carries a mark along.
+
+A line whose runs match its numbers turns green. A line that can't hold its numbers any more turns red a moment later.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". If a mark you made is wrong, Hint points at that first. Every board can be worked out one line at a time, with no guessing, and has one answer.
+
+## Rules
+
+- The numbers beside a row, or above a column, give the lengths of its runs of filled squares, in order.
+- Two runs always have at least one empty square between them.
+- Finish when every row and column shows its numbers.
+
+## What changes per tier
+
+- Standard: 5x5 grid. Takes at least two passes over the lines.
+- Hard: 10x10 grid. Takes at least three passes over the lines.
+- Expert: 15x15 grid. Takes at least four passes over the lines.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, the numbers are in the coloured margins, the solid squares are already filled, an x is already crossed, the tint is the line to look at, and the bright rounded squares are the move: filled, or crossed where they show an x. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### full-line | A clue that fills its line
+
+Add up a line's numbers and one gap between each. If that is the whole width of the line, there is nowhere to slide, and every square is settled.
+
+~~~board
+_ _ 1 1 2 2 1
+_ _ 1 2 2 2 3
+. 4 . . . . .
+1 2 . . . . .
+1 1 . . . . .
+. 4 . . . . .
+1 3 . . . . .
+regions: ..aaaaa ..aaaaa aa..... aa..... aa..... aa..... aa.....
+focus: r7c1-r7c7
+answer: r7c3=. r7c4=x r7c5=. r7c6=. r7c7=.
+caption: Row 5's numbers take 1 + 3 + one gap = 5 squares, exactly its width. So it can only be one filled, one empty, three filled.
+~~~
+
+### line-finished | A line whose clue is complete
+
+Once a line's filled squares give it every number it has, the rest of the line is empty. Cross it out.
+
+~~~board
+_ _ 1 1 2 2 1
+_ _ 1 2 2 2 3
+. 4 . . . . .
+1 2 . . . . x
+1 1 . . x x .
+. 4 . . . . .
+1 3 . x . . .
+regions: ..aaaaa ..aaaaa aa..... aa..... aa..... aa..... aa.....
+filled: r3c4 r3c5 r3c6 r3c7 r4c5 r4c6 r5c7 r6c5 r6c6 r6c7 r7c3 r7c5 r7c6 r7c7
+focus: r3c1-r3c7
+answer: r3c3=x
+caption: Row 1's number is 4, and its last four squares are filled. So the first square is empty.
+~~~
+
+### overlap | The overlap of a clue's slides
+
+Imagine a line's numbers as blocks, pushed as far one way as they go and then as far the other. A square covered by the same block both times is filled, wherever the blocks really sit.
+
+~~~board
+_ _ 1 1 2 2 1
+_ _ 1 2 2 2 3
+. 4 . . . . .
+1 2 . . . . x
+1 1 . . x x .
+. 4 . . . . .
+1 3 . x . . .
+regions: ..aaaaa ..aaaaa aa..... aa..... aa..... aa..... aa.....
+filled: r3c5 r3c6 r3c7 r4c5 r4c6 r5c7 r6c5 r6c6 r6c7 r7c3 r7c5 r7c6 r7c7
+focus: r3c1-r3c7
+answer: r3c4=.
+caption: Pushed left, row 1's 4 covers squares 1 to 4; pushed right, squares 2 to 5. So squares 2 to 4 are filled, and square 2 is the one not done yet.
+~~~
+
+### line-logic | What a line's marks leave possible
+
+The general case. With the marks already in a line, try every way its numbers can still be laid out. A square they all agree on is settled, filled or empty.
+
+~~~board
+_ _ 1 1 2 2 1
+_ _ 1 2 2 2 3
+. 4 x . . . .
+1 2 . . . . x
+1 1 . . x x .
+. 4 x . . . .
+1 3 . x . . .
+regions: ..aaaaa ..aaaaa aa..... aa..... aa..... aa..... aa.....
+filled: r3c4 r3c5 r3c6 r3c7 r4c5 r4c6 r5c7 r6c4 r6c5 r6c6 r6c7 r7c3 r7c5 r7c6 r7c7
+focus: r4c1-r4c7
+answer: r4c3=. r4c4=x
+caption: Row 2's numbers are 1 and 2. Its filled squares 3 and 4 can only be the 2, so square 2 is the gap before it, and the 1 is square 1.
+~~~
