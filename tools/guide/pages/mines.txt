@@ -1,0 +1,180 @@
+# Mines
+> Every safe square, found without a guess
+
+## How to play
+
+The first squares are already open when the board loads. The Reveal and Flag buttons under the board set what a tap does. A long press does the other one.
+
+Tap a number whose flags already match it to reveal all its other squares at once. A wrong flag there opens a mine and loses the board.
+
+A flag is your own note: it is never checked, and it keeps its square from being revealed by mistake. Flag it again to take it off. The counter says how many mines are left, less your flags.
+
+On a keyboard, the arrows move, Space or Enter reveals (on a number, reveals around it), and F flags or unflags.
+
+There is no undo. Reveal a mine and the board is lost, and Try again starts it again from the opening.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board can be cleared without a guess.
+
+## Rules
+
+- Each number counts the mines in the squares touching it, corners included.
+- Reveal every square without a mine. Reveal a mine and the board is lost.
+
+## What changes per tier
+
+- Standard: 8x8 field, 10 mines. Single numbers are enough.
+- Hard: 8x10 field, 16 mines. Needs one number's squares inside another's, or two numbers that share squares, at least once.
+- Expert: 8x12 field, 22 mines. Needs the numbers counted against the mines left, or a what-if, at least once.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, the dark squares are hidden, F is a flag, and a blank open square touches no mines. The tinted squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move: ✓ a square to reveal, F a square to flag. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### all-found | A number with all its mines found
+
+A number already touching all its mines has nothing left to hide, so every other hidden square around it is safe.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+1 2 . . . . . .
+. 1 F . . . . .
+. 1 2 . . . . .
+. . 1 . . . . .
+. . 1 1 2 . . .
+. . . . 1 . . .
+solid: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6 r1c7 r1c8 r2c1 r2c2 r2c3 r2c4 r2c5 r2c6 r2c7 r2c8 r3c3 r3c4 r3c5 r3c6 r3c7 r3c8 r4c3 r4c4 r4c5 r4c6 r4c7 r4c8 r5c4 r5c5 r5c6 r5c7 r5c8 r6c4 r6c5 r6c6 r6c7 r6c8 r7c6 r7c7 r7c8 r8c6 r8c7 r8c8
+focus: r4c2
+cite: r4c2
+answer: r3c3=✓
+caption: The ringed 1 touches its flagged mine, and one more hidden square. That one is safe.
+~~~
+
+### all-mines | A number with as many squares as mines
+
+A number with exactly as many hidden squares around it as mines it needs: all of them are mines.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+1 2 . . . . . .
+. 1 . . . . . .
+. 1 2 . . . . .
+. . 1 . . . . .
+. . 1 1 2 . . .
+. . . . 1 . . .
+solid: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6 r1c7 r1c8 r2c1 r2c2 r2c3 r2c4 r2c5 r2c6 r2c7 r2c8 r3c3 r3c4 r3c5 r3c6 r3c7 r3c8 r4c3 r4c4 r4c5 r4c6 r4c7 r4c8 r5c4 r5c5 r5c6 r5c7 r5c8 r6c4 r6c5 r6c6 r6c7 r6c8 r7c6 r7c7 r7c8 r8c6 r8c7 r8c8
+focus: r5c2
+cite: r5c2
+answer: r4c3=F
+caption: The ringed 1 has exactly one hidden square touching it, so that square is a mine.
+~~~
+
+### subset | One number's squares inside another's
+
+If all of one number's hidden squares also touch a second number, compare what they need. When they need the same, the mines are all on the shared squares, and the second number's other squares are safe.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+1 1 1 1 1 1 2 .
+. . . 1 1 1 2 .
+. 1 1 3 F 3 2 .
+. 1 F 5 F . . .
+. 1 2 F F 3 . .
+2 2 2 2 2 2 . .
+F F 1 . . 1 . .
+solid: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6 r1c7 r1c8 r2c1 r2c2 r2c3 r2c4 r2c5 r2c6 r2c7 r2c8 r3c1 r3c2 r3c3 r3c4 r3c5 r3c6 r3c7 r3c8 r4c8 r5c8 r6c5 r6c8 r7c3 r7c5 r7c6 r7c7 r7c8 r8c4 r8c5 r8c7 r8c8 r9c7 r9c8 r10c1 r10c2 r10c7 r10c8
+focus: r4c1
+cite: r4c1 r4c2
+answer: r3c3=✓
+caption: The left 1 touches two hidden squares, and the 1 beside it touches both of those and the filled one. Each needs one mine, so that mine is on the shared two, and the filled square is safe.
+~~~
+
+### pair | Two numbers that share squares
+
+Two numbers can share squares without one holding the other. Work out the most mines the shared squares can hold: if the bigger number needs more than that, the difference is on its own squares.
+
+~~~board
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . 3 F 3 F
+. . . . 3 1 2 1
+. . . . 2 1 . .
+. . . . F 1 . .
+. . . . 2 1 . .
+solid: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6 r1c7 r1c8 r2c1 r2c2 r2c3 r2c4 r2c5 r2c6 r2c7 r2c8 r3c1 r3c2 r3c3 r3c4 r3c5 r3c6 r3c7 r3c8 r4c1 r4c2 r4c3 r4c4 r4c5 r4c6 r4c7 r4c8 r5c1 r5c2 r5c3 r5c4 r5c5 r5c6 r5c7 r5c8 r6c1 r6c2 r6c3 r6c4 r6c6 r6c8 r7c1 r7c2 r7c3 r7c4 r8c1 r8c2 r8c3 r8c4 r9c1 r9c2 r9c3 r9c4 r9c5 r10c1 r10c2 r10c3 r10c4
+focus: r8c5
+cite: r7c5 r8c5
+answer: r6c4=F r9c4=✓
+caption: The ringed 3 needs 2 more mines, among three hidden squares. The ringed 2 needs 1 more, so the two squares they share hold at most 1. So the 3's own square, at the top, is a mine, the shared two hold exactly 1, and the 2's own square, at the bottom, is safe.
+~~~
+
+### count | Counting the mines left
+
+The counter helps at the very end. If every mine is found, every hidden square left is safe. If there are as many mines left as hidden squares, they are all mines.
+
+~~~board
+. 1 F 1 . . 1 F 2
+. 1 1 2 1 1 1 2 F
+. 1 1 2 F 2 1 2 2
+1 2 F 3 3 F 1 1 F
+3 F 3 3 F 3 1 1 1
+F F 3 3 F 3 1 . .
+3 3 2 F 3 F 1 1 1
+F 2 2 1 2 1 2 3 F
+3 F 1 . . . 2 F F
+F 2 1 . . . 2 F .
+solid: r1c3 r1c8 r2c9 r3c5 r4c3 r4c6 r4c9 r5c2 r5c5 r6c1 r6c2 r6c5 r7c4 r7c6 r8c1 r8c9 r9c2 r9c8 r9c9 r10c1 r10c8 r10c9
+focus: r10c9
+answer: r10c9=✓
+caption: All 21 mines are flagged, so the last hidden square is safe.
+~~~
+
+### count-edge | The numbers needing every mine left
+
+Find numbers whose hidden squares don't overlap, and add up the mines they still need. If that is every mine left, no other hidden square can hold one.
+
+~~~board
+F 2 F F 2 . 1 . .
+1 3 4 F 3 2 4 . .
+. 1 F 2 2 F F F .
+. 1 1 1 2 3 5 F F
+1 1 1 . 1 F 2 2 2
+1 F 1 1 2 2 1 . .
+3 3 2 1 F 2 1 1 .
+F F 2 1 1 2 F 2 1
+3 F 2 . 1 3 4 . .
+1 1 1 . 1 F F . .
+solid: r1c1 r1c3 r1c4 r1c8 r1c9 r2c4 r2c8 r2c9 r3c3 r3c6 r3c7 r3c8 r3c9 r4c8 r4c9 r5c6 r6c2 r7c5 r8c1 r8c2 r8c7 r9c2 r9c8 r9c9 r10c6 r10c7 r10c8 r10c9
+focus: r1c7 r8c8
+cite: r1c7 r8c8
+answer: r1c9=✓ r2c9=✓ r3c9=✓ r10c8=✓ r10c9=✓
+caption: 2 mines are left. The ringed 1 at the top needs one, on the two hidden squares touching it. The ringed 2 lower down needs one, on the two squares below it. That's both, so every other hidden square is safe.
+~~~
+
+### what-if | A what-if
+
+Suppose a hidden square beside a number is a mine, or is safe, and follow single numbers from there, at most three of them. If a number breaks, the supposition was wrong. This isn't guessing: you only reveal the square once the other choice has been shown to break.
+
+~~~board
+. . . . . . . . .
+. . . . . . . . .
+. . . . . 3 1 3 .
+. . . . . 2 . 1 .
+. . . . . 2 1 2 .
+. . . . . . . . .
+. . . . . . . . .
+. . . . . . . . .
+. . . . . . . . .
+. . . . . . . . .
+solid: r1c1 r1c2 r1c3 r1c4 r1c5 r1c6 r1c7 r1c8 r1c9 r2c1 r2c2 r2c3 r2c4 r2c5 r2c6 r2c7 r2c8 r2c9 r3c1 r3c2 r3c3 r3c4 r3c5 r3c9 r4c1 r4c2 r4c3 r4c4 r4c5 r4c9 r5c1 r5c2 r5c3 r5c4 r5c5 r5c9 r6c1 r6c2 r6c3 r6c4 r6c5 r6c6 r6c7 r6c8 r6c9 r7c1 r7c2 r7c3 r7c4 r7c5 r7c6 r7c7 r7c8 r7c9 r8c1 r8c2 r8c3 r8c4 r8c5 r8c6 r8c7 r8c8 r8c9 r9c1 r9c2 r9c3 r9c4 r9c5 r9c6 r9c7 r9c8 r9c9 r10c1 r10c2 r10c3 r10c4 r10c5 r10c6 r10c7 r10c8 r10c9
+focus: r2c6
+cite: r3c7 r3c8 r4c8
+answer: r2c6=✓
+caption: If the filled square were a mine, the ringed 1 touching it would have its mine, and its other two hidden squares would be safe. The ringed 3 would then need all three hidden squares on its right to be mines, which puts two on the ringed 1 below it. So the filled square is safe.
+~~~
