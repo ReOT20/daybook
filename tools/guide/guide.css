@@ -21,7 +21,7 @@ a { color: var(--primary); }
 strong { font-weight: 600; }
 h1, h2, h3 { font-weight: 600; line-height: 1.2; }
 h1 { font-size: 34px; margin: 8px 0 4px; }
-h2 { font-size: 24px; margin: 36px 0 8px; }
+h2 { font-size: 24px; margin: 36px 0 8px; scroll-margin-top: 12px; }
 h3 { font-size: 19px; margin: 32px 0 8px; scroll-margin-top: 12px; }
 h3 a { color: inherit; text-decoration: none; }
 h3:target a { color: var(--primary); }
@@ -29,6 +29,8 @@ h3:target a { color: var(--primary); }
 ul { padding-left: 22px; }
 li { margin: 4px 0; }
 ul.toc { background: var(--surface); border-radius: 12px; padding: 10px 14px 10px 32px; }
+ul.toc ul { padding-left: 18px; }
+.top { margin: 16px 0 0; text-align: right; font-size: 15px; }
 ul.puzzles { list-style: none; padding: 0; }
 ul.puzzles li { margin: 8px 0; }
 ul.puzzles a { display: block; padding: 12px 16px; background: var(--surface); border-radius: 12px; color: var(--ink); text-decoration: none; }

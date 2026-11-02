@@ -15,8 +15,8 @@ python3 tools/guide/build.py --out /tmp/guide    # then serve /tmp/guide and loo
 |---|---|
 | `# Title` | the puzzle's `displayName` (Trail, Sun & Moon, Codebreaker, Arrows..., never the code name) |
 | `> tagline` | its `tagline` |
-| `## How to play` | its `rules` (the gestures), `keyboardHelp`, the "Teaching" notes in `CLAUDE.md`. No hints or undo? Say so (Arrows, Mines) |
-| `## Rules` | its `rules`, and the puzzle's section of `CLAUDE.md` for what makes a board fair. Rules only, no strategy |
+| `## How to play` | Working the screen: its `rules` (the gestures), `keyboardHelp`, what feedback looks like, the "Teaching" notes in `CLAUDE.md`. No hints or undo? Say so (Arrows, Mines) |
+| `## Rules` | What the player must do to succeed, and nothing else: its `rules` with the gestures taken out. No controls, feedback, strategy or promises about the board |
 | `## What changes per tier` | `- Standard: `, `- Hard: `, `- Expert: `, each starting with the exact line from `core/TierNotes.kt`, then anything else the player can see, from `CLAUDE.md` |
 | `## Techniques` | `core/TechniqueNames.kt`: every id, in that order, under `### id \| Name`, the name with its first letter capitalised, as Training shows it. Nothing else: mistakes and fallbacks have no name and no entry. A puzzle with no names has no Techniques section |
 | What a technique means | the teacher's own `explanation` and the comment at the top of `puzzles/<Name>Teacher.kt` |

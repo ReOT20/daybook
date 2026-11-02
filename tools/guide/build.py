@@ -34,6 +34,7 @@ HEAD = """<!doctype html>
 <main>
 """
 CELL = 40
+TOP = '<p class="top"><a href="#top">Back to top</a></p>'
 
 
 def fail(where, message):
@@ -153,11 +154,11 @@ def board(lines, where):
 
 
 def page(path):
-    """A page's source to (title, tagline, body html), with the Techniques section's list of links worked out."""
+    """A page's source to (title, tagline, body html): contents first, and a way back to them after every section."""
     title = tagline = None
     out, paragraph, items, block = [], [], [], None
     block_start = 0
-    techniques = []
+    sections, techniques = [], []
 
     def flush():
         if paragraph:
@@ -184,14 +185,19 @@ def page(path):
             tagline = line[2:].strip()
         elif line.startswith("## "):
             flush()
-            out.append(f"<h2>{inline(line[3:])}</h2>")
-            if line[3:].strip() == "Techniques":
-                out.append("@@TECHNIQUES@@")
+            name = line[3:].strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", name.lower())
+            if sections:
+                out.append(TOP)
+            sections.append((slug, name))
+            out.append(f'<h2 id="{slug}">{inline(name)}</h2>')
         elif line.startswith("### "):
             flush()
             tid, bar, name = line[4:].partition("|")
             if not bar:
                 fail(where, "a technique heading is ### id | Name")
+            if techniques:
+                out.append(TOP)
             techniques.append((tid.strip(), name.strip()))
             out.append(f'<h3 id="{html.escape(tid.strip())}"><a href="#{html.escape(tid.strip())}">{inline(name.strip())}</a></h3>')
         elif line.startswith("- "):
@@ -209,8 +215,12 @@ def page(path):
         fail(f"{path.name}:{block_start}", "a board is never closed")
     if not title or not tagline:
         fail(path.name, "a page starts with # Title and > tagline")
-    links = '<ul class="toc">' + "".join(f'<li><a href="#{t}">{inline(n)}</a></li>' for t, n in techniques) + "</ul>"
-    return title, tagline, "\n".join(out).replace("@@TECHNIQUES@@", links if techniques else "")
+    links = lambda pairs: "".join(f'<li><a href="#{t}">{inline(n)}</a></li>' for t, n in pairs)
+    nested = f"<ul>{links(techniques)}</ul>" if techniques else ""
+    contents = '<ul class="toc">' + "".join(
+        f'<li><a href="#{s}">{inline(n)}</a>{nested if n == "Techniques" else ""}</li>' for s, n in sections
+    ) + "</ul>"
+    return title, tagline, "\n".join([contents, *out, TOP])
 
 
 def main():

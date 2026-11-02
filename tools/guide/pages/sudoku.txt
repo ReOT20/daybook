@@ -11,15 +11,15 @@ Tap the pencil to take notes. While it is lit, a digit is pencilled small in the
 
 On a keyboard, the arrows move, 1 to 9 place a digit (or a note in pencil mode), and Backspace clears.
 
-Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me".
+Clashing digits are shown in red as you go, but nothing stops you placing one.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
 
 ## Rules
 
 - Fill every square with a digit from 1 to 9.
 - No digit may repeat within a row, a column or a 3x3 box.
 - The digits you start with are given, and stay put.
-- Clashing digits are shown in red as you go.
-- Every board has exactly one answer, and you never need to guess to find it.
 
 ## What changes per tier
 
