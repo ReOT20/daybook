@@ -4,13 +4,13 @@
 :root {
   color-scheme: light dark;
   --bg: #F4EFFF; --surface: #FFFFFF; --ink: #21145F; --ink2: #4A3F86; --primary: #5B3DF5; --on-primary: #FFFFFF;
-  --outline: #B3A6E6; --wall: #21145F; --cite: #E05A00; --error: #C4122F;
+  --outline: #B3A6E6; --wall: #21145F; --cite: #E05A00; --error: #C4122F; --solid: #21145F;
   --hue0: #BE8EF6; --hue1: #F6C98E; --hue2: #9AEAE3; --hue3: #8EB9F6; --hue4: #F6DE8E;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #120D33; --surface: #211A5C; --ink: #F4EFFF; --ink2: #D9D4FF; --primary: #00E5FF; --on-primary: #120D33;
-    --outline: #5F52B8; --wall: #F4EFFF; --cite: #FFB300; --error: #FF8A9E;
+    --outline: #5F52B8; --wall: #F4EFFF; --cite: #FFB300; --error: #FF8A9E; --solid: #05030F;
     --hue0: #53218C; --hue1: #8C5E21; --hue2: #1C7870; --hue3: #214E8C; --hue4: #80691E;
   }
 }
@@ -54,3 +54,7 @@ svg text { fill: var(--ink); text-anchor: middle; dominant-baseline: central; fo
 svg text.struck { fill: var(--error); }
 .strike { stroke: var(--error); stroke-width: 2; stroke-linecap: round; }
 svg text.on { fill: var(--on-primary); }
+.solid { fill: var(--solid); }
+svg text.onsolid { fill: #F4EFFF; }
+.sign { fill: var(--surface); stroke: var(--outline); stroke-width: 1; }
+.signtext { font-size: 13px; font-weight: 600; }

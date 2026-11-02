@@ -77,7 +77,7 @@ def board(lines, where):
     for line in lines:
         key, colon, value = line.partition(":")
         if colon:
-            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption"):
+            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "between", "solid", "caption"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():
@@ -90,6 +90,7 @@ def board(lines, where):
     W, H = w * CELL, h * CELL
     get = lambda key, parse: parse(fields.get(key, ""), where, w, h)
     focus, cite = set(get("focus", cells)), get("cite", cells)
+    solid = set(get("solid", cells))
     answer, notes, struck = get("answer", marks), get("notes", marks), get("struck", marks)
     regions = fields.get("regions", "").split()
     if regions and (len(regions) != h or {len(r) for r in regions} != {w}):
@@ -107,6 +108,8 @@ def board(lines, where):
             if regions:
                 hue = hues.setdefault(regions[r][c], len(hues) % 5)
                 svg.append(f'<rect class="hue{hue}" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
+            if (r, c) in solid:
+                svg.append(f'<rect class="solid" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             if (r, c) in focus:
                 svg.append(f'<rect class="focus" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             # A wall on the right and the bottom of any square whose neighbour is another region (or nothing).
@@ -133,7 +136,7 @@ def board(lines, where):
             x, y = centre(r, c)
             token = answer.get((r, c), rows[r][c])
             if token not in (".", "_"):
-                kind = "big on" if (r, c) in answer else "big"
+                kind = "big on" if (r, c) in answer else "big onsolid" if (r, c) in solid else "big"
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(token)}</text>')
     # A note sits where the app pencils that digit, a 3x3 inside the square; a note that is not a digit, in the middle.
     for table, kind in ((notes, "note"), (struck, "note struck")):
@@ -148,6 +151,14 @@ def board(lines, where):
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{ch}</text>')
                 if kind != "note":
                     svg.append(f'<line class="strike" x1="{x - 6}" y1="{y + 5}" x2="{x + 6}" y2="{y - 5}"/>')
+    # A sign printed on the edge between two neighbours: `r1c1-r1c2==` or `r1c1-r2c1=x`.
+    for part in fields.get("between", "").split():
+        ends, _, sign = part.partition("=")
+        (r1, c1), (r2, c2) = (cells(end, where, w, h)[0] for end in ends.split("-"))
+        if abs(r1 - r2) + abs(c1 - c2) != 1 or not sign:
+            fail(where, f"between needs two neighbours and a sign: {part}")
+        x, y = (c1 + c2 + 1) * CELL // 2, (r1 + r2 + 1) * CELL // 2
+        svg.append(f'<circle class="sign" cx="{x}" cy="{y}" r="8"/><text class="signtext" x="{x}" y="{y}">{html.escape(sign)}</text>')
     caption = inline(fields["caption"])
     return (f'<figure><svg viewBox="-2 -2 {W + 4} {H + 4}" role="img" aria-label="{html.escape(fields["caption"])}">'
             + "".join(svg) + f"</svg><figcaption>{caption}</figcaption></figure>")
