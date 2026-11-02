@@ -4,10 +4,23 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.Verdict
 import com.joebywan.daybook.core.praisedTechniquesOf
 import com.joebywan.daybook.core.techniqueNamesOf
 import com.joebywan.daybook.core.tierNotes
+import com.joebywan.daybook.puzzles.Atom
+import com.joebywan.daybook.puzzles.AtomsTeacher
+import com.joebywan.daybook.puzzles.Domino
+import com.joebywan.daybook.puzzles.DominoLogic
+import com.joebywan.daybook.puzzles.DominoTeacher
+import com.joebywan.daybook.puzzles.MosaicTeacher
+import com.joebywan.daybook.puzzles.Pair2
+import com.joebywan.daybook.puzzles.PearlsTeacher
+import com.joebywan.daybook.puzzles.PipesTeacher
+import com.joebywan.daybook.puzzles.Placement
 import com.joebywan.daybook.puzzles.PuzzleState
+import com.joebywan.daybook.puzzles.RegionRule
+import com.joebywan.daybook.puzzles.RuleKind
 import com.joebywan.daybook.puzzles.Sudoku
 import com.joebywan.daybook.puzzles.SudokuTeacher
 import kotlinx.serialization.json.Json
@@ -81,7 +94,134 @@ class GuideTest {
      */
     private val teachers: Map<String, (Board) -> TeachStep?> = mapOf(
         "sudoku" to ::sudokuStep,
+        "pipes" to ::pipesStep,
+        "atoms" to ::atomsStep,
+        "pearls" to ::pearlsStep,
+        "mosaic" to ::mosaicStep,
+        "dominoes" to ::dominoesStep,
+        // No techniques and so no boards (hints are off): these two lines are never asked.
+        "snap" to { _ -> null },
+        "pointers" to { _ -> null },
     )
+
+    /** A step's squares as a board draws them, for a teacher whose highlights are not all squares (or whose move is a line). */
+    private class Drawn(override val technique: String, override val focus: Set<Int>, override val targets: Set<Int> = emptySet()) : TeachStep {
+        override val nudge = ""
+        override val explanation = ""
+        override val cited = emptySet<Int>()
+    }
+
+    /** `lines` or `moves` as (lower square, the mark between, higher square). */
+    private fun Board.drawn(key: String): List<Triple<Int, Char, Int>> = fields[key].orEmpty().split(' ').filter { it.isNotEmpty() }.map { part ->
+        val n = Regex("\\d+").findAll(part).map { it.value.toInt() - 1 }.toList()
+        val a = n[0] * width + n[1]
+        val b = n[2] * width + n[3]
+        Triple(minOf(a, b), Regex("[-=x]").find(part)!!.value[0], maxOf(a, b))
+    }
+
+    private fun pipesStep(b: Board): TeachStep? {
+        val dirs = "urdl"
+        fun mask(token: String) = token.sumOf { 1 shl dirs.indexOf(it) as Int }
+        val cells = b.rows.flatten().map(::mask)
+        assertTrue("${b.technique}: a board the reasoning settles, so one answer", PipesTeacher.settles(b.width, b.rows.size, cells))
+        val step = PipesTeacher.deduce(b.width, b.rows.size, cells) ?: return null
+        assertEquals("${b.technique}: the turn", mask(b.marks("answer").getValue(step.cell)), step.mask)
+        return step
+    }
+
+    private fun atomsStep(b: Board): TeachStep? {
+        val atoms = b.rows.flatMapIndexed { r, row ->
+            row.mapIndexedNotNull { c, t -> t.toIntOrNull()?.let { Atom(r, c, it) } }
+        }
+        val at = { a: Atom -> a.row * b.width + a.col }
+        // Who sees whom along a clear line, worked out here from the rows.
+        val pairs = buildList {
+            for (i in atoms.indices) for (j in i + 1 until atoms.size) {
+                val (x, y) = atoms[i] to atoms[j]
+                val across = x.row == y.row && atoms.none { it.row == x.row && it.col in x.col + 1 until y.col }
+                val down = x.col == y.col && atoms.none { it.col == x.col && it.row in x.row + 1 until y.row }
+                if (across || down) add(Pair2(i, j, across))
+            }
+        }
+        fun pairOf(d: Triple<Int, Char, Int>) = pairs.indexOfFirst { at(atoms[it.a]) == d.first && at(atoms[it.b]) == d.third }
+        val counts = MutableList(pairs.size) { 0 }
+        for (d in b.drawn("lines")) counts[pairOf(d)] = if (d.second == '=') 2 else 1
+        val step = AtomsTeacher.deduce(atoms, pairs, counts) ?: return null
+        val moved = b.drawn("moves").associate { pairOf(it) to if (it.second == '=') 2 else 1 }
+        assertEquals("${b.technique}: the bonds", moved, step.raise)
+        return Drawn(step.technique, step.focus.filter { it < atoms.size }.map { at(atoms[it]) }.toSet())
+    }
+
+    private fun pearlsStep(b: Board): TeachStep? {
+        val n = b.width
+        val pearls = b.rows.flatten().joinToString("")
+        fun edge(d: Triple<Int, Char, Int>) =
+            if (d.third == d.first + 1) d.first / n * (n - 1) + d.first % n else n * (n - 1) + d.first
+        val edges = CharArray(2 * n * (n - 1)) { '.' }
+        for (d in b.drawn("lines")) edges[edge(d)] = if (d.second == 'x') 'x' else '-'
+        val marks = edges.concatToString()
+        // A pearl with two ways in is never the hint itself: a pearl's own rule always speaks first (black-pearl on this
+        // board), so that heading alone asks the teacher for the steps of its technique rather than for its next step.
+        val step = if (b.technique == "pearl-ways") {
+            PearlsTeacher.steps(n, pearls, marks, b.technique).first { s -> s.focus.filter { it < n * n }.toSet() == b.squares("focus") }
+        } else {
+            PearlsTeacher.deduce(n, pearls, marks) ?: return null
+        }
+        val moved = b.drawn("moves")
+        assertEquals("${b.technique}: the lines", moved.filter { it.second != 'x' }.map(::edge).toSet(), step.lines.toSet())
+        assertEquals("${b.technique}: the crosses", moved.filter { it.second == 'x' }.map(::edge).toSet(), step.crosses.toSet())
+        return Drawn(step.technique, step.focus.filter { it < n * n }.toSet())
+    }
+
+    /** The two things a Mosaic board's squares can't show (fills left, the colour poured), and how many colours it deals. */
+    private val mosaicFixtures = mapOf("count" to Triple(3, 2, 2), "biggest-swallow" to Triple(3, 4, 0), "centre" to Triple(3, 3, 1))
+
+    private fun mosaicStep(b: Board): TeachStep? {
+        val cells = b.fields.getValue("regions").filter { it != ' ' }.map { it - 'a' }
+        val (colours, fillsLeft, colour) = mosaicFixtures.getValue(b.technique)
+        val step = MosaicTeacher.deduce(b.width, b.rows.size, colours, cells, fillsLeft) ?: return null
+        assertEquals("${b.technique}: the colour poured", colour, step.colour)
+        // The board tints the area filled: the hint's own focus can be the area and all its neighbours.
+        return Drawn(step.technique, step.targets)
+    }
+
+    private fun dominoesStep(b: Board): TeachStep? {
+        val w = b.width
+        val grid = b.rows.take(w).flatten()
+        val regions = b.fields.getValue("regions").split(' ').take(w).joinToString("")
+        val badges = b.marks("badges")
+        val regionOf = regions.map { if (it == '.') -1 else it - 'a' }
+        val rules = (0..regionOf.max()).map { r ->
+            val rule = badges.entries.first { regionOf[it.key] == r }.value
+            when {
+                rule == "=" -> RegionRule(RuleKind.EQUAL)
+                rule == "≠" -> RegionRule(RuleKind.DIFFERENT)
+                rule[0] == '<' -> RegionRule(RuleKind.LESS, rule.drop(1).toInt())
+                rule[0] == '>' -> RegionRule(RuleKind.MORE, rule.drop(1).toInt())
+                else -> RegionRule(RuleKind.SUM, rule.toInt())
+            }
+        }
+        // The tray is under the grid and an empty row, a slot per domino in the tray's sorted order; a laid one's slot is empty.
+        val slots = b.rows.drop(w + 1).flatten()
+        val laid = b.drawn("lines").map { (x, _, y) -> x to y }
+        fun domino(p: Int, q: Int) = Domino(minOf(p, q), maxOf(p, q))
+        val fromSlots = slots.filter { it != "_" }.map { t -> t.split('-').let { domino(it[0].toInt(), it[1].toInt()) } }
+        val tray = (fromSlots + laid.map { (x, y) -> domino(grid[x].toInt(), grid[y].toInt()) }).sortedWith(compareBy({ it.a }, { it.b }))
+        val placed = tray.indices.map<Int, Placement?> { k ->
+            if (slots[k] != "_") return@map null
+            val (x, y) = laid.first { (x, y) -> domino(grid[x].toInt(), grid[y].toInt()) == tray[k] }
+            if (grid[x].toInt() == tray[k].a) Placement(x, y) else Placement(y, x)
+        }
+        val layout = DominoLogic.Layout(w, w, grid.map { it != "_" }, regionOf, rules, tray)
+        assertTrue("${b.technique}: a position with one answer", DominoLogic.solutions(layout) is Verdict.ExactlyOne)
+        val step = DominoTeacher.deduce(layout, placed) ?: return null
+        val slotSquare = { k: Int -> (w + 1) * w + k }
+        val move = step.placement!!
+        val domino = tray[step.domino]
+        assertEquals("${b.technique}: the digits", mapOf(move.first to "${domino.a}", move.second to "${domino.b}", slotSquare(step.domino) to "${domino.b}-${domino.a}"), b.marks("answer"))
+        val mapped = { s: Set<Int> -> s.map { if (it >= DominoTeacher.TRAY) slotSquare(it - DominoTeacher.TRAY) else it }.toSet() }
+        return Drawn(step.technique, mapped(step.focus), mapped(step.targets))
+    }
 
     private fun sudokuStep(b: Board): PlacementStep? {
         val cells = b.rows.flatten().map { it.toIntOrNull() ?: 0 }

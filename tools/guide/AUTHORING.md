@@ -51,7 +51,10 @@ caption: One or two sentences saying what the board shows. Required.
 - `box: n` thick walls every n squares; `regions:` one string a row, one letter a square: a tint and walls per letter.
 - `focus` the tint (the step's `focus`), `cite` a ring (what the reasoning leans on), `answer` the filled square that is the move.
 - `notes` small marks, a digit in its pencil place; `struck` the same, crossed out. Never on the `answer` square.
-- `lines` thick lines between square centres (bonds, loops, paths).
+- `lines` thick lines between square centres (bonds, loops, paths): `r1c1-r1c4` one line, `r1c1=r1c4` two side by side, `r1c1xr1c2` a cross on the edge between two squares.
+- `moves` the same, drawn over `lines` in the move's colour, for a move that is a line rather than a square.
+- `draw` how a token is drawn: `spokes` (a pipe tile, its arms named from `urdl`), `discs` (a number in a disc, so lines pass behind it), `pearls` (`b` and `w`).
+- `badges` small text in a square's top-right corner: `r2c3=>8`. In `regions`, `.` is a square in no region.
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 
 For what these cannot draw (a hex, a wheel, a tube): first try tokens in a grid (Cipher's sum is rows of letters). If that really cannot

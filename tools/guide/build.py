@@ -77,7 +77,7 @@ def board(lines, where):
     for line in lines:
         key, colon, value = line.partition(":")
         if colon:
-            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption"):
+            if key.strip() not in ("box", "regions", "focus", "cite", "answer", "notes", "struck", "lines", "caption", "draw", "moves", "badges"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():
@@ -104,7 +104,7 @@ def board(lines, where):
                 continue
             x, y = c * CELL, r * CELL
             svg.append(f'<rect class="sq" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
-            if regions:
+            if regions and regions[r][c] != ".":
                 hue = hues.setdefault(regions[r][c], len(hues) % 5)
                 svg.append(f'<rect class="hue{hue}" x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
             if (r, c) in focus:
@@ -120,10 +120,25 @@ def board(lines, where):
                 walls.append((x, y, x + CELL, y))
     svg += [f'<line class="wall" x1="{a}" y1="{b}" x2="{c}" y2="{d}"/>' for a, b, c, d in walls]
     centre = lambda r, c: (c * CELL + CELL // 2, r * CELL + CELL // 2)
-    for part in fields.get("lines", "").split():
-        (r1, c1), (r2, c2) = (cells(end, where, w, h)[0] for end in part.split("-"))
-        (x1, y1), (x2, y2) = centre(r1, c1), centre(r2, c2)
-        svg.append(f'<line class="run" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"/>')
+    draw = fields.get("draw", "")
+    if draw not in ("", "spokes", "discs", "pearls"):
+        fail(where, f"unknown draw: {draw}")
+    # `a-b` a line, `a=b` two side by side, `axb` a cross on the edge between two squares. `moves` are the step's, on top.
+    for key, kind in (("lines", "run done" if "moves" in fields else "run"), ("moves", "run move")):
+        for part in fields.get(key, "").split():
+            m = re.fullmatch(r"(r\d+c\d+)([-=x])(r\d+c\d+)", part)
+            if not m:
+                fail(where, f"not a line: {part}")
+            (r1, c1), (r2, c2) = (cells(end, where, w, h)[0] for end in (m[1], m[3]))
+            (x1, y1), (x2, y2) = centre(r1, c1), centre(r2, c2)
+            if m[2] == "x":
+                mx, my = (x1 + x2) // 2, (y1 + y2) // 2
+                svg += [f'<line class="{kind} x" x1="{mx - 5}" y1="{my - 5}" x2="{mx + 5}" y2="{my + 5}"/>',
+                        f'<line class="{kind} x" x1="{mx - 5}" y1="{my + 5}" x2="{mx + 5}" y2="{my - 5}"/>']
+            else:
+                dx, dy = (4, 0) if x1 == x2 else (0, 4)
+                for k in ((-1, 1) if m[2] == "=" else (0,)):
+                    svg.append(f'<line class="{kind}" x1="{x1 + k * dx}" y1="{y1 + k * dy}" x2="{x2 + k * dx}" y2="{y2 + k * dy}"/>')
     for r, c in cite:
         svg.append(f'<rect class="cite" x="{c * CELL + 3}" y="{r * CELL + 3}" width="{CELL - 6}" height="{CELL - 6}" rx="6"/>')
     for r, c in answer:
@@ -132,9 +147,22 @@ def board(lines, where):
         for c in range(w):
             x, y = centre(r, c)
             token = answer.get((r, c), rows[r][c])
-            if token not in (".", "_"):
-                kind = "big on" if (r, c) in answer else "big"
+            if token in (".", "_"):
+                continue
+            kind = "big on" if (r, c) in answer else "big"
+            if draw == "spokes" and set(token) <= set("urdl"):
+                # A pipe tile: an arm from the middle to each side named (up, right, down, left).
+                ends = {"u": (x, y - CELL // 2), "r": (x + CELL // 2, y), "d": (x, y + CELL // 2), "l": (x - CELL // 2, y)}
+                pipe = "pipe on" if (r, c) in answer else "pipe"
+                svg += [f'<line class="{pipe}" x1="{x}" y1="{y}" x2="{ends[t][0]}" y2="{ends[t][1]}"/>' for t in token]
+            elif draw == "pearls" and token in ("b", "w"):
+                svg.append(f'<circle class="pearl {token}" cx="{x}" cy="{y}" r="11"/>')
+            else:
+                if draw == "discs":
+                    svg.append(f'<circle class="disc" cx="{x}" cy="{y}" r="15"/>')
                 svg.append(f'<text class="{kind}" x="{x}" y="{y}">{html.escape(token)}</text>')
+    for (r, c), value in get("badges", marks).items():
+        svg.append(f'<text class="badge" x="{(c + 1) * CELL - 3}" y="{r * CELL + 9}">{html.escape(value)}</text>')
     # A note sits where the app pencils that digit, a 3x3 inside the square; a note that is not a digit, in the middle.
     for table, kind in ((notes, "note"), (struck, "note struck")):
         for (r, c), value in table.items():
