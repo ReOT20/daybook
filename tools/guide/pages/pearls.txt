@@ -1,0 +1,163 @@
+# Pearls
+> One loop through every pearl
+
+## How to play
+
+Drag through squares to draw the line. Drag back along a line to rub it out. Tap between two squares to cross that edge out: a cross is only a note, for an edge you know the loop doesn't use.
+
+On a keyboard, the arrows move, Shift and an arrow draws or rubs out the line that way, and X then an arrow crosses that edge.
+
+After a moment, red marks what can't stand: three lines at a square, a pearl its lines already break, or a closed loop that leaves something out. Nothing stops you drawing it.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one loop, and you never need to guess to find it.
+
+## Rules
+
+- Draw one closed loop through the middles of squares, moving up, down, left or right. It never crosses or branches.
+- The loop passes through every pearl. It need not visit every square.
+- On a black pearl the loop turns, and goes straight on through the next square on both sides.
+- On a white pearl the loop goes straight through, and turns on at least one of the squares just before or after it.
+
+## What changes per tier
+
+- Standard: 6x6 grid. The pearls' and squares' own rules finish it.
+- Hard: 8x8 grid. Needs the rule that there's only one loop.
+- Expert: 10x10 grid. Needs a what-if.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, the tinted squares are where to look, grey lines and crosses are already drawn, and the coloured line or cross is the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### black-pearl | A black pearl's straight arms
+
+A black pearl turns, and runs straight on through the next square each way. An arm that can't do that (the edge of the board, a cross, another black pearl next door) sends it the other way, and a line out of a black pearl always carries on.
+
+~~~board
+b . . . . .
+. . . w . .
+. . w w . .
+w . . . w .
+. . b . . w
+. . . . . .
+draw: pearls
+focus: r1c1
+moves: r1c1-r1c2 r1c2-r1c3 r1c1-r2c1 r2c1-r3c1
+caption: In the corner, this black pearl can't go up or left. So it runs right and down, two squares each way.
+~~~
+
+### white-pearl | A white pearl's straight line
+
+A white pearl goes straight through. If it can't go one way, it goes the other, and the sides are crossed.
+
+~~~board
+. w . . . . . .
+. . . w . . . .
+w w . . . . . .
+. . . b . . . .
+. . . . b w . w
+. . . . . w w .
+. . . . w . . .
+. . . . . . . .
+draw: pearls
+focus: r1c2
+moves: r1c1-r1c2 r1c2-r1c3 r1c2xr2c2
+caption: On the top edge, this white pearl can't go up and down. So it goes straight across, and the edge below it is crossed.
+~~~
+
+### white-turn | A white pearl's turn beside it
+
+The loop has to turn just before or just after a white pearl. If it runs straight on through the square on one side, it must turn at the square on the other.
+
+~~~board
+. w . . . . . .
+. . . w . . . .
+w w . . . . . .
+. . . b . . . .
+. . . . b w . w
+. . . . . w w .
+. . . . w . . .
+. . . . . . . .
+draw: pearls
+focus: r3c1 r4c1
+lines: r1c1-r1c2 r1c2-r1c3 r3c1xr3c2 r3c2xr3c3 r5c7xr5c8 r1c1-r2c1 r1c2xr2c2 r2c1-r3c1 r2c2-r3c2 r3c1-r4c1 r3c2-r4c2 r4c8-r5c8 r5c8-r6c8
+moves: r4c1xr5c1
+caption: The line runs straight on through the square above this white pearl, so it has to turn on the square below. It can't carry on down from there, so that edge is crossed.
+~~~
+
+### one-way | A line with one way on
+
+A line can't stop. A square with one line and only one way left sends the line on that way.
+
+~~~board
+. . . . . .
+. . . . . w
+w . . b . w
+. . b . . .
+. . . . . .
+b . . . . .
+draw: pearls
+focus: r1c6
+lines: r2c5xr2c6 r3c1xr3c2 r3c2-r3c3 r3c3-r3c4 r3c4xr3c5 r3c5xr3c6 r4c2xr4c3 r4c3-r4c4 r4c4-r4c5 r6c1-r6c2 r6c2-r6c3 r1c1xr2c1 r1c4-r2c4 r1c6-r2c6 r2c1-r3c1 r2c4-r3c4 r2c6-r3c6 r3c1-r4c1 r3c6-r4c6 r4c1-r5c1 r4c3-r5c3 r4c6xr5c6 r5c1-r6c1 r5c3-r6c3
+moves: r1c5-r1c6
+caption: The line comes up into this corner, and the only way left is to the left.
+~~~
+
+### dead-end | A dead end
+
+An empty square with only one way in left can never be passed through, so that way is crossed.
+
+~~~board
+. . . . . .
+. . . . . w
+w . . b . w
+. . b . . .
+. . . . . .
+b . . . . .
+draw: pearls
+focus: r1c1
+lines: r1c5-r1c6 r2c1-r2c2 r2c5xr2c6 r3c1xr3c2 r3c2-r3c3 r3c3-r3c4 r3c4xr3c5 r3c5xr3c6 r4c2xr4c3 r4c3-r4c4 r4c4-r4c5 r4c5-r4c6 r6c1-r6c2 r6c2-r6c3 r1c1xr2c1 r1c4-r2c4 r1c6-r2c6 r2c1-r3c1 r2c4-r3c4 r2c6-r3c6 r3c1-r4c1 r3c6-r4c6 r4c1-r5c1 r4c3-r5c3 r4c6xr5c6 r5c1-r6c1 r5c3-r6c3
+moves: r1c1xr1c2
+caption: This corner has no pearl, and it's already crossed below. The loop would need two ways in and has one, so that edge is crossed too.
+~~~
+
+### small-loop | The loop that must be one
+
+There is only one loop. If two ends of one line sit side by side, joining them would close a loop, and that's wrong while anything is left out.
+
+~~~board
+. . . . b . w .
+w . w . . . . .
+b . b w . . w .
+. . . w b . . .
+. w . . . b w .
+. w . . b . . .
+. . . . . . . .
+. . . . . . . .
+draw: pearls
+focus: r5c3 r5c4
+lines: r1c1-r1c2 r1c3xr1c4 r1c4xr1c5 r1c5-r1c6 r1c6-r1c7 r1c7-r1c8 r2c1xr2c2 r2c2-r2c3 r2c3-r2c4 r3c1-r3c2 r3c2-r3c3 r3c3xr3c4 r3c4xr3c5 r4c3xr4c4 r4c4xr4c5 r4c5-r4c6 r4c6-r4c7 r6c3-r6c4 r6c4-r6c5 r1c1-r2c1 r1c2-r2c2 r1c3xr2c3 r1c4xr2c4 r1c5-r2c5 r1c7xr2c7 r1c8-r2c8 r2c1-r3c1 r2c3xr3c3 r2c4-r3c4 r2c5-r3c5 r3c3-r4c3 r3c4-r4c4 r4c3-r5c3 r4c4-r5c4 r5c6-r6c6 r6c6-r7c6
+moves: r5c3xr5c4
+caption: These two squares are the ends of one long line. Joining them would close a loop that leaves out pearls, so the edge between them is crossed.
+~~~
+
+### what-if | A what-if
+
+Suppose a line on an edge, or a cross, and follow the rules a few rounds. If something breaks, your supposition was wrong, so it's the other one. This isn't guessing: you only mark the edge once the other choice has been shown to break.
+
+~~~board
+. . . . . w . . . .
+. . . . . . w . . w
+. . . . . b w . . .
+. . . . . . . . . b
+. . . w . . w b w .
+. . w . w . . . . .
+. . w . . b . . . w
+. w . . . . . w . .
+w . . b . . . . . .
+. w . . . . b . . .
+draw: pearls
+focus: r7c8 r7c9
+lines: r1c4xr1c5 r1c5-r1c6 r1c6-r1c7 r1c7-r1c8 r1c8-r1c9 r1c9-r1c10 r2c5-r2c6 r2c6-r2c7 r2c7-r2c8 r2c8xr2c9 r2c9xr2c10 r3c6-r3c7 r3c7-r3c8 r4c7-r4c8 r4c8-r4c9 r4c9-r4c10 r5c6xr5c7 r5c8-r5c9 r5c9-r5c10 r7c9xr7c10 r8c9-r8c10 r9c1xr9c2 r10c1-r10c2 r10c2-r10c3 r1c5-r2c5 r1c6xr2c6 r1c7xr2c7 r1c8xr2c8 r1c10-r2c10 r2c6xr3c6 r2c7xr3c7 r2c8-r3c8 r2c9xr3c9 r2c10-r3c10 r3c6-r4c6 r3c7xr4c7 r3c10-r4c10 r4c6-r5c6 r4c7-r5c7 r4c8xr5c8 r4c10xr5c10 r5c7-r6c7 r5c8-r6c8 r5c9xr6c9 r5c10-r6c10 r6c8-r7c8 r6c9xr7c9 r6c10-r7c10 r7c4-r8c4 r7c10-r8c10 r8c1-r9c1 r8c4-r9c4 r8c7-r9c7 r8c10xr9c10 r9c1-r10c1 r9c2xr10c2 r9c4xr10c4 r9c7-r10c7
+moves: r7c8xr7c9
+caption: Suppose a line on this edge. The right-hand square is crossed above and to its right, so the line would go on down into row 8. The white pearl in row 8 could then only run across, and the square beside it would need three lines. So this edge is crossed.
+~~~

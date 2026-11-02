@@ -103,6 +103,7 @@ import com.joebywan.daybook.core.tierNotes
 import com.joebywan.daybook.core.undone
 import com.joebywan.daybook.data.SavedGame
 import com.joebywan.daybook.data.fits
+import com.joebywan.daybook.platform.rememberOpenUrl
 import com.joebywan.daybook.platform.BackButton
 import com.joebywan.daybook.platform.GENERATION_ANIMATES
 import com.joebywan.daybook.platform.LOADING_MESSAGE_DELAY_MS
@@ -225,6 +226,7 @@ fun PlayScreen(
     var askRestart by rememberSaveable(initial) { mutableStateOf(false) }
     var consulted by rememberSaveable(initial) { mutableStateOf(false) }
     var showRules by remember { mutableStateOf(false) }
+    val openUrl = rememberOpenUrl()
     // The walkthrough draws over the game rather than replacing the route, so the board, its undo
     // stack and its clock are exactly where they were when the player comes back.
     var showTutorial by rememberSaveable(initial) { mutableStateOf(false) }
@@ -766,6 +768,7 @@ fun PlayScreen(
             "How to play ${puzzle.displayName}", puzzle, difficulty,
             onWalkthrough = if (hasTutorial) ({ showRules = false; openTutorial() }) else null,
             onTrain = onTrain?.let { train -> { showRules = false; train() } },
+            onGuide = { openUrl(guideUrl(puzzle.id)) },
         ) { showRules = false }
     }
 }
@@ -1066,7 +1069,7 @@ private fun ToolButton(icon: ImageVector, label: String, modifier: Modifier, onC
 /**
  * A puzzle's rules, scrolling, under [title]: the tagline first, then the bullets, then what each tier changes (the board's
  * own [difficulty] marked), with a "Got it" and, given [onWalkthrough], a way into the walkthrough (the play screen's "?":
- * the rules are a tap away, the walkthrough one more).
+ * the rules are a tap away, the walkthrough one more). [onGuide] opens the puzzle's guide page, which the sheet never needs.
  */
 @Composable
 internal fun RulesDialog(
@@ -1075,6 +1078,7 @@ internal fun RulesDialog(
     difficulty: Difficulty? = null,
     onWalkthrough: (() -> Unit)? = null,
     onTrain: (() -> Unit)? = null,
+    onGuide: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
@@ -1096,6 +1100,11 @@ internal fun RulesDialog(
                 onTrain?.let {
                     Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Train: practise the techniques") }
+                }
+                // Extra reading, so not offered inside a walkthrough, which passes none.
+                onGuide?.let {
+                    Spacer(Modifier.height(4.dp))
+                    TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Read more in the guide") }
                 }
             }
         },

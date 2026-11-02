@@ -7,6 +7,8 @@ catalogue open from day one.
 
 No ads. No subscription. No accounts. No network permission in the manifest at all.
 
+Each puzzle has a page in the **[player guide](https://knowhowit.com.au/daybook/guide/)**, linked from its rules; links open your browser.
+
 **[Get it on Google Play](https://play.google.com/store/apps/details?id=com.joebywan.daybook)** ·
 **[Get it on F-Droid](https://f-droid.org/packages/com.joebywan.daybook/)** ·
 **[Play in the browser](https://knowhowit.com.au/daybook/)**

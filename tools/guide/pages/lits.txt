@@ -1,0 +1,138 @@
+# LITS
+> One tetromino in every region
+
+## How to play
+
+Tap a square to shade or clear it, or drag across several to do the same to each.
+
+A finished tetromino takes its letter's colour and carries the letter, so two blocks touching in one colour are the rule being broken.
+
+Squares that can no longer be shaded are crossed off for you.
+
+On a keyboard, the arrows move, Space shades, and Shift+arrow carries the shading along.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You make the move yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Shade exactly four squares in every region, forming an L, I, T or S tetromino.
+- A 2x2 square of shading is never allowed.
+- Two tetrominoes of the same letter may not touch edge to edge, even across regions.
+
+## What changes per tier
+
+- Standard: 6x6 grid. Never needs a shape that would block a neighbour, or a what-if.
+- Hard: 7x7 grid.
+- Expert: 8x8 grid. Boards are picked to need a what-if, or else a shape that would block a neighbour.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. Try them in this order. On each board, ■ is a shaded square, a letter is a finished tetromino's, and x is a square the game has crossed off. The darker squares are where to look, rings mark what the reasoning leans on, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### whole-region | A region of exactly four squares
+
+A region of exactly four squares is its own tetromino, so shade all four.
+
+~~~board
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+. . . . . .
+regions: eedddc ebddbc ebbbbc faabcc ffaacc fffaaa
+focus: r1c1 r1c2 r2c1 r3c1
+answer: r1c1=■ r1c2=■ r2c1=■ r3c1=■
+caption: This region has exactly four squares, so they are all shaded.
+~~~
+
+### overlap | Where every shape overlaps
+
+Go through the shapes that fit a region. A square every one of them covers is shaded, whichever the shape turns out to be.
+
+~~~board
+. . . x x x
+. . ■ ■ . .
+. . . . . .
+. . . . . ■
+. . . . . ■
+. . . . . .
+regions: ffffff fbbbbb eebcaa eeccca deecaa ddddda
+focus: r3c4 r4c3 r4c4 r4c5 r5c4
+answer: r4c4=■
+caption: The region with the filled square is a plus of five squares. Any four of them that join up include the middle, so it's shaded.
+~~~
+
+### avoid-2x2 | Avoiding a 2x2 block
+
+The same idea, once you set aside the shapes that would finish a 2x2 with the shading beside them.
+
+~~~board
+. . ■ x x x
+. . ■ ■ . .
+. . . . . .
+. ■ . ■ . ■
+x ■ x . . ■
+. ■ ■ . . .
+regions: ffffff fbbbbb eebcaa eeccca deecaa ddddda
+focus: r5c1 r6c1 r6c2 r6c3 r6c4 r6c5
+cite: r5c2
+answer: r6c4=■
+caption: In the region along the bottom, the crossed square at its left end is out: a shape using it would finish a 2x2 with the ringed square. That leaves a straight I, four along the bottom, starting in either of two places. Both cover the filled square.
+~~~
+
+### letter-clash | Keeping matching letters apart
+
+The same again, setting aside the shapes that would touch a finished tetromino of their own letter.
+
+~~~board
+L L L x x x
+L x I I I I
+. x x T x .
+. ■ T T x ■
+x ■ x T ■ ■
+. ■ ■ ■ x x
+regions: ffffff fbbbbb eebcaa eeccca deecaa ddddda
+focus: r3c5 r3c6 r4c6 r5c5 r5c6 r6c6
+cite: r3c4 r4c3 r4c4 r5c4
+answer: r3c6=■
+caption: The three shaded squares in the region with the filled square can finish as a T, using the crossed square below them, or an L, using the filled one above. A T would touch the ringed T, so it's crossed off and the L is what's left.
+~~~
+
+### neighbour | A shape that would block a neighbour
+
+Now look next door as well. A shape that would leave a neighbouring region no legal shape is out, and whatever every remaining shape covers is shaded.
+
+~~~board
+L L . . ■ ■ .
+L x ■ . . x I
+L . ■ . ■ ■ I
+T x ■ . ■ x I
+T T . . ■ ■ I
+T x L . ■ x .
+L L L . ■ ■ ■
+regions: ffggggg fiiggdd fiihhhd bbihhdd bbicccd baaccee aaaeeee
+focus: r5c4 r5c5 r5c6 r6c4 r6c5
+cite: r3c4 r3c5 r3c6 r4c4 r4c5
+answer: r6c4=■
+caption: The region with the filled square can finish as a T, using its top-left square, or an S, using the filled one. With a T, the ringed region above couldn't be a T too, as the two touch, and its S would finish a 2x2 with the T. It would have no shape left, so this one is the S.
+~~~
+
+### what-if | A what-if
+
+Suppose a square stays empty and follow what that forces, no more than a couple of shapes. If some region ends up with no legal shape, the square must be shaded. This isn't guessing: you only shade it once leaving it empty has been shown to break.
+
+~~~board
+I ■ ■ . I x T
+I x ■ . I T T
+I . ■ . I x T
+I . ■ . I L L
+■ . ■ . x x L
+■ . ■ . x x L
+■ . . I I I I
+regions: gbbbaai ggbbaii gdddaii gdddacc hfffeec hhfffec hhfeeee
+focus: r1c4
+cite: r3c2 r3c3 r3c4 r4c2 r4c3 r4c4
+answer: r1c4=■
+caption: If the filled square stayed empty, its region would have to finish as an S through the square below it. The ringed region touches that S, so it can't be an S too. One of its T shapes would finish a 2x2 with the S, and the other would leave the region under it no room. So the filled square is shaded.
+~~~

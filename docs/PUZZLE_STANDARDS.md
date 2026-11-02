@@ -34,6 +34,7 @@ A puzzle is done when all of these are true:
    a free-play frame the hints can finish.
 9. A fixed-motif `Preview`; the board reports its highlight geometry (`core/HighlightBounds.kt`).
 10. Tests per section 10; the rendered result checked at true size on dark and light (section 6).
+11. A player-guide page, `tools/guide/pages/<id>.txt` (`tools/guide/AUTHORING.md`), with its line in `GuideTest.teachers`. `GuideTest` fails a registered puzzle without a page.
 
 ## 2. The contract: `core/PuzzleType.kt`
 
@@ -638,7 +639,7 @@ In order. `X` is the new puzzle's name. Do this on a branch, never `main`.
 10. **Walkthrough:** `tutorialBoard`, constants, `tutorial` frames; tests per section 8.
 11. **Web:** run the section 5 dump comparison; check the page at a phone width in both colour schemes
     (`?puzzle=x&tier=expert`); check generation time on the web for Expert (`?dump&range=N&times`).
-12. **Housekeeping:** README puzzle list; recapture `docs/screenshots/home.png` (and its alt
+12. **Housekeeping:** the guide page (`tools/guide/AUTHORING.md`); README puzzle list; recapture `docs/screenshots/home.png` (and its alt
     text); `HomeScreen` comment on the row count if the grid changes shape; the teaching table in `docs/TEACHING.md`; this file's matrix.
 13. **Commit and PR:** branch, PR, review and merge per CLAUDE.md "Git and releases". Push to `main` builds a
     signed release automatically.

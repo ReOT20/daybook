@@ -1,0 +1,79 @@
+# Crossword
+> A mini crossword. Solve the clues.
+
+## How to play
+
+Tap a square, then type. Typing moves on to the next empty square of the word. Tap the square again to turn between Across and Down, or tap the clue.
+
+The bar shows the clue for the word you're in, and its arrows walk through the words.
+
+On a keyboard, type letters and Backspace clears. The arrows move (one the other way turns first), and Space turns.
+
+Once every square is filled, a word that isn't in the word list turns red. If the grid is full and still not right, a note under it says so, without saying where.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You type the word yourself, unless you ask for "Show me". Each clue has exactly one answer.
+
+## Rules
+
+- Fill every white square with a letter.
+- Every word across and down must be the answer to its clue.
+
+## What changes per tier
+
+- Standard: 5x5 grid, plain clues.
+- Hard: 6x6 grid, many across clues indirect.
+- Expert: 7x7 grid, most clues indirect.
+
+## Techniques
+
+These are the steps the hints teach. On each board, the tinted squares are the word to look at and the filled squares are that word.
+
+### clue | A letter from its clue
+
+From an empty grid, only a clue can start you off, and a clue is knowledge, not logic. So the hint first offers a second clue for the word the fewest words fit. Tap again and it reads the answer, says so, and gives you one letter.
+
+### one-word | A word only one word fits
+
+The letters in a word may leave only one word in the list that fits, even before you've read its clue.
+
+~~~board
+G E M _ _
+. X . . .
+. I . . .
+. . . . .
+_ _ . . .
+focus: r1c2-r4c2
+answer: r1c2=E r2c2=X r3c2=I r4c2=T
+caption: 2 Down reads E X I and a gap. EXIT is the only word in the list that fits, and its clue is "Way out".
+~~~
+
+### crossing | The word its crossings leave
+
+When a few words fit, try each one against the words that cross it. One that leaves a crossing word with nothing to be can't be right.
+
+~~~board
+G E M _ _
+E X A C T
+N I C H E
+E T H O S
+_ _ O . T
+focus: r5c3-r5c5
+cite: r2c4 r3c4 r4c4
+answer: r5c3=O r5c4=P r5c5=T
+caption: OPT and OUT both fit 9 Across. OUT would make the ringed word CHOU, which is no word in the list. OPT makes it CHOP.
+~~~
+
+### all-words | Every crossing worked through together
+
+Sometimes no single crossing settles a word, but they all do between them. Each square keeps only the letters both its words allow. Each cut leaves fewer words, and that cuts more letters, until a word has only one choice left.
+
+~~~board
+G E M _ _
+E X . . .
+N I . . .
+E T . . .
+_ _ . . .
+focus: r2c1-r2c5
+answer: r2c1=E r2c2=X r2c3=A r2c4=C r2c5=T
+caption: No one crossing settles 4 Across here. Working every open word through together until nothing changes leaves it only EXACT.
+~~~

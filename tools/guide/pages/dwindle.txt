@@ -1,0 +1,82 @@
+# Dwindle
+> Find every word, and watch the letters go
+
+## How to play
+
+Swipe through touching tiles to spell a word, across or up and down, never diagonally. Or tap the tiles in turn and press Enter.
+
+On a keyboard, type a word from the tiles, Backspace deletes, Enter tries the word, and Escape clears it.
+
+The dashes show the lengths of the goal words. Each tile's number is how many goal words still run through it, and at zero it vanishes. Tiles never fall or move.
+
+Any other real word is a bonus word: it uses nothing up. Tap the bonus line to see them all, A to Z. A word that won't do is refused with a note saying why.
+
+Each goal word has only one way on the board, and no order can leave you stuck.
+
+Stuck? The first tap on Hint says where to look, and the second gives a clue to a word. A hint glows one tile at most, because the word's own tiles would spell it. Only "Show me" enters the word.
+
+## Rules
+
+- Find every goal word.
+- A word has three letters or more and runs through touching tiles, using a tile at most once.
+
+## What changes per tier
+
+- Standard: 4x4 tiles, 6 or 7 words, words up to 5 letters.
+- Hard: 5x5 tiles, 10 to 12 words, words up to 6 letters.
+- Expert: 6x6 tiles, 15 to 18 words, words up to 7 letters.
+
+## Techniques
+
+These are the steps the hints teach. On each board, a tile is its letter and its number, so S2 is an S with two words left to run through it. A filled tile is where to look, and the rings mark the rest of the word.
+
+### clue | A word from its clue
+
+Sometimes nothing on the board forces a word. The hint then picks the tile with the fewest words to spare and gives the clue to a word through it. It reads the board's own goals to do that, and says so.
+
+### through | A tile only so many words reach
+
+Compare a tile's number with the well-known words that can run through it. If they're equal, every one of them is a goal.
+
+~~~board
+N2 I2 S2 S2
+R1 H1 E2 O2
+A2 Y2 R2 W3
+S1 I1 V1 A1
+focus: r1c4
+answer: r1c4=S2
+cite: r2c4 r3c4 r2c2 r1c2 r1c3
+caption: This S has 2 uses left, and just two well-known words run through it, SOW and HISS. So both are goals.
+~~~
+
+### length | A length only so many words fit
+
+Count the open dashes of one length, then the well-known words of that length still on the tiles. If they match, those words are the goals.
+
+~~~board
+T1 A1 P2 A2 L2 B2
+_ _ A1 Z1 S2 U2
+_ _ W2 E3 T1 P2
+_ _ T1 F2 Y1 O1
+T1 L2 I3 F2 R2 _
+_ C2 U2 B2 E3 V1
+cite: r5c5 r6c5 r6c4 r6c3 r5c3 r5c2 r5c1
+caption: One seven-letter dash is open, and only one well-known seven-letter word is left on these tiles: REBUILT.
+~~~
+
+### all-tiles | Every tile's number taken together
+
+The numbers have to come out exactly, on every tile and for every dash. Think through the ways of using up the whole board: if one word is in all of them, it's a goal, whichever way the rest falls.
+
+~~~board
+T1 A1 P2 A1 L1 B1
+_ _ A1 _ S2 U2
+_ _ W2 E2 T1 P2
+_ _ T1 F1 Y1 O1
+_ _ I1 F1 R1 _
+_ C1 U1 B1 E2 V1
+focus: r2c3
+answer: r2c3=A1
+cite: r3c3 r3c4
+caption: More than one word could take this A's last use. But every way of using up all the numbers includes AWE, so AWE is a goal.
+~~~
