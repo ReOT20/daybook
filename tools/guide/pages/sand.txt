@@ -85,7 +85,7 @@ li te or wi li br wi wi cr .
 li vi te cr mi vi br te cr mi
 te br vi vi or mi or or cr mi
 regions: ababababab ababababab ababababab ababababab
-focus: r1c5-r4c5
-answer: r1c1=li
-caption: There's no empty tube here, and tubes 1 and 5 both show lilac. Moving one layer across joins nothing up by itself, but the hint's search has found a way to sort the board that starts with this pour.
+focus: r1c8-r4c8
+answer: r1c4=wi
+caption: There's no empty tube here, and tube 8's two wine won't fit in one place: tubes 4 and 7 each have room for one. Moving one onto tube 4 joins nothing up by itself, but then the other can go on tube 7, and that uncovers the teal.
 ~~~
