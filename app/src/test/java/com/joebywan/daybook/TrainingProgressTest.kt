@@ -99,7 +99,7 @@ class TrainingProgressTest {
                         val verdict = course.judge(p, s)
                         if (d.isReached(s) || verdict == true) break
                         assertNull("${course.id} $t: no verdict for part of a step", verdict)
-                        assertEquals("${course.id} $t", "Right so far: ${k + 1} of ${need.size}. Keep going.", course.progress(p, s))
+                        assertTrue("${course.id} $t", course.progress(p, s)!!.startsWith("Right so far: ${k + 1} of ${need.size}. Keep going"))
                         seen++
                     }
                     assertEquals("${course.id} $t: the whole step is right", true, course.judge(p, full))

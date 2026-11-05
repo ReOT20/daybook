@@ -463,6 +463,8 @@ class MoveDrill(
      * of a step. Null for a course whose every step is one move (a domino, a block, a chess move), which needs no progress.
      */
     private val view: ((PuzzleState) -> List<Any?>)? = null,
+    /** What [progress]'s line asks next: Nonogram's says its crosses count, since in play they are only notes. */
+    private val keepGoing: String = "Keep going.",
 ) : Drill {
     override fun walk(start: PuzzleState): Sequence<Course.Practice> = sequence {
         var s = start
@@ -500,13 +502,13 @@ class MoveDrill(
             val need = d.targets.filter { it < was.size && was[it] != full[it] }
             val done = need.count { now[it] == full[it] }
             val sound = now.indices.all { now[it] == was[it] || now[it] == full[it] }
-            if (sound && done in 1 until need.size) progressLine(done, need.size) else null
+            if (sound && done in 1 until need.size) progressLine(done, need.size, keepGoing) else null
         }
     }
 }
 
 /** The line for a step part made: how many of its squares, never which are left. */
-internal fun progressLine(done: Int, of: Int) = "Right so far: $done of $of. Keep going."
+internal fun progressLine(done: Int, of: Int, keepGoing: String) = "Right so far: $done of $of. $keepGoing"
 
 /**
  * What the player has passed in Training, as `puzzleId|technique` (or `puzzleId|exam`). Its own key set in the
