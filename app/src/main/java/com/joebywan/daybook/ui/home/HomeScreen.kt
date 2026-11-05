@@ -497,7 +497,7 @@ private fun StreakBadge(streak: Streak, onStats: () -> Unit) {
         if (!streak.alive) {
             Text("0", style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(0.dp).alpha(0f).clearAndSetSemantics { })
             Text(
-                if (streak.lapsed) tr("Welcome back", "С возвращением") else tr("Day one awaits", "Всё начинается с первого дня"),
+                if (streak.lapsed) tr("Welcome back", "С возвращением") else tr("Day one awaits", "Первый день"),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
             )

@@ -9,8 +9,9 @@ The first pass translates app navigation, settings, calendar, play controls, res
   keep technique ids and earning rules stable. English-only achievement prose must keep English tier names.
 - Russian word games need their own screened/licensed corpora, clues, keyboards, alphabet domains, difficulty
   validation and language-aware board/save identity; never replace or reorder the shipped English lists.
-- Check Russian layouts on phones/tablets, both orientations and large text in Android, Chromium and WebKit;
-  include an offline glyph-request check. No language picker or live language switching is implemented.
+- Check native Russian Android layouts on phones/tablets, both orientations and large text. Headless
+  Chromium/WebKit layout and offline glyph-request coverage is recorded in `docs/LOCALIZATION.md`.
+  No language picker or live language switching is implemented.
 
 
 ## Arcade: the rest of the boards

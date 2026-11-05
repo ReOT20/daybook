@@ -44,19 +44,21 @@ fun TitledScreen(
         Modifier.fillMaxSize().background(scheme.background).windowInsetsPadding(WindowInsets.safeDrawing),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            BackButton(onBack)
-            Column(Modifier.weight(1f).padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 8.dp)) {
-                Text(title, style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
-                if (subtitle != null) Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(subtitle, style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
-                    if (beside != null) {
-                        Spacer(Modifier.width(10.dp))
-                        beside()
+        CappedFontScale {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                BackButton(onBack)
+                Column(Modifier.weight(1f).padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 8.dp)) {
+                    Text(title, style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+                    if (subtitle != null) Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(subtitle, style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+                        if (beside != null) {
+                            Spacer(Modifier.width(10.dp))
+                            beside()
+                        }
                     }
                 }
+                trailing()
             }
-            trailing()
         }
         content()
     }

@@ -22,6 +22,12 @@ route or preference keys. English word lists remain unchanged. A Russian word bo
 content-language identity before new corpora can be introduced. English-only content should not interpolate
 Russian display labels.
 
+Fixed headers, archive calendar/list slots and compact statistics cards use the existing
+`CappedFontScale` limit. Archive tier headings use short Russian labels and fit within their columns;
+statistics rows wrap whole labels
+and share links, and the share preview's body scrolls at large text sizes. Explanatory body text
+in settings and puzzle rules keeps the player's font scale.
+
 Android keeps `DateTimeFormatter` and its existing locale behavior, with the locale included in the cache
 key. The web's supported patterns are tested in `CalendarText.kt`; `MMMM` uses Russian date forms
 (`5 ноября`), while `LLLL` is a standalone month (`ноябрь 2026`). Weekday captions stay Monday first.
@@ -73,3 +79,21 @@ For visual checks use a Russian device/browser locale, both themes, narrow and w
 Use `tools/render/render.py --locale ru-RU` (its default is `en-US`). The glyph-request check accepts a
 locale after its output and distribution directories. Do not re-pin boards or rewrite save fixtures
 to make a translation pass.
+
+### Validation on 2026-11-05
+
+Headless Chromium 156 and WebKit 27.2 covered 72 distinct locale/layout cases across Russian and
+English: welcome/Start, daily/levels/training home modes, settings through the lower controls,
+archives, populated statistics, hints, walkthrough, training celebration, finish/share and tablet play.
+Sizes included 375x537, 360x640, 390x844, 844x390, 768x1024 and 1024x768, both themes and 2x text.
+The shortest 375x537 viewport was also checked at 2x for archive, welcome and share. Targeted reruns
+verified the fixes found during review, including deep per-puzzle statistics and English comparisons.
+
+Every case blocked external page requests, loaded all four Cyrillic weights locally for Russian
+(none for English), and redrew after going offline. No page errors, font failures or external requests
+were observed. The existing glyph harness also passed all 32 language/browser/screen combinations.
+Only isolated browser contexts were used, with service workers blocked and no personal profile.
+
+Android compilation, 33 focused tests and final unsigned release assembly passed alongside the Wasm
+distribution. Native Android visual checks, real-device Safari and the full unit suite were not run.
+Headless Linux WebKit is an approximation of Safari, as described in `AGENTS.md`.

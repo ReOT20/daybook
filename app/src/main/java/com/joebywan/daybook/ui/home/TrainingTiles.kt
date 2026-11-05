@@ -34,7 +34,7 @@ internal fun TrainingStrip(tally: TrainingTally) {
         CappedFontScale {
             val style = MaterialTheme.typography.labelLarge
             Text(
-                tr("${tally.graduated} of ${tally.courses} graduated  ·  ${tally.passed} techniques passed", "Завершено курсов: ${tally.graduated} из ${tally.courses}  ·  Освоено приёмов: ${tally.passed}"),
+                tr("${tally.graduated} of ${tally.courses} graduated  ·  ${tally.passed} techniques passed", "Курсы: ${tally.graduated} из ${tally.courses}  ·  Приёмы: ${tally.passed}"),
                 style = style, color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip,
                 autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = style.fontSize),
             )

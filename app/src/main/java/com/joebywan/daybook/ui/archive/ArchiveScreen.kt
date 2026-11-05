@@ -3,6 +3,8 @@ package com.joebywan.daybook.ui.archive
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.BoardHues
 import com.joebywan.daybook.ui.TitledScreen
+import com.joebywan.daybook.ui.CappedFontScale
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +52,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.joebywan.daybook.core.DailySeed
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
@@ -73,10 +76,10 @@ private const val DAY_DATE = "EEE d MMM yyyy"
 /** The tier buttons' row: a label and a reserved second line ("in progress"), so picking a day never moves anything. */
 private val TIER_ROW = 60.dp
 /** The selected day's date line above the tier buttons. */
-private val DATE_LINE = 28.dp
+private val DATE_LINE = 32.dp
 /** The month bar (its arrows are 48 dp touch targets) and the weekday letters. */
 private val MONTH_BAR = 48.dp
-private val WEEKDAYS = 20.dp
+private val WEEKDAYS = 22.dp
 private val GAP = 12.dp
 
 /** Where the calendar can go and where it opens. Pure, so the bounds are testable on their own. */
@@ -133,7 +136,7 @@ fun ArchiveScreen(
     val selected = picked?.let(LocalDate::fromEpochDays)
     val started by remember(selected) { selected?.let(inProgress) ?: flowOf(emptySet()) }.collectAsState(emptySet())
 
-    TitledScreen(
+    CappedFontScale { TitledScreen(
         tr("${puzzle.displayName} archive", "Архив: ${puzzle.displayName}"),
         archiveDaysLabel(today),
         onBack,
@@ -198,7 +201,7 @@ fun ArchiveScreen(
                 }
             }
         }
-    }
+    } }
 }
 
 @Composable
@@ -276,7 +279,10 @@ private fun TierPanel(
                             Icon(Icons.Default.Check, tr("Solved", "Решено"), tint = ink, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
                         }
-                        Text(difficulty.label, style = MaterialTheme.typography.labelLarge, color = ink)
+                        Text(
+                            difficulty.label, style = MaterialTheme.typography.labelLarge, color = ink, maxLines = 1,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
+                        )
                     }
                     // Under the centred label, in room kept for it, so a save appearing never moves the label.
                     if (!isSolved && difficulty in started) {
@@ -295,9 +301,10 @@ private fun TierPanel(
 
 /** The day's list: a tier column's width and a puzzle's row. */
 private val TIER_COL = 60.dp
+private val TIER_HEADING = 22.dp
 private val PUZZLE_ROW = 52.dp
 /** The least room the list keeps under the calendar on a narrow screen: the date line, the tier headings and two rows. */
-private val LIST_MIN = DATE_LINE + 20.dp + PUZZLE_ROW * 2
+private val LIST_MIN = DATE_LINE + TIER_HEADING + PUZZLE_ROW * 2
 
 /**
  * The archive by day, the way in from Home and from the streak calendar: a month calendar (a dot under a day with a
@@ -328,7 +335,7 @@ fun ArchiveDaysScreen(
     val month = LocalDate.fromEpochDays(shown)
     val started by remember(selected) { inProgress(selected) }.collectAsState(emptySet())
 
-    TitledScreen(
+    CappedFontScale { TitledScreen(
         tr("Archive", "Архив"),
         archiveDaysLabel(today),
         onBack,
@@ -389,7 +396,7 @@ fun ArchiveDaysScreen(
                 }
             }
         }
-    }
+    } }
 }
 
 /** A day of the month: its number, and a dot under it when a daily of that day was solved. */
@@ -436,16 +443,21 @@ private fun DayPuzzles(
             maxLines = 1,
             modifier = Modifier.height(DATE_LINE),
         )
-        Row(Modifier.fillMaxWidth().height(20.dp)) {
+        Row(Modifier.fillMaxWidth().height(TIER_HEADING)) {
             Spacer(Modifier.weight(1f))
             Difficulty.entries.forEach {
                 Text(
-                    it.label,
+                    tr(it.englishLabel, when (it) {
+                        Difficulty.STANDARD -> "Обыч."
+                        Difficulty.HARD -> "Сложн."
+                        Difficulty.EXPERT -> "Эксп."
+                    }),
                     style = MaterialTheme.typography.labelMedium,
                     color = scheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    modifier = Modifier.width(TIER_COL),
+                    autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelMedium.fontSize),
+                    modifier = Modifier.width(TIER_COL).padding(horizontal = 3.dp),
                 )
             }
         }

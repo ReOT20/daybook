@@ -2,6 +2,8 @@ package com.joebywan.daybook.ui.play
 
 import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -53,7 +55,7 @@ fun SharePreview(card: ShareCard, onClose: () -> Unit) {
         onDismissRequest = onClose,
         title = { Text(card.header.removePrefix("Daybook · "), style = MaterialTheme.typography.titleMedium) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
                     val widest = card.lines.maxOfOrNull { it.marks.size + if (it.hinted) 2 else 0 } ?: 1
                     val tail = if (card.lines.any { it.marks.isNotEmpty() && it.tail.length > 2 }) 120.dp else 24.dp
