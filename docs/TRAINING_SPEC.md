@@ -202,7 +202,7 @@ techniques), `tierFor` (usually `tierByIndex(...)`), a `Drill`, the trained badg
     still making, so a note would fire on honest progress.
   - **Progress** (2026-10-28, the owner dislikes a player left without feedback): a play-on move that is a right part of
     an instance of the technique not yet finished shows "Right so far: 3 of 12. Keep going." in the slot, in place of the
-    explanation (`Course.progress`, `MoveDrill(view)`). It is no verdict: it neither counts, ends the board nor breaks
+    explanation (`Course.progress`, `MoveDrill(view)`). Nonogram's line ends "Keep going: crosses count here, so cross the squares the step rules out." instead (`MoveDrill(keepGoing)`, 2026-11-05): in play crosses are notes, and a player who never crosses filled a step's squares and was left at "k of n" not knowing why. It is no verdict: it neither counts, ends the board nor breaks
     the run, and the board stays interactive. Per instance (the teacher's own first, then `every`'s), "need" is the
     targets whose mark the instance's own Show me changes and "done" those the board already holds; the line shows when
     every square the player changed holds what that Show me puts there (a flood or a sprout it makes too counts) and
