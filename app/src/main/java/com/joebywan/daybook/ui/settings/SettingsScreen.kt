@@ -200,7 +200,7 @@ private fun MotionSetting(choice: MotionChoice, onChoice: (MotionChoice) -> Unit
         Column {
             CardText(
                 tr("Reduced motion", "Меньше анимации"),
-                tr("Stills the confetti, sparkles, shakes and slides, and holds the hint glow steady. System follows your device's setting.", "Отключает конфетти, искры, тряску и движение, делает подсветку подсказок постоянной. «Как в системе» использует настройку устройства."),
+                tr("Stills the confetti, sparkles, shakes and slides, and holds the hint glow steady. System follows your device's setting.", "Отключает конфетти, искры, тряску и движение, делает подсветку подсказок постоянной. «Система» использует настройку устройства."),
             )
         }
         SegmentedControl(

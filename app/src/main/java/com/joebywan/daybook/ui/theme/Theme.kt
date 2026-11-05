@@ -14,7 +14,7 @@ enum class Appearance {
     DARK;
 
     val label: String get() = when (this) {
-        SYSTEM -> tr("System", "Системная")
+        SYSTEM -> tr("System", "Система")
         LIGHT -> tr("Light", "Светлая")
         DARK -> tr("Dark", "Тёмная")
     }

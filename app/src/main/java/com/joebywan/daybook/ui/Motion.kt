@@ -32,7 +32,7 @@ enum class MotionChoice {
     OFF;
 
     val label: String get() = when (this) {
-        DEVICE -> tr("System", "Как в системе")
+        DEVICE -> tr("System", "Система")
         ON -> tr("On", "Вкл.")
         OFF -> tr("Off", "Выкл.")
     }
