@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.tutorial
 
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.foundation.background
@@ -217,20 +218,20 @@ fun TutorialRunner(
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    "How to play ${puzzle.displayName}",
+                    tr("How to play ${puzzle.displayName}", "Как играть в ${puzzle.displayName}"),
                     style = MaterialTheme.typography.titleLarge,
                     color = scheme.onBackground,
                 )
                 Text(
-                    "${index + 1} of ${frames.size}",
+                    tr("${index + 1} of ${frames.size}", "${index + 1} из ${frames.size}"),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                 )
             }
-            TextButton(onClick = { showRules = true }) { Text("Rules", color = scheme.onSurfaceVariant) }
+            TextButton(onClick = { showRules = true }) { Text(tr("Rules", "Правила"), color = scheme.onSurfaceVariant) }
             // Skip is always there, and always the same size and place, so leaving never has to be
             // hunted for.
-            TextButton(onClick = onClose) { Text(if (last) "Close" else "Skip", color = scheme.onSurfaceVariant) }
+            TextButton(onClick = onClose) { Text(if (last) tr("Close", "Закрыть") else tr("Skip", "Пропустить"), color = scheme.onSurfaceVariant) }
         }
 
         Box(
@@ -309,7 +310,7 @@ fun TutorialRunner(
                 },
                 enabled = index > 0,
                 modifier = Modifier.weight(1f),
-            ) { Text("Back") }
+            ) { Text(tr("Back", "Назад")) }
             // Only where a hint can answer: Snap's teaching is its walkthrough, with no hints.
             if (frame.freePlay && !board.solved && puzzle.offersHints) {
                 OutlinedButton(
@@ -326,7 +327,7 @@ fun TutorialRunner(
                 enabled = showNext && canAdvance,
                 colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = BoardHues.onFill(accent)),
                 modifier = Modifier.weight(1f).alpha(if (showNext) 1f else 0f),
-            ) { Text(if (last) "Play" else "Next") }
+            ) { Text(if (last) tr("Play", "Играть") else tr("Next", "Далее")) }
         }
     }
 
@@ -346,5 +347,5 @@ fun TutorialRunner(
     }
     }
 
-    if (showRules) RulesDialog("${puzzle.displayName} in short", puzzle) { showRules = false }
+    if (showRules) RulesDialog(tr("${puzzle.displayName} in short", "Кратко о ${puzzle.displayName}"), puzzle) { showRules = false }
 }

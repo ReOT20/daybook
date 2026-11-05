@@ -54,10 +54,10 @@ val ACHIEVEMENTS: List<Achievement> = listOf(
     puzzleStreak(7, "Devoted"),
     puzzleStreak(30, "Specialist"),
     Achievement("days30", AchievementCategory.MILESTONE, "Regular", "Play on 30 different days.") { h, _, _ -> playedDays(h).size >= 30 },
-    Achievement("firstTop", AchievementCategory.MILESTONE, "First ${TOP.label}", "Solve a puzzle on ${TOP.label}.") { h, _, _ ->
+    Achievement("firstTop", AchievementCategory.MILESTONE, "First ${TOP.englishLabel}", "Solve a puzzle on ${TOP.englishLabel}.") { h, _, _ ->
         h.any { it.difficulty == TOP }
     },
-    Achievement("cleanTop", AchievementCategory.MILESTONE, "Unaided ${TOP.label}", "Solve a ${TOP.label} puzzle without hints.") { h, _, _ ->
+    Achievement("cleanTop", AchievementCategory.MILESTONE, "Unaided ${TOP.englishLabel}", "Solve a ${TOP.englishLabel} puzzle without hints.") { h, _, _ ->
         h.any { it.difficulty == TOP && it.hints == 0 }
     },
     Achievement("oneOfEach", AchievementCategory.COVERAGE, "One of each", "Solve every kind of puzzle at least once.") { h, _, ids ->
@@ -169,7 +169,7 @@ fun remaining(
             .map { (p, c) -> p to Difficulty.entries - c.mapTo(HashSet()) { it.difficulty }.toSet() }
             .filter { it.second.size in 1..2 }.minWithOrNull(compareBy({ it.second.size }, { it.first }))
             ?.let { (p, miss) ->
-                go(miss.size, "${nameOf(p)} on ${miss.joinToString(" and ") { it.label }} is all that's left for a Full set today.")
+                go(miss.size, "${nameOf(p)} on ${miss.joinToString(" and ") { it.englishLabel }} is all that's left for a Full set today.")
             }
         // The week ending today: the only one a solve from now on can still finish.
         id == "allPuzzles" -> {

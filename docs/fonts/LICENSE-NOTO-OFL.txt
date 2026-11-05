@@ -1,9 +1,12 @@
 Copyright 2016 Google LLC. All Rights Reserved. (Noto Sans Symbols)
 Copyright 2017 Google Inc. All Rights Reserved. (Noto Sans Symbols 2)
 Copyright 2018 Google LLC. All Rights Reserved. (Noto Sans Math)
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/latin-greek-cyrillic) (Noto Sans)
 
 The web build bundles subsets of these fonts (web/src/wasmJsMain/composeResources/font/noto_*.ttf),
 cut by tools/subset-font.py; each keeps its name table, which carries this notice.
+The Noto Sans Cyrillic subsets are also bundled on Android; their source and generation are
+recorded in docs/LOCALIZATION.md. They retain the same license and name-table notice.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

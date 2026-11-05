@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui
 
+import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -25,11 +26,16 @@ import com.joebywan.daybook.core.LocalBoardHighlight
 val LocalReducedMotion = compositionLocalOf { false }
 
 /** The player's Reduced motion setting: the device's (the default) or their own, either way. Stored by name. */
-enum class MotionChoice(val label: String) {
-    DEVICE("System"),
-    ON("On"),
-    OFF("Off"),
-    ;
+enum class MotionChoice {
+    DEVICE,
+    ON,
+    OFF;
+
+    val label: String get() = when (this) {
+        DEVICE -> tr("System", "Как в системе")
+        ON -> tr("On", "Вкл.")
+        OFF -> tr("Off", "Выкл.")
+    }
 
     /** Whether motion is reduced, given what the [device] asks for. */
     fun reduced(device: Boolean): Boolean = when (this) {

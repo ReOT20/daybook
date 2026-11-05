@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.settings
 
+import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import com.joebywan.daybook.ui.card
@@ -72,24 +73,25 @@ fun SettingsScreen(
 ) {
     val rateLink = rememberRateLink()
 
-    TitledScreen("Settings", null, onBack) {
+    val languageNote = tr("", "Переведён интерфейс. Правила, подсказки, обучающие задания и словесные головоломки пока на английском.")
+    TitledScreen(tr("Settings", "Настройки"), null, onBack) {
         LazyColumn(
             contentPadding = PaddingValues(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item {
                 SettingSwitch(
-                    title = "Show the timer while playing",
-                    detail = "A running clock above the board. Off or on, your time is counted, " +
-                        "shown when you solve, and kept for your statistics.",
+                    title = tr("Show the timer while playing", "Показывать таймер во время игры"),
+                    detail = tr("A running clock above the board. Off or on, your time is counted, " +
+                        "shown when you solve, and kept for your statistics.", "Таймер над полем. Независимо от этой настройки время учитывается, показывается после решения и сохраняется в статистике."),
                     checked = showTimer,
                     onChecked = onShowTimer,
                 )
             }
             item {
                 SettingSwitch(
-                    title = "Sound",
-                    detail = "Soft sounds as you play, and a short tune when you solve a puzzle. $SOLVE_SOUND_NOTE",
+                    title = tr("Sound", "Звук"),
+                    detail = tr("Soft sounds as you play, and a short tune when you solve a puzzle. $SOLVE_SOUND_NOTE", "Тихие звуки во время игры и короткая мелодия после решения. $SOLVE_SOUND_NOTE"),
                     checked = playSound,
                     onChecked = onPlaySound,
                 )
@@ -100,9 +102,9 @@ fun SettingsScreen(
             item { MotionSetting(motionChoice, onMotionChoice) }
             item {
                 SettingSwitch(
-                    title = "Vibration",
-                    detail = "A light tap when a move lands, a firmer one when a bump costs a life, and a short buzz " +
-                        "when you solve. $VIBRATION_NOTE",
+                    title = tr("Vibration", "Вибрация"),
+                    detail = tr("A light tap when a move lands, a firmer one when a bump costs a life, and a short buzz " +
+                        "when you solve. $VIBRATION_NOTE", "Лёгкая вибрация при ходе, более сильная при потере жизни и короткий сигнал после решения. $VIBRATION_NOTE"),
                     checked = vibrate,
                     onChecked = onVibrate,
                 )
@@ -110,6 +112,9 @@ fun SettingsScreen(
             item { PuzzleOrderRow(customOrder, onResetOrder) }
             item { TrainingRow(onTraining) }
             item { RateRow(rateLink) }
+            if (languageNote.isNotEmpty()) item {
+                Text(languageNote, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             item { Credits() }
         }
     }
@@ -131,9 +136,9 @@ private fun ReminderSetting() {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().card(scheme.surface)) {
         SettingSwitch(
-            title = "Daily reminder",
-            detail = if (refused) "Daybook isn't allowed to send notifications. Allow them in your phone's settings, then try again."
-            else "One quiet note a day at a time you choose, and none on a day you've already solved a daily.",
+            title = tr("Daily reminder", "Ежедневное напоминание"),
+            detail = if (refused) tr("Daybook isn't allowed to send notifications. Allow them in your phone's settings, then try again.", "Daybook не разрешено отправлять уведомления. Разрешите их в настройках телефона и попробуйте снова.")
+            else tr("One quiet note a day at a time you choose, and none on a day you've already solved a daily.", "Одно тихое уведомление в выбранное время. Если вы уже решили задание дня, уведомления не будет."),
             checked = on,
             onChecked = { want ->
                 fun apply(now: Boolean) = scope.launch {
@@ -171,10 +176,10 @@ private fun ReminderSetting() {
 private fun AccessibilityHeading() {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp)) {
-        Text("Accessibility", style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+        Text(tr("Accessibility", "Специальные возможности"), style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
         Text(
-            "Always on: press and hold does whatever a double tap does, the numbers and letters on a board stay " +
-                "inside their squares at large font sizes, and what is right or wrong is never shown by colour alone.",
+            tr("Always on: press and hold does whatever a double tap does, the numbers and letters on a board stay " +
+                "inside their squares at large font sizes, and what is right or wrong is never shown by colour alone.", "Всегда включено: долгое нажатие заменяет двойное, цифры и буквы остаются внутри клеток при крупном шрифте, а верные и неверные ходы различаются не только цветом."),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
         )
@@ -194,8 +199,8 @@ private fun MotionSetting(choice: MotionChoice, onChoice: (MotionChoice) -> Unit
     ) {
         Column {
             CardText(
-                "Reduced motion",
-                "Stills the confetti, sparkles, shakes and slides, and holds the hint glow steady. System follows your device's setting.",
+                tr("Reduced motion", "Меньше анимации"),
+                tr("Stills the confetti, sparkles, shakes and slides, and holds the hint glow steady. System follows your device's setting.", "Отключает конфетти, искры, тряску и движение, делает подсветку подсказок постоянной. «Как в системе» использует настройку устройства."),
             )
         }
         SegmentedControl(
@@ -221,7 +226,7 @@ private fun AppearanceChoice(appearance: Appearance, onAppearance: (Appearance) 
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column { CardText("Appearance", "Light or dark, or the same as your device.") }
+        Column { CardText(tr("Appearance", "Тема"), tr("Light or dark, or the same as your device.", "Светлая, тёмная или как на устройстве.")) }
         SegmentedControl(
             modifier = Modifier,
             options = Appearance.entries,
@@ -250,14 +255,14 @@ private fun Credits() {
             .padding(14.dp),
     ) {
         CardText(
-            "Word lists",
-            "Lexicon's words come from SCOWL (Spell Checker Oriented Word Lists), Copyright 2000-2016 " +
+            tr("Word lists", "Словари"),
+            tr("Lexicon's words come from SCOWL (Spell Checker Oriented Word Lists), Copyright 2000-2016 " +
                 "by Kevin Atkinson, used under its permissive licence. The lists are provided \"as is\" " +
                 "without warranty, and Kevin Atkinson makes no representations about their suitability " +
-                "for any purpose.",
+                "for any purpose.", "Слова Lexicon взяты из SCOWL (Spell Checker Oriented Word Lists), Copyright 2000-2016 Kevin Atkinson, и используются по свободной лицензии. Списки предоставляются «как есть», без гарантий; Kevin Atkinson не заявляет об их пригодности для каких-либо целей."),
         )
         Spacer(Modifier.height(12.dp))
-        CardText("Typeface", "Fredoka, Copyright 2016 The Fredoka Project Authors, used under the SIL Open Font License 1.1.")
+        CardText(tr("Typeface", "Шрифт"), tr("Fredoka, Copyright 2016 The Fredoka Project Authors, used under the SIL Open Font License 1.1.", "Fredoka, Copyright 2016 The Fredoka Project Authors. Используется по лицензии SIL Open Font License 1.1."))
     }
 }
 
@@ -274,14 +279,14 @@ private fun PuzzleOrderRow(customOrder: Boolean, onReset: () -> Unit) {
     ) {
         Column(Modifier.weight(1f)) {
             CardText(
-                "Puzzle order",
-                if (customOrder) "Your own order. Puzzles added later join at the end."
-                else "Most played first, over the last two months. Press and hold a puzzle on the home screen to move it.",
+                tr("Puzzle order", "Порядок головоломок"),
+                if (customOrder) tr("Your own order. Puzzles added later join at the end.", "Ваш порядок. Новые головоломки добавляются в конец.")
+                else tr("Most played first, over the last two months. Press and hold a puzzle on the home screen to move it.", "Сначала те, в которые вы чаще играли за последние два месяца. Чтобы переместить головоломку на главном экране, нажмите и удерживайте её."),
             )
         }
         if (customOrder) {
             Text(
-                "Reset to most played",
+                tr("Reset to most played", "Вернуть по частоте игры"),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = scheme.primary,
@@ -331,6 +336,6 @@ private fun TrainingRow(onOpen: () -> Unit) {
             .clickable(onClick = onOpen)
             .padding(14.dp),
     ) {
-        CardText("Training", "Practise the hints' techniques one at a time, on real boards.")
+        CardText(tr("Training", "Обучение"), tr("Practise the hints' techniques one at a time, on real boards.", "Отрабатывайте приёмы из подсказок по одному на настоящих заданиях."))
     }
 }

@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.play
 
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.russianPlural
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.PuzzleType
@@ -161,6 +163,7 @@ fun shareCard(
     val key: List<Pair<Mark, String>>
     // A daily comes back tomorrow; a random or level board does not, so its nudges look to the next one instead.
     val next = if (date != null) "tomorrow" else "next time"
+    val nextRussian = if (date != null) "завтра" else "в следующий раз"
     // Rows are the final guesses; the log's live moves are the last of them (an older save logged none before).
     fun hintedRows(guessed: Int): (Int) -> Boolean {
         val live = moves.filter { !it.undone && !it.wrong }
@@ -168,7 +171,7 @@ fun shareCard(
         return { row -> live.getOrNull(row - offset)?.hinted == true }
     }
     fun guessNudge(guessed: Int) =
-        if (guessed == 1) "First guess. Nothing to improve on." else "No hints, ${plural(guessed, "guess", "guesses")}. Fewer $next?"
+        if (guessed == 1) tr("First guess. Nothing to improve on.", "С первой попытки. Лучше уже некуда.") else tr("No hints, ${plural(guessed, "guess", "guesses")}. Fewer $next?", "Без подсказок, $guessed ${russianPlural(guessed, "попытка", "попытки", "попыток")}. Сможете меньше $nextRussian?")
     // Every nudge below is for a solve without hints; one with them gets the same line whatever the puzzle.
     val own: String
     when (state) {
@@ -181,7 +184,7 @@ fun shareCard(
                     when (it) { LexiconMark.CORRECT -> Mark.GREEN; LexiconMark.PRESENT -> Mark.YELLOW; else -> Mark.WHITE }
                 }, hinted(row))
             }
-            key = listOf(Mark.GREEN to "right place", Mark.YELLOW to "wrong place", Mark.RED to "hint")
+            key = listOf(Mark.GREEN to tr("right place", "верное место"), Mark.YELLOW to tr("wrong place", "неверное место"), Mark.RED to tr("hint", "подсказка"))
             own = guessNudge(guessed)
         }
         is TowerState -> {
@@ -196,64 +199,64 @@ fun shareCard(
                     hinted(row),
                 )
             }
-            key = listOf(Mark.EXACT to "right colour and slot", Mark.CLOSE to "right colour", Mark.RED to "hint")
+            key = listOf(Mark.EXACT to tr("right colour and slot", "верный цвет и место"), Mark.CLOSE to tr("right colour", "верный цвет"), Mark.RED to tr("hint", "подсказка"))
             own = guessNudge(guessed)
         }
         is SetsState -> {
             lines = listOf(ShareLine(moves.map { it.mark() }))
-            key = listOf(Mark.GREEN to "a set", Mark.WHITE to "not a set", Mark.YELLOW to "taken back", Mark.RED to "hint")
+            key = listOf(Mark.GREEN to tr("a set", "набор"), Mark.WHITE to tr("not a set", "не набор"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
             val misses = moves.count { it.wrong }
             val off = listOfNotNull(
-                misses.takeIf { it > 0 }?.let { if (it == 1) "1 pick that wasn't a set" else "$it picks that weren't sets" },
-                undone.takeIf { it > 0 }?.let { "${plural(it, "set")} taken back" },
+                misses.takeIf { it > 0 }?.let { if (it == 1) tr("1 pick that wasn't a set", "1 неудачный выбор") else tr("$it picks that weren't sets", "$it ${russianPlural(it, "неудачный выбор", "неудачных выбора", "неудачных выборов")}") },
+                undone.takeIf { it > 0 }?.let { tr("${plural(it, "set")} taken back", "отменено наборов: $it") },
             )
-            own = if (off.isEmpty()) "Every pick a set. Nothing to improve on." else "No hints, ${off.joinToString(" and ")}. Fewer $next?"
+            own = if (off.isEmpty()) tr("Every pick a set. Nothing to improve on.", "Каждый выбор — набор. Лучше уже некуда.") else tr("No hints, ${off.joinToString(" and ")}. Fewer $next?", "Без подсказок, ${off.joinToString(" и ")}. Сможете меньше $nextRussian?")
         }
         is ChessState -> {
-            suffix = " · mate in ${state.mateIn}"
+            suffix = tr(" · mate in ${state.mateIn}", " · мат в ${state.mateIn}")
             lines = listOf(ShareLine(moves.map { it.mark() }, tail = "#"))
-            key = listOf(Mark.GREEN to "move", Mark.YELLOW to "taken back", Mark.RED to "hint")
+            key = listOf(Mark.GREEN to tr("move", "ход"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
             own = when {
-                undone > 0 -> "No hints, ${plural(undone, "move")} taken back. Fewer $next?"
-                else -> "A clean mate. Nothing to improve on."
+                undone > 0 -> tr("No hints, ${plural(undone, "move")} taken back. Fewer $next?", "Без подсказок, отменено ходов: $undone. Сможете меньше $nextRussian?")
+                else -> tr("A clean mate. Nothing to improve on.", "Мат без отмен и подсказок. Лучше уже некуда.")
             }
         }
         is TargetState -> {
             val steps = state.log.size
-            lines = listOf(ShareLine(moves.map { it.mark() }, tail = "   ${plural(steps, "step")} · par ${state.par}"))
-            key = listOf(Mark.GREEN to "step", Mark.YELLOW to "taken back", Mark.RED to "hint")
+            lines = listOf(ShareLine(moves.map { it.mark() }, tail = tr("   ${plural(steps, "step")} · par ${state.par}", "   $steps ${russianPlural(steps, "шаг", "шага", "шагов")} · минимум ${state.par}")))
+            key = listOf(Mark.GREEN to tr("step", "шаг"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
             own = when {
-                undone > 0 -> "No hints, ${plural(undone, "step")} taken back. Fewer $next?"
-                steps > state.par -> "No hints, nothing taken back. Par is ${state.par}: $next?"
-                else -> "On par, nothing taken back. Nothing to improve on."
+                undone > 0 -> tr("No hints, ${plural(undone, "step")} taken back. Fewer $next?", "Без подсказок, отменено шагов: $undone. Сможете меньше $nextRussian?")
+                steps > state.par -> tr("No hints, nothing taken back. Par is ${state.par}: $next?", "Без подсказок и отмен. Минимум — ${state.par}: получится $nextRussian?")
+                else -> tr("On par, nothing taken back. Nothing to improve on.", "За минимум ходов, без отмен. Лучше уже некуда.")
             }
         }
         // No hints and no undo: the lives are the whole story.
         is PointersState -> {
             val lost = PointersLogic.LIVES - state.lives
             lines = listOf(ShareLine(List(state.lives) { Mark.HEART } + List(lost) { Mark.LOST }))
-            key = listOf(Mark.HEART to "life left", Mark.LOST to "life lost")
-            own = if (lost == 0) "Not a single bump." else "${plural(lost, "bump")}. None $next?"
+            key = listOf(Mark.HEART to tr("life left", "жизнь осталась"), Mark.LOST to tr("life lost", "жизнь потеряна"))
+            own = if (lost == 0) tr("Not a single bump.", "Ни одного столкновения.") else tr("${plural(lost, "bump")}. None $next?", "$lost ${russianPlural(lost, "столкновение", "столкновения", "столкновений")}. Сможете без них $nextRussian?")
         }
         else -> {
             lines = listOf(ShareLine(strip(moves)))
-            key = listOf(Mark.GREEN to "own move", Mark.YELLOW to "taken back", Mark.RED to "hint")
+            key = listOf(Mark.GREEN to tr("own move", "свой ход"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
             own = when {
-                undone > 0 -> "No hints, ${plural(undone, "move")} taken back. Fewer $next?"
-                else -> "A clean solve. Nothing to improve on."
+                undone > 0 -> tr("No hints, ${plural(undone, "move")} taken back. Fewer $next?", "Без подсказок, отменено ходов: $undone. Сможете меньше $nextRussian?")
+                else -> tr("A clean solve. Nothing to improve on.", "Решено без подсказок и отмен. Лучше уже некуда.")
             }
         }
     }
     return ShareCard(
-        header = if (level != null) "Daybook · Level $level · ${puzzle.displayName} · ${tier.label}$suffix"
-            else "Daybook · ${puzzle.displayName} · ${tier.label} · ${date ?: "random board"}$suffix",
+        header = if (level != null) tr("Daybook · Level $level · ${puzzle.displayName} · ${tier.label}$suffix", "Daybook · Уровень $level · ${puzzle.displayName} · ${tier.label}$suffix")
+            else tr("Daybook · ${puzzle.displayName} · ${tier.label} · ${date ?: "random board"}$suffix", "Daybook · ${puzzle.displayName} · ${tier.label} · ${date ?: "случайное поле"}$suffix"),
         lines = lines,
         stats = clock +
-            (if (hints > 0) " · ${plural(hints, "hint")}" else "") +
-            bonusCount(state).let { if (it > 0) " · +${plural(it, "bonus word")}" else "" } +
-            if (streak >= 2) " · $streak day streak" else "",
+            (if (hints > 0) tr(" · ${plural(hints, "hint")}", " · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}") else "") +
+            bonusCount(state).let { if (it > 0) tr(" · +${plural(it, "bonus word")}", " · +$it ${russianPlural(it, "бонусное слово", "бонусных слова", "бонусных слов")}") else "" } +
+            if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
         key = key,
-        nudge = if (hints > 0) "The hints got you there. Try ${if (date != null) "tomorrow's" else "the next one"} with fewer." else own,
+        nudge = if (hints > 0) tr("The hints got you there. Try ${if (date != null) "tomorrow's" else "the next one"} with fewer.", "Подсказки помогли справиться. Попробуйте ${if (date != null) "завтра" else "в следующий раз"} обойтись меньшим числом подсказок.") else own,
         spaced = state is TowerState,
     )
 }
@@ -275,22 +278,23 @@ fun dayShareCard(
     val tiers = Difficulty.entries.map { tier -> tier to ids.filter { (it to tier) in done } }.filter { it.second.isNotEmpty() }
     if (tiers.isEmpty()) return null
     val lines = tiers.flatMap { (tier, solved) ->
-        val what = if (solved.size <= DAY_NAMES) solved.joinToString(", ") { nameOf(it) } else "${solved.size} puzzles"
+        val what = if (solved.size <= DAY_NAMES) solved.joinToString(", ") { nameOf(it) } else tr("${solved.size} puzzles", "${solved.size} ${russianPlural(solved.size, "задача", "задачи", "задач")}")
         listOf(ShareLine(emptyList(), tail = "${tier.label} · $what")) + solved.chunked(13).map { row -> ShareLine(row.map { Mark.GREEN }) }
     }
     // The preview's one line about the rest of the day: only when a tier is done or one or two are left at it.
     val left = tiers.map { (tier, solved) -> tier to ids.filter { it !in solved } }.minBy { it.second.size }
     val nudge = when (left.second.size) {
-        0 -> "Every ${left.first.label} daily done today."
-        1, 2 -> "${left.second.joinToString(" and ") { nameOf(it) }} ${if (left.second.size == 1) "is" else "are"} all that's left " +
-            "for every ${left.first.label} daily today."
-        else -> "Well played. Same time tomorrow?"
+        0 -> tr("Every ${left.first.label} daily done today.", "Все ежедневные задачи на сложности «${left.first.label}» решены.")
+        1, 2 -> tr("${left.second.joinToString(" and ") { nameOf(it) }} ${if (left.second.size == 1) "is" else "are"} all that's left " +
+            "for every ${left.first.label} daily today.",
+            "Осталось решить ${left.second.joinToString(" и ") { nameOf(it) }}, чтобы завершить все ежедневные задачи на сложности «${left.first.label}».")
+        else -> tr("Well played. Same time tomorrow?", "Отличная игра. До завтра?")
     }
     return ShareCard(
-        header = "Daybook · $date · today's dailies",
+        header = tr("Daybook · $date · today's dailies", "Daybook · $date · ежедневные задачи"),
         lines = lines,
-        stats = "${tiers.sumOf { it.second.size }} solved today" + if (streak >= 2) " · $streak day streak" else "",
-        key = listOf(Mark.GREEN to "solved"),
+        stats = tr("${tiers.sumOf { it.second.size }} solved today", "Сегодня решено: ${tiers.sumOf { it.second.size }}") + if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
+        key = listOf(Mark.GREEN to tr("solved", "решено")),
         nudge = nudge,
     )
 }
@@ -308,12 +312,12 @@ fun threeShareCard(
     if (done.isEmpty()) return null
     val hints = done.sumOf { it.hints }
     return ShareCard(
-        header = "Daybook · $date · Today's three · ${tier.label}",
+        header = tr("Daybook · $date · Today's three · ${tier.label}", "Daybook · $date · Тройка дня · ${tier.label}"),
         lines = listOf(ShareLine(solves.map { if (it == null) Mark.WHITE else Mark.GREEN }, tail = "  ${done.size}/${three.size}")),
-        stats = clock(done.sumOf { it.seconds }) + (if (hints > 0) " · ${plural(hints, "hint")}" else "") +
-            if (streak >= 2) " · $streak day streak" else "",
-        key = listOf(Mark.GREEN to "solved", Mark.WHITE to "not yet"),
-        nudge = if (done.size == three.size) "All three done. A tidy day's work." else "A fine start on today's three.",
+        stats = clock(done.sumOf { it.seconds }) + (if (hints > 0) tr(" · ${plural(hints, "hint")}", " · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}") else "") +
+            if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
+        key = listOf(Mark.GREEN to tr("solved", "решено"), Mark.WHITE to tr("not yet", "ещё не решено")),
+        nudge = if (done.size == three.size) tr("All three done. A tidy day's work.", "Все три решены. Отличная работа за день.") else tr("A fine start on today's three.", "Хорошее начало тройки дня."),
     )
 }
 
@@ -326,11 +330,11 @@ fun levelShareCard(level: Int, plan: List<String>, solves: List<LevelSolve>, clo
     val got = plan.mapNotNull { by[it] }
     val hints = got.sumOf { it.hints }
     return ShareCard(
-        header = "Daybook · Level $level · ${got.size}/${plan.size}",
+        header = tr("Daybook · Level $level · ${got.size}/${plan.size}", "Daybook · Уровень $level · ${got.size}/${plan.size}"),
         lines = listOf(ShareLine(plan.map { id -> by[id]?.let { if (it.hints > 0) Mark.RED else Mark.GREEN } ?: Mark.WHITE })),
-        stats = "${clock(got.sumOf { it.seconds })} · ${plural(hints, "hint")}",
-        key = listOf(Mark.GREEN to "no hints", Mark.RED to "hints"),
-        nudge = if (hints == 0) "Every board your own work." else "Level $level done. On to level ${level + 1}.",
+        stats = tr("${clock(got.sumOf { it.seconds })} · ${plural(hints, "hint")}", "${clock(got.sumOf { it.seconds })} · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}"),
+        key = listOf(Mark.GREEN to tr("no hints", "без подсказок"), Mark.RED to tr("hints", "подсказки")),
+        nudge = if (hints == 0) tr("Every board your own work.", "Каждое поле решено своими силами.") else tr("Level $level done. On to level ${level + 1}.", "Уровень $level пройден. Вперёд, к уровню ${level + 1}."),
     )
 }
 

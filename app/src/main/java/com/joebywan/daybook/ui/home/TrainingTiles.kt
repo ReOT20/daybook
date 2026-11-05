@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.home
 
+import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,7 +34,7 @@ internal fun TrainingStrip(tally: TrainingTally) {
         CappedFontScale {
             val style = MaterialTheme.typography.labelLarge
             Text(
-                "${tally.graduated} of ${tally.courses} graduated  ·  ${tally.passed} techniques passed",
+                tr("${tally.graduated} of ${tally.courses} graduated  ·  ${tally.passed} techniques passed", "Завершено курсов: ${tally.graduated} из ${tally.courses}  ·  Освоено приёмов: ${tally.passed}"),
                 style = style, color = scheme.onSurfaceVariant, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip,
                 autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = style.fontSize),
             )
@@ -51,7 +52,7 @@ internal fun TrainingGrid(puzzles: List<PuzzleType>, record: Set<String>, height
     TileGrid(courses.size, height) { i, previewSize, modifier ->
         val c = courses[i]
         PuzzleTile(c.puzzle, c.graduated(record), { emptySet() }, previewSize, { onOpen(c.id) }, modifier) { accent ->
-            TileFooter("${c.passedCount(record)} of ${c.techniques.size}", accent)
+            TileFooter(tr("${c.passedCount(record)} of ${c.techniques.size}", "${c.passedCount(record)} из ${c.techniques.size}"), accent)
         }
     }
 }

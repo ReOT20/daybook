@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.Training
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.data.PuzzleTechniques
 import com.joebywan.daybook.platform.BackButton
 import com.joebywan.daybook.platform.rememberOpenUrl
@@ -57,9 +58,9 @@ fun TechniquesScreen(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             BackButton(onBack)
             Column(Modifier.weight(1f).padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 8.dp)) {
-                Text("Techniques", style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+                Text(tr("Techniques", "Приёмы"), style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
                 Text(
-                    "Techniques you've been shown in hints",
+                    tr("Techniques you've been shown in hints", "Приёмы, показанные в подсказках"),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                 )
@@ -84,7 +85,7 @@ fun TechniquesScreen(
                     p.techniques.forEach { t ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // The tick's room is kept either way, so the names line up.
-                            if (t.met) Icon(Icons.Default.Check, "Shown", tint = scheme.primary, modifier = Modifier.size(18.dp))
+                            if (t.met) Icon(Icons.Default.Check, tr("Shown", "Показано"), tint = scheme.primary, modifier = Modifier.size(18.dp))
                             else Spacer(Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
@@ -97,8 +98,8 @@ fun TechniquesScreen(
                         // Under the name, not beside it: two links beside a long name squeeze it to a word a line.
                         // 16dp + a link's own 10dp padding starts them under the name.
                         Row(Modifier.padding(start = 16.dp)) {
-                            TechniqueLink("Guide") { openUrl(guideUrl(p.puzzleId, t.id)) }
-                            if (t.id in trained) TechniqueLink("Practise") { onPractise(p.puzzleId, t.id) }
+                            TechniqueLink(tr("Guide", "Руководство")) { openUrl(guideUrl(p.puzzleId, t.id)) }
+                            if (t.id in trained) TechniqueLink(tr("Practise", "Тренироваться")) { onPractise(p.puzzleId, t.id) }
                         }
                     }
                 }

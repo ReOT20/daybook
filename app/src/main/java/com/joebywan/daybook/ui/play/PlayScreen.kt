@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.play
 
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.russianPlural
 import com.joebywan.daybook.ui.theme.arcadePage
 
 import com.joebywan.daybook.ui.theme.vivid
@@ -535,7 +537,7 @@ fun PlayScreen(
                         buildString {
                             append(difficulty.label)
                             append(" · ")
-                            append(level?.let { "Level $it" } ?: day?.let { formatDate(it, PLAY_DATE) } ?: "Random")
+                            append(level?.let { tr("Level $it", "Уровень $it") } ?: day?.let { formatDate(it, PLAY_DATE) } ?: tr("Random", "Случайная"))
                         },
                         style = MaterialTheme.typography.labelLarge,
                         color = scheme.onSurfaceVariant,
@@ -545,7 +547,7 @@ fun PlayScreen(
                     Modifier.size(48.dp).clip(CircleShape).clickable { showRules = true },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.HelpOutline, "How to play", tint = scheme.onSurfaceVariant)
+                    Icon(Icons.AutoMirrored.Filled.HelpOutline, tr("How to play", "Как играть"), tint = scheme.onSurfaceVariant)
                 }
             }
         }
@@ -573,7 +575,7 @@ fun PlayScreen(
                     // What the puzzle is about, then the offer: two small lines (the longest tagline fits one at 360dp),
                     // inside the clock row's height and its padding, so the board never moves.
                     Text(
-                        "${puzzle.tagline}\nOne-minute walkthrough",
+                        tr("${puzzle.tagline}\nOne-minute walkthrough", "${puzzle.tagline}\nОбучение за минуту"),
                         style = MaterialTheme.typography.bodySmall,
                         color = com.joebywan.daybook.ui.theme.BoardHues.textOn(vivid(puzzle.accent), scheme.background),
                         textAlign = TextAlign.Center,
@@ -624,11 +626,11 @@ fun PlayScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (puzzle.offersUndo) {
-                    ToolButton(Icons.AutoMirrored.Filled.Undo, "Undo", Modifier.weight(1f)) {
+                    ToolButton(Icons.AutoMirrored.Filled.Undo, tr("Undo", "Отменить"), Modifier.weight(1f)) {
                         if (!solved) undo()
                     }
                 }
-                ToolButton(Icons.Default.Refresh, "Restart", Modifier.weight(1f)) {
+                ToolButton(Icons.Default.Refresh, tr("Restart", "Заново"), Modifier.weight(1f)) {
                     if (solved) return@ToolButton
                     // A random game can be replaced as well as restarted; a daily has only the one board.
                     when {
@@ -658,7 +660,7 @@ fun PlayScreen(
                 Column(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 8.dp),
                 ) {
-                    Text("How to play", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                    Text(tr("How to play", "Как играть"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
                     Spacer(Modifier.height(6.dp))
                     // With the keys: a wide window is the desktop, where they are most likely used and least likely guessed.
                     RulesList(puzzle, MaterialTheme.typography.bodySmall, scheme.onSurfaceVariant, gap = 6.dp)
@@ -736,18 +738,18 @@ fun PlayScreen(
     if (askRestart && onNewGame != null) {
         AlertDialog(
             onDismissRequest = { askRestart = false },
-            title = { Text("Start over?") },
-            text = { Text("Clear this board and try it again, or deal a new random one.") },
+            title = { Text(tr("Start over?", "Начать заново?")) },
+            text = { Text(tr("Clear this board and try it again, or deal a new random one.", "Очистить это поле и попробовать ещё раз или получить новое случайное поле.")) },
             confirmButton = {
                 TextButton(onClick = {
                     askRestart = false
                     // Back to the untouched board first, so leaving writes nothing under the old key.
                     game = pristine
                     onNewGame()
-                }) { Text("New board") }
+                }) { Text(tr("New board", "Новое поле")) }
             },
             dismissButton = {
-                TextButton(onClick = { askRestart = false; restart() }) { Text("Restart this one") }
+                TextButton(onClick = { askRestart = false; restart() }) { Text(tr("Restart this one", "Начать это поле заново")) }
             },
         )
     }
@@ -755,17 +757,17 @@ fun PlayScreen(
     if (askStartOver) {
         AlertDialog(
             onDismissRequest = { askStartOver = false },
-            title = { Text("Start over?") },
+            title = { Text(tr("Start over?", "Начать заново?")) },
             // Only Arrows has lives; Mines (no Undo either) ends at its first mine, so it says nothing of them.
-            text = { Text(if (state is PointersState) "The board resets and your lives come back." else "The board goes back to how it began.") },
-            confirmButton = { TextButton(onClick = { askStartOver = false; restart() }) { Text("Start over") } },
-            dismissButton = { TextButton(onClick = { askStartOver = false }) { Text("Keep playing") } },
+            text = { Text(if (state is PointersState) tr("The board resets and your lives come back.", "Поле вернётся в исходное состояние, а жизни восстановятся.") else tr("The board goes back to how it began.", "Поле вернётся в исходное состояние.")) },
+            confirmButton = { TextButton(onClick = { askStartOver = false; restart() }) { Text(tr("Start over", "Начать заново")) } },
+            dismissButton = { TextButton(onClick = { askStartOver = false }) { Text(tr("Keep playing", "Продолжить игру")) } },
         )
     }
 
     if (showRules) {
         RulesDialog(
-            "How to play ${puzzle.displayName}", puzzle, difficulty,
+            tr("How to play ${puzzle.displayName}", "Как играть в ${puzzle.displayName}"), puzzle, difficulty,
             onWalkthrough = if (hasTutorial) ({ showRules = false; openTutorial() }) else null,
             onTrain = onTrain?.let { train -> { showRules = false; train() } },
             onGuide = { openUrl(guideUrl(puzzle.id)) },
@@ -811,7 +813,7 @@ private fun DealingBoard(puzzle: PuzzleType) {
                     Spacer(Modifier.height(16.dp))
                 }
                 Text(
-                    "Setting out ${puzzle.displayName}...",
+                    tr("Setting out ${puzzle.displayName}...", "Готовлю ${puzzle.displayName}..."),
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurfaceVariant,
                 )
@@ -903,7 +905,7 @@ internal fun FinishedFrame(
     val stamp = remember(praise.big) { Animatable(if (celebrate && praise.big) STAMP_FROM else 1f) }
     LaunchedEffect(praise.streak) { count.animateTo(praise.streak.toFloat(), tween(COUNT_MS, easing = FastOutSlowInEasing)) }
     LaunchedEffect(praise.big) { stamp.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)) }
-    val title = praise.title ?: "Congratulations!"
+    val title = praise.title ?: tr("Congratulations!", "Поздравляем!")
     val shown = count.value.toInt()
     val counting = praise.streak > 0 && shown < praise.streak
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -931,13 +933,13 @@ internal fun FinishedFrame(
                 Text(
                     buildString {
                         append(formatClock(seconds))
-                        if (hints > 0) append("  ·  ${plural(hints, "hint")}")
+                        if (hints > 0) append(tr("  ·  ${plural(hints, "hint")}", "  ·  $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}"))
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.onSurface,
                 )
                 praise.share?.let { ShareChip(it, accent) }
-                praise.setShare?.let { ShareChip(it, accent, praise.setShareLabel) }
+                praise.setShare?.let { ShareChip(it, accent, praise.setShareLabel, preview = false) }
             }
             praise.lines.forEach {
                 Text(it, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
@@ -988,10 +990,10 @@ private fun Modifier.frameCard(color: Color): Modifier = shadow(6.dp, FrameShape
 
 /** Opens the share preview ([SharePreview]) for the result's card ([Praise.share]). */
 @Composable
-private fun ShareChip(card: ShareCard, accent: Color, label: String = "Share") {
+private fun ShareChip(card: ShareCard, accent: Color, label: String = tr("Share", "Поделиться"), preview: Boolean = true) {
     // Saveable, so turning the device keeps the preview open.
     // The render hook opens the solve's own card, never the set's over it.
-    var open by rememberSaveable { mutableStateOf(sharePreviewOpen && label == "Share") }
+    var open by rememberSaveable { mutableStateOf(sharePreviewOpen && preview) }
     Row(
         Modifier.clip(RoundedCornerShape(14.dp)).background(accent.copy(alpha = 0.22f))
             .clickable { open = true }
@@ -1020,7 +1022,7 @@ private fun ResultsPill(accent: Color, options: List<NextOption>, onShow: () -> 
                             Modifier.weight(1f).fillMaxHeight().heightIn(min = 48.dp).shadow(4.dp, RoundedCornerShape(24.dp)).clip(RoundedCornerShape(24.dp))
                                 .background(scheme.surface).background(accent.copy(alpha = 0.22f)).clickable(onClick = onShow),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Show results", style = MaterialTheme.typography.titleSmall, color = scheme.onSurface) }
+                        ) { Text(tr("Show results", "Результаты"), style = MaterialTheme.typography.titleSmall, color = scheme.onSurface) }
                     } else {
                         NextTile(option, option == main, accent, Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(14.dp)).background(scheme.surface)) { onOption(option) }
                     }
@@ -1083,7 +1085,7 @@ internal fun RulesDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Got it") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(tr("Got it", "Понятно")) } },
         title = { Text(title) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -1094,17 +1096,17 @@ internal fun RulesDialog(
                 // In the text, not the button row: beside "Got it" a label this long wraps the row onto two lines.
                 onWalkthrough?.let {
                     Spacer(Modifier.height(12.dp))
-                    FilledTonalButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Play the one-minute walkthrough") }
+                    FilledTonalButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text(tr("Play the one-minute walkthrough", "Пройти обучение за минуту")) }
                 }
                 // Training: each technique the hints use, practised on real boards.
                 onTrain?.let {
                     Spacer(Modifier.height(8.dp))
-                    OutlinedButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Train: practise the techniques") }
+                    OutlinedButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text(tr("Train: practise the techniques", "Тренировка приёмов")) }
                 }
                 // Extra reading, so not offered inside a walkthrough, which passes none.
                 onGuide?.let {
                     Spacer(Modifier.height(4.dp))
-                    TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text("Read more in the guide") }
+                    TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) { Text(tr("Read more in the guide", "Подробнее в руководстве")) }
                 }
             }
         },
@@ -1125,7 +1127,7 @@ private fun TierList(puzzle: PuzzleType, current: Difficulty?) {
     Difficulty.entries.forEachIndexed { i, d ->
         val here = d == current
         Text(
-            "${d.label}: ${notes[i]}" + if (here) " (this board)" else "",
+            "${d.label}: ${notes[i]}" + if (here) tr(" (this board)", " (это поле)") else "",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (here) FontWeight.Bold else null,
             color = if (here) MaterialTheme.colorScheme.primary else Color.Unspecified,
@@ -1151,10 +1153,10 @@ private fun RulesList(
     }
     if (puzzle.keyboardHelp.isEmpty()) return
     Text(
-        "Keyboard: " + puzzle.keyboardHelp.joinToString(" ") +
+        tr("Keyboard: ", "Клавиатура: ") + puzzle.keyboardHelp.joinToString(" ") +
             listOfNotNull(
-                "Ctrl+Z undoes".takeIf { puzzle.offersUndo },
-                "H asks for a hint, Esc closes it".takeIf { puzzle.offersHints },
+                tr("Ctrl+Z undoes", "Ctrl+Z отменяет ход").takeIf { puzzle.offersUndo },
+                tr("H asks for a hint, Esc closes it", "H открывает подсказку, Esc закрывает её").takeIf { puzzle.offersHints },
             ).joinToString(", ", prefix = " ").let { if (it.isBlank()) "" else "$it." },
         style = style,
         color = color,

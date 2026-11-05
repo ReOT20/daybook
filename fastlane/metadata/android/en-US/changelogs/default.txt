@@ -1,8 +1,3 @@
-- New player guide, linked from each puzzle's rules and every technique.
-- Letters and finished rows climb a marimba; words da-ding.
-- The marimba chime is back when you finish, growing with bigger wins.
-- Solved dailies reopen on your result, share card and next choices.
-- Hexwords: lower Standard target; says when it's out of reach.
-- Sudoku, Cage Sudoku: pick a digit, then tap squares.
-- Sudoku: a note press lights that digit and its notes.
-- Word games: tap letters, then press Enter.
+- Russian interface text follows your device or browser language.
+- Calendars, reminders, results and sharing now have Russian text, with bundled Cyrillic fonts for offline use.
+- This is the first localization step: puzzle rules, teaching content, achievements and word puzzles remain in English.

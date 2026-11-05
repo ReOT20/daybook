@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.play
 
+import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,7 +47,7 @@ private val GOLD = Color(0xFFD1A32F)
 @Composable
 fun SharePreview(card: ShareCard, onClose: () -> Unit) {
     val share = rememberSharer()
-    var label by remember { mutableStateOf("Share") }
+    var label by remember { mutableStateOf(tr("Share", "Поделиться")) }
     val scheme = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = onClose,
@@ -88,7 +89,7 @@ fun SharePreview(card: ShareCard, onClose: () -> Unit) {
         confirmButton = {
             TextButton(onClick = { share(card.text)?.let { label = it } }) { Text(label) }
         },
-        dismissButton = { TextButton(onClick = onClose) { Text("Close") } },
+        dismissButton = { TextButton(onClick = onClose) { Text(tr("Close", "Закрыть")) } },
     )
 }
 

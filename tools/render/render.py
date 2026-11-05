@@ -317,6 +317,7 @@ def build_parser():
                     help=f"viewport in CSS px, repeatable (default: {' '.join(DEFAULT_SIZES)})")
     ap.add_argument("-b", "--browser", action="append", choices=BROWSERS, help="repeatable (default: both)")
     ap.add_argument("--scheme", action="append", choices=SCHEMES, help="repeatable (default: both)")
+    ap.add_argument("--locale", default="en-US", help="browser language (default: en-US)")
     ap.add_argument("--date", default="2026-06-15", metavar="YYYY-MM-DD",
                     help="the app's 'today' (?date=); default is fixed so boards are reproducible")
     ap.add_argument("--finish", type=int, choices=range(4), metavar="N",
@@ -399,7 +400,7 @@ def main(argv=None) -> int:
                         # board is unplayed (with --first-visit, it opens on its walkthrough as for a new player).
                         ctx = browser.new_context(
                             viewport={"width": w, "height": h}, device_scale_factor=DEVICE_SCALE,
-                            has_touch=True, color_scheme=scheme, locale="en-US",
+                            has_touch=True, color_scheme=scheme, locale=args.locale,
                             service_workers="block",  # a cached shell would hide a rebuilt dist
                             user_agent=args.user_agent,
                             reduced_motion="reduce" if args.reduced_motion else "no-preference",

@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.training
 
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.animation.core.Animatable
@@ -123,7 +124,7 @@ private fun TrainingRow(title: String, note: String?, ticked: Boolean, done: Int
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (ticked) Icon(Icons.Default.Check, "Passed", tint = scheme.primary, modifier = Modifier.size(20.dp))
+        if (ticked) Icon(Icons.Default.Check, tr("Passed", "Пройдено"), tint = scheme.primary, modifier = Modifier.size(20.dp))
         else Spacer(Modifier.size(20.dp))
         Spacer(Modifier.width(10.dp))
         Column {
@@ -168,14 +169,14 @@ private fun TrainingList(title: String, subtitle: String, intro: String, onBack:
 @Composable
 fun TrainingScreen(record: Set<String>, onOpen: (String) -> Unit, onBack: () -> Unit) {
     TrainingList(
-        "Training", "Practise what the hints teach",
-        "Pick a puzzle, then a technique, and practise it on real boards. Get ${Training.RUN} right in a row to pass it.",
+        tr("Training", "Тренировка"), tr("Practise what the hints teach", "Закрепите приёмы из подсказок"),
+        tr("Pick a puzzle, then a technique, and practise it on real boards. Get ${Training.RUN} right in a row to pass it.", "Выберите игру и приём, затем потренируйтесь на настоящих полях. Для зачёта нужна серия верных решений: ${Training.RUN} подряд."),
         onBack,
     ) {
         Training.COURSES.forEach { c ->
             val done = c.techniques.count { c.passed(record, it) }
             TrainingRow(
-                c.puzzle.displayName, "$done of ${c.techniques.size} passed",
+                c.puzzle.displayName, tr("$done of ${c.techniques.size} passed", "Пройдено: $done из ${c.techniques.size}"),
                 ticked = if (c.hasExam) c.passed(record, Training.EXAM) else c.allPassed(record),
                 done = done, of = c.techniques.size,
             ) { onOpen(c.id) }
@@ -188,9 +189,11 @@ fun TrainingScreen(record: Set<String>, onOpen: (String) -> Unit, onBack: () -> 
 fun CourseScreen(course: Course, record: Set<String>, onOpen: (String) -> Unit, onBack: () -> Unit) {
     val done = course.techniques.count { course.passed(record, it) }
     TrainingList(
-        "${course.puzzle.displayName} training", "$done of ${course.techniques.size} passed",
-        "Each technique the hints use, with real boards to practise on. Get ${Training.RUN} right " +
+        tr("${course.puzzle.displayName} training", "Тренировка: ${course.puzzle.displayName}"), tr("$done of ${course.techniques.size} passed", "Пройдено: $done из ${course.techniques.size}"),
+        tr("Each technique the hints use, with real boards to practise on. Get ${Training.RUN} right " +
             "in a row to pass it. Hints are always there to help, and using one never breaks your run.",
+            "Отрабатывайте приёмы из подсказок на настоящих полях. Для зачёта нужна серия верных решений: ${Training.RUN} подряд. " +
+                "Подсказки всегда доступны и не прерывают серию."),
         onBack,
     ) {
         PassedBar(done, course.techniques.size, Modifier.padding(bottom = 6.dp))
@@ -198,9 +201,9 @@ fun CourseScreen(course: Course, record: Set<String>, onOpen: (String) -> Unit, 
         if (course.hasExam) {
             val open = course.allPassed(record)
             TrainingRow(
-                "Final board",
-                if (open) "A whole ${course.puzzle.displayName} board that needs every technique above."
-                else "Opens when every technique above is passed.",
+                tr("Final board", "Итоговое поле"),
+                if (open) tr("A whole ${course.puzzle.displayName} board that needs every technique above.", "Полное поле ${course.puzzle.displayName}, для которого нужны все перечисленные приёмы.")
+                else tr("Opens when every technique above is passed.", "Откроется после освоения всех перечисленных приёмов."),
                 course.passed(record, Training.EXAM),
                 onClick = if (open) ({ onOpen(Training.EXAM) }) else null,
             )
@@ -217,9 +220,9 @@ internal enum class Verdict { RIGHT, HINTED, WRONG, ASIDE }
  */
 internal fun verdictLine(verdict: Verdict, step: TeachStep, made: TeachStep): String = when (verdict) {
     Verdict.ASIDE -> "" // its own line, [Course.aside]
-    Verdict.WRONG -> "Not quite. ${step.explanation}"
-    Verdict.HINTED -> "That's it. ${made.explanation} Your run is kept for the next one you solve on your own."
-    Verdict.RIGHT -> "That's it. ${made.explanation}"
+    Verdict.WRONG -> tr("Not quite. ${step.explanation}", "Не совсем. ${step.explanation}")
+    Verdict.HINTED -> tr("That's it. ${made.explanation} Your run is kept for the next one you solve on your own.", "Верно. ${made.explanation} Серия сохранена до следующего самостоятельного решения.")
+    Verdict.RIGHT -> tr("That's it. ${made.explanation}", "Верно. ${made.explanation}")
 }
 
 /** The achievements passing [technique] earns: only the first time it is passed ([record] is from before the pass). */
@@ -257,17 +260,17 @@ internal fun passCheer(course: Course, record: Set<String>, technique: String, r
     val first = !course.passed(record, technique)
     val done = course.passedCount(after)
     val all = course.allPassed(after)
-    val progress = "$name trained: $done of ${course.techniques.size} techniques"
+    val progress = tr("$name trained: $done of ${course.techniques.size} techniques", "$name: освоено приёмов — $done из ${course.techniques.size}")
     val examOpen = course.hasExam && !course.passed(after, Training.EXAM)
     val toGo = when {
-        all && first -> if (examOpen) "Final board unlocked. Solve it to become a $name graduate." else null
-        all && examOpen -> "$progress. The final board is open: solve it to become a $name graduate."
+        all && first -> if (examOpen) tr("Final board unlocked. Solve it to become a $name graduate.", "Итоговое поле открыто. Решите его, чтобы завершить курс $name.") else null
+        all && examOpen -> tr("$progress. The final board is open: solve it to become a $name graduate.", "$progress. Итоговое поле открыто: решите его, чтобы завершить курс $name.")
         else -> progress
     }
     return Cheer(
         Praise(
-            title = "Passed!",
-            lines = listOf(course.titleOf(technique), "${Training.RUN} in a row"),
+            title = tr("Passed!", "Зачёт!"),
+            lines = listOf(course.titleOf(technique), tr("${Training.RUN} in a row", "${Training.RUN} подряд")),
             achievements = firstTime(course, record, technique),
             toGo = toGo,
         ),
@@ -283,11 +286,11 @@ internal fun graduateCheer(course: Course, record: Set<String>): Cheer {
     val tally = Training.tally(record + TrainingRecord.entry(course.id, Training.EXAM))
     return Cheer(
         Praise(
-            title = "Graduated!",
+            title = tr("Graduated!", "Курс пройден!"),
             big = true,
-            lines = listOf("${course.puzzle.displayName} graduate", "The final board, solved"),
+            lines = listOf(tr("${course.puzzle.displayName} graduate", "Курс ${course.puzzle.displayName} пройден"), tr("The final board, solved", "Итоговое поле решено")),
             achievements = firstTime(course, record, Training.EXAM),
-            toGo = "Training: ${tally.graduated} of ${tally.courses} courses graduated",
+            toGo = tr("Training: ${tally.graduated} of ${tally.courses} courses graduated", "Курсы пройдены: ${tally.graduated} из ${tally.courses}"),
         ),
         badge = "${course.id}Graduate", badgeEarned = true,
     )
@@ -321,7 +324,7 @@ private fun Celebration(cheer: Cheer, accent: Color, done: String, played: Boole
                 AchievementBadge(cheer.badge, cheer.badgeEarned, Modifier.width(size))
                 if (cheer.of > 0) {
                     Spacer(Modifier.height(8.dp))
-                    TickBoxes(cheer.passed, cheer.of, accent, "${cheer.passed} of ${cheer.of} techniques passed",
+                    TickBoxes(cheer.passed, cheer.of, accent, tr("${cheer.passed} of ${cheer.of} techniques passed", "Освоено приёмов: ${cheer.passed} из ${cheer.of}"),
                         fresh = cheer.fresh && celebrate, box = 16.dp)
                 }
             }
@@ -354,7 +357,7 @@ internal fun TickBoxes(done: Int, of: Int, accent: Color, label: String, modifie
 /** The run so far, in a practice's header: "n of 3 in a row". */
 @Composable
 internal fun RunBoxes(run: Int, accent: Color, modifier: Modifier = Modifier) =
-    TickBoxes(run, Training.RUN, accent, "${run.coerceIn(0, Training.RUN)} of ${Training.RUN} in a row", modifier, box = 16.dp)
+    TickBoxes(run, Training.RUN, accent, tr("${run.coerceIn(0, Training.RUN)} of ${Training.RUN} in a row", "Серия: ${run.coerceIn(0, Training.RUN)} из ${Training.RUN}"), modifier, box = 16.dp)
 
 @Composable
 private fun TickBox(ticked: Boolean, accent: Color, box: Dp) {
@@ -392,7 +395,7 @@ fun TechniquePractice(
     record: Set<String>,
     onPass: (String) -> Unit,
     onBack: () -> Unit,
-    done: String = "Back to ${course.puzzle.displayName} training",
+    done: String = tr("Back to ${course.puzzle.displayName} training", "К тренировке: ${course.puzzle.displayName}"),
 ) {
     val puzzle = course.puzzle
     val scheme = MaterialTheme.colorScheme
@@ -422,7 +425,7 @@ fun TechniquePractice(
     // A right part of a step not finished yet ([Course.progress]): how far along, in the slot; never a verdict.
     var progress by remember(p) { mutableStateOf<String?>(null) }
     val hints = rememberHintSession("$key|$index")
-    val subtitle = if (course.passed(record, technique)) "Passed" else "$run of ${Training.RUN} in a row"
+    val subtitle = if (course.passed(record, technique)) tr("Passed", "Пройдено") else tr("$run of ${Training.RUN} in a row", "Серия: $run из ${Training.RUN}")
 
     fun settle(right: Boolean, step: TeachStep) {
         hints.clear()
@@ -486,7 +489,7 @@ fun TechniquePractice(
         val b = board
         if (p == null || b == null) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text("Finding a board...", color = scheme.onSurfaceVariant)
+                Text(tr("Finding a board...", "Подбираю поле..."), color = scheme.onSurfaceVariant)
             }
         } else {
             if (verdict == null) WatchHint(hints, puzzle, b)
@@ -540,7 +543,7 @@ fun TechniquePractice(
                 enabled = p != null && earned == null,
                 colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = BoardHues.onFill(accent)),
                 modifier = Modifier.weight(1f),
-            ) { Text(if (verdict == null) "Another board" else "Next board") }
+            ) { Text(if (verdict == null) tr("Another board", "Другое поле") else tr("Next board", "Следующее поле")) }
         }
     }
     cheerOf(earned)?.let { Celebration(it, accent, done, confettiPlayed, { confettiPlayed = true }, onBack) }
@@ -564,9 +567,9 @@ fun FinalBoard(course: Course, record: Set<String>, onPass: (String) -> Unit, on
     // An Expert board can take a while to generate (Regions' up to a second or two in a browser), so off the main thread.
     val start by produceState<PuzzleState?>(null, course) { value = withContext(Dispatchers.Default) { course.exam() } }
     val s = start
-    if (s == null) TitledScreen("Final board", "Every technique, in one board", onBack) {
+    if (s == null) TitledScreen(tr("Final board", "Итоговое поле"), tr("Every technique, in one board", "Все приёмы на одном поле"), onBack) {
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text("Finding a board...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr("Finding a board...", "Подбираю поле..."), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else FinalBoardOn(course, s, record, onPass, onBack)
 }
@@ -604,7 +607,7 @@ private fun FinalBoardOn(course: Course, start: PuzzleState, record: Set<String>
         }
     }
     Box(Modifier.fillMaxSize()) {
-    TitledScreen("Final board", if (course.passed(record, Training.EXAM)) "Passed" else "Every technique, in one board", onBack) {
+    TitledScreen(tr("Final board", "Итоговое поле"), if (course.passed(record, Training.EXAM)) tr("Passed", "Пройдено") else tr("Every technique, in one board", "Все приёмы на одном поле"), onBack) {
         Box(
             Modifier.weight(1f).fillMaxWidth().hintKeys(!board.solved, hints, if (puzzle.offersHints) ::onHint else null),
             contentAlignment = Alignment.Center,
@@ -617,10 +620,12 @@ private fun FinalBoardOn(course: Course, start: PuzzleState, record: Set<String>
             if (hints.active) HintPanel(hints, accent, ::onHint, Modifier.fillMaxSize())
             else Text(
                 when {
-                    board.solved && shown -> "Solved, with a Show me along the way. Start again to solve it on your own."
-                    board.solved -> "Solved!"
-                    else -> "This board needs every technique you've practised. Hints are here if you're stuck; " +
-                        "solve it without a Show me to pass."
+                    board.solved && shown -> tr("Solved, with a Show me along the way. Start again to solve it on your own.", "Решено с помощью показа ходов. Начните заново, чтобы решить самостоятельно.")
+                    board.solved -> tr("Solved!", "Решено!")
+                    else -> tr("This board needs every technique you've practised. Hints are here if you're stuck; " +
+                        "solve it without a Show me to pass.",
+                        "На этом поле нужны все отработанные приёмы. Если застрянете, доступны подсказки. " +
+                            "Для зачёта решите поле без показа ходов.")
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onBackground,
@@ -644,10 +649,10 @@ private fun FinalBoardOn(course: Course, start: PuzzleState, record: Set<String>
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = BoardHues.onFill(accent)),
                 modifier = Modifier.weight(1f),
-            ) { Text("Start again") }
+            ) { Text(tr("Start again", "Начать заново")) }
         }
     }
-    cheerOf(earned)?.let { Celebration(it, accent, "Back to ${puzzle.displayName} training", confettiPlayed, { confettiPlayed = true }, onBack) }
+    cheerOf(earned)?.let { Celebration(it, accent, tr("Back to ${puzzle.displayName} training", "К тренировке: ${puzzle.displayName}"), confettiPlayed, { confettiPlayed = true }, onBack) }
     }
 }
 
@@ -658,5 +663,5 @@ private fun FinalBoardOn(course: Course, start: PuzzleState, record: Set<String>
 @Composable
 fun PractiseLink(course: Course, d: Deduction, stage: HintStage, onPractise: (String) -> Unit) {
     if (stage != HintStage.EXPLAIN || d.mistake || d.fallback || d.technique !in course.techniques) return
-    TextButton(onClick = { onPractise(d.technique) }) { Text("Practise this", color = MaterialTheme.colorScheme.primary) }
+    TextButton(onClick = { onPractise(d.technique) }) { Text(tr("Practise this", "Потренироваться"), color = MaterialTheme.colorScheme.primary) }
 }

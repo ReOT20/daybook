@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.DailySeed
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
+import com.joebywan.daybook.core.i18n.russianPlural
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.platform.formatDate
 import com.joebywan.daybook.ui.home.TierDots
@@ -132,8 +134,8 @@ fun ArchiveScreen(
     val started by remember(selected) { selected?.let(inProgress) ?: flowOf(emptySet()) }.collectAsState(emptySet())
 
     TitledScreen(
-        "${puzzle.displayName} archive",
-        "${today.toEpochDays() - DailySeed.EPOCH.toEpochDays() + 1} days, all unlocked",
+        tr("${puzzle.displayName} archive", "Архив: ${puzzle.displayName}"),
+        archiveDaysLabel(today),
         onBack,
     ) {
         BoxWithConstraints(
@@ -250,7 +252,7 @@ private fun TierPanel(
     val scheme = MaterialTheme.colorScheme
     Column(modifier) {
         Text(
-            if (day == null) "Pick a day to play it." else formatDate(day, DAY_DATE) + if (day == today) "  ·  today" else "",
+            if (day == null) tr("Pick a day to play it.", "Выберите день для игры.") else formatDate(day, DAY_DATE) + if (day == today) tr("  ·  today", "  ·  сегодня") else "",
             style = MaterialTheme.typography.titleMedium,
             color = if (day == null) scheme.onSurfaceVariant else scheme.onSurface,
             maxLines = 1,
@@ -271,7 +273,7 @@ private fun TierPanel(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (isSolved) {
-                            Icon(Icons.Default.Check, "Solved", tint = ink, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Check, tr("Solved", "Решено"), tint = ink, modifier = Modifier.size(14.dp))
                             Spacer(Modifier.width(4.dp))
                         }
                         Text(difficulty.label, style = MaterialTheme.typography.labelLarge, color = ink)
@@ -279,7 +281,7 @@ private fun TierPanel(
                     // Under the centred label, in room kept for it, so a save appearing never moves the label.
                     if (!isSolved && difficulty in started) {
                         Text(
-                            "in progress",
+                            tr("in progress", "в процессе"),
                             style = MaterialTheme.typography.labelSmall,
                             color = ink,
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp),
@@ -327,8 +329,8 @@ fun ArchiveDaysScreen(
     val started by remember(selected) { inProgress(selected) }.collectAsState(emptySet())
 
     TitledScreen(
-        "Archive",
-        "${today.toEpochDays() - DailySeed.EPOCH.toEpochDays() + 1} days, all unlocked",
+        tr("Archive", "Архив"),
+        archiveDaysLabel(today),
         onBack,
     ) {
         BoxWithConstraints(
@@ -428,7 +430,7 @@ private fun DayPuzzles(
     val scheme = MaterialTheme.colorScheme
     Column(modifier) {
         Text(
-            formatDate(day, DAY_DATE) + if (day == today) "  ·  today" else "",
+            formatDate(day, DAY_DATE) + if (day == today) tr("  ·  today", "  ·  сегодня") else "",
             style = MaterialTheme.typography.titleMedium,
             color = scheme.onSurface,
             maxLines = 1,
@@ -467,7 +469,7 @@ private fun DayPuzzles(
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         Icon(
-                            Icons.Default.CalendarToday, "${puzzle.displayName} archive",
+                            Icons.Default.CalendarToday, tr("${puzzle.displayName} archive", "Архив: ${puzzle.displayName}"),
                             tint = scheme.onSurfaceVariant, modifier = Modifier.padding(start = 6.dp).size(14.dp),
                         )
                     }
@@ -480,12 +482,12 @@ private fun DayPuzzles(
                             contentAlignment = Alignment.Center,
                         ) {
                             when {
-                                isSolved -> Icon(Icons.Default.Check, "${tier.label} solved", tint = BoardHues.onTint(accent, scheme.background, 3f), modifier = Modifier.size(18.dp))
+                                isSolved -> Icon(Icons.Default.Check, tr("${tier.label} solved", "Решено: ${tier.label}"), tint = BoardHues.onTint(accent, scheme.background, 3f), modifier = Modifier.size(18.dp))
                                 (puzzle.id to tier) in started -> Text(
-                                    "started", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant,
+                                    tr("started", "начато"), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant,
                                 )
                                 else -> Icon(
-                                    Icons.Default.PlayArrow, "Play ${tier.label}",
+                                    Icons.Default.PlayArrow, tr("Play ${tier.label}", "Играть: ${tier.label}"),
                                     tint = scheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(18.dp),
                                 )
                             }
@@ -495,4 +497,9 @@ private fun DayPuzzles(
             }
         }
     }
+}
+
+internal fun archiveDaysLabel(today: LocalDate): String {
+    val days = (today.toEpochDays() - DailySeed.EPOCH.toEpochDays() + 1).toInt()
+    return tr("$days days, all unlocked", "$days ${russianPlural(days, "день", "дня", "дней")} — всё доступно")
 }

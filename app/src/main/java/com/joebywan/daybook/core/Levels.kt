@@ -1,5 +1,7 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.tr
+
 /** One board of a level: which puzzle, at which tier, from which seed. */
 data class LevelBoard(val puzzleId: String, val difficulty: Difficulty, val seed: Long)
 
@@ -144,9 +146,9 @@ object Levels {
     fun summary(boards: List<LevelBoard>): String {
         val counts = Difficulty.entries.map { t -> t to boards.count { it.difficulty == t } }.filter { it.second > 0 }
         val top = counts.maxByOrNull { it.second } ?: return ""
-        if (top.second == boards.size) return "All ${top.first.label}"
-        fun words(list: List<Pair<Difficulty, Int>>) = list.joinToString(", ") { "${NUMBERS[it.second]} ${it.first.label}" }
-        return if (top.second * 2 > boards.size) "Mostly ${top.first.label}, ${words(counts - top)}"
+        if (top.second == boards.size) return tr("All ${top.first.label}", "Все: ${top.first.label}")
+        fun words(list: List<Pair<Difficulty, Int>>) = list.joinToString(", ") { tr("${NUMBERS[it.second]} ${it.first.label}", "${it.second} × ${it.first.label}") }
+        return if (top.second * 2 > boards.size) tr("Mostly ${top.first.label}, ${words(counts - top)}", "В основном ${top.first.label}, ${words(counts - top)}")
         else words(counts).replaceFirstChar { it.uppercaseChar() }
     }
 

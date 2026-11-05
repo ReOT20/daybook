@@ -1,5 +1,17 @@
 # Daybook TODO
 
+## Russian localization
+
+The first pass translates app navigation, settings, calendar, play controls, results/share cards and reminders
+(`docs/LOCALIZATION.md`). The generators, saved identities and English content remain unchanged. Still owed:
+- Extract and translate puzzle names, taglines, rules, tier descriptions and finished-frame notes.
+- Translate teachers, technique names, walkthrough frames and training/achievement content as whole messages;
+  keep technique ids and earning rules stable. English-only achievement prose must keep English tier names.
+- Russian word games need their own screened/licensed corpora, clues, keyboards, alphabet domains, difficulty
+  validation and language-aware board/save identity; never replace or reorder the shipped English lists.
+- Check Russian layouts on phones/tablets, both orientations and large text in Android, Chromium and WebKit;
+  include an offline glyph-request check. No language picker or live language switching is implemented.
+
 
 ## Arcade: the rest of the boards
 

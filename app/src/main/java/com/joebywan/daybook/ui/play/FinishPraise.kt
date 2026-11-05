@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.play
 
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.russianPlural
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.Tones
 import com.joebywan.daybook.core.nearestToGo
@@ -96,13 +98,13 @@ fun finishPraise(
         val n = after.current
         val savedByWindow = n > 1 && history.none { it.streakDay == LocalDate.fromEpochDays(today.toEpochDays() - 1) }
         when {
-            n == 1 && before.lapsed -> { title = "Welcome back"; lines += "A new streak starts today." }
-            n == 1 -> { title = "Day one"; lines += "Your streak starts today." }
+            n == 1 && before.lapsed -> { title = tr("Welcome back", "С возвращением!"); lines += tr("A new streak starts today.", "Сегодня начинается новая серия.") }
+            n == 1 -> { title = tr("Day one", "Первый день"); lines += tr("Your streak starts today.", "Сегодня начинается ваша серия.") }
             else -> {
-                title = "$n day streak"
+                title = tr("$n day streak", "Серия: $n ${russianPlural(n, "день", "дня", "дней")}")
                 streak = n
                 big = n in STREAK_MILESTONES
-                if (savedByWindow) lines += "You're back, and your streak is still going."
+                if (savedByWindow) lines += tr("You're back, and your streak is still going.", "Вы вернулись, и ваша серия продолжается.")
             }
         }
     }
@@ -111,16 +113,16 @@ fun finishPraise(
     val s = solve.seconds
     val personal = mutableListOf<String>()
     val record = tier.isNotEmpty() && s < tier.minOf { it.seconds }
-    if (record) personal += "Your fastest ${solve.difficulty.label} $puzzleName yet."
+    if (record) personal += tr("Your fastest ${solve.difficulty.label} $puzzleName yet.", "Ваш новый рекорд в $puzzleName (${solve.difficulty.label}).")
     val sorted = tier.map { it.seconds }.sorted()
     val long = s >= LONG_SECONDS || (sorted.size >= MIN_SAMPLES && s >= LONG_FLOOR && s >= 2 * sorted[sorted.size / 2])
-    if (long) personal += "That one fought back, and you stuck with it."
+    if (long) personal += tr("That one fought back, and you stuck with it.", "Задача не поддавалась, но вы не сдались.")
     if (sorted.size >= MIN_SAMPLES && !record) {
         val pct = 100 * sorted.count { it > s } / sorted.size
-        if (pct >= PERCENT_FLOOR) personal += "Faster than $pct% of your own ${solve.difficulty.label} solves."
+        if (pct >= PERCENT_FLOOR) personal += tr("Faster than $pct% of your own ${solve.difficulty.label} solves.", "Быстрее $pct% ваших решений на сложности «${solve.difficulty.label}».")
     }
     personal += techniqueLine(solve.puzzleId, solve.hints, taught, needed)
-        ?: if (solve.hints > 0) "Hints are how a move sticks. Look for that one next time." else puzzleNote(solve.puzzleId, today.toEpochDays()) ?: "No hints needed."
+        ?: if (solve.hints > 0) tr("Hints are how a move sticks. Look for that one next time.", "Подсказки помогают запомнить ход. Попробуйте найти его в следующий раз.") else puzzleNote(solve.puzzleId, today.toEpochDays()) ?: tr("No hints needed.", "Без подсказок.")
     // Lowest priority: a no-hint solve with no record gets a technique note in place of the bare "No hints needed."
 
     // One line beneath the title (or beneath "Congratulations!"): praise is loud, not long.
@@ -130,7 +132,7 @@ fun finishPraise(
     val full = allTiers || firstToday || solve.difficulty == Difficulty.EXPERT || record || big || earned.isNotEmpty()
     val firstOfPuzzle = history.none { it.puzzleId == solve.puzzleId }
     if (allTiers) return Praise(
-        TITLE_ALL_TIERS, big = true, listOf("Standard, Hard and Expert, all on one day's boards."), earned, near?.text, allTiers = true,
+        TITLE_ALL_TIERS, big = true, listOf(tr("Standard, Hard and Expert, all on one day's boards.", "Все три сложности на полях за один день.")), earned, near?.text, allTiers = true,
     )
     val heading = title ?: finishTitle(solve, today, firstOfPuzzle, record)
     return Praise(heading, big, (lines + personal).take(1), earned, near?.text, full = full, streak = streak)
@@ -150,12 +152,12 @@ internal fun finishedAllTiers(history: List<Completion>, solve: Completion): Boo
 const val TITLE_MAX = 18
 
 /** Hand-written titles for a solve with nothing rarer to say: unaided ones, and the rest. */
-internal val TITLES_UNAIDED = listOf("All your own work.", "Worked it out.", "Clear thinking.")
-internal val TITLES_PLAIN = listOf("Nicely done.", "Well solved.", "Lovely work.", "There it is.", "Neatly done.", "That's the one.")
-internal const val TITLE_FIRST = "First one done."
-internal const val TITLE_RECORD = "A new best."
-internal const val TITLE_EXPERT = "Expert, cracked."
-internal const val TITLE_ALL_TIERS = "All three tiers!"
+internal val TITLES_UNAIDED get() = listOf(tr("All your own work.", "Всё своими силами."), tr("Worked it out.", "Вы разобрались."), tr("Clear thinking.", "Ясная мысль."))
+internal val TITLES_PLAIN get() = listOf(tr("Nicely done.", "Отлично!"), tr("Well solved.", "Задача решена."), tr("Lovely work.", "Прекрасная работа."), tr("There it is.", "Получилось!"), tr("Neatly done.", "Безупречно!"), tr("That's the one.", "Вот и решение!"))
+internal val TITLE_FIRST get() = tr("First one done.", "Первое решение!")
+internal val TITLE_RECORD get() = tr("A new best.", "Новый рекорд!")
+internal val TITLE_EXPERT get() = tr("Expert, cracked.", "Эксперт пройден!")
+internal val TITLE_ALL_TIERS get() = tr("All three tiers!", "Все три сложности!")
 
 /**
  * The title when there is no streak to tell, rarest first: the first solve of this puzzle ever, a personal record at the
@@ -181,10 +183,10 @@ internal fun finishTitle(solve: Completion, today: LocalDate, firstOfPuzzle: Boo
  * the puzzle's simplest step, because it is true of the board whatever the player did; it never claims the player used it.
  */
 fun techniqueLine(puzzleId: String, hints: Int, taught: List<String>, needed: String?): String? {
-    if (hints > 0) return techniqueToPraise(puzzleId, taught)?.let { "You learned $it." }
+    if (hints > 0) return techniqueToPraise(puzzleId, taught)?.let { tr("You learned $it.", "Вы освоили приём «$it».") }
     val names = techniqueNamesOf(puzzleId)
     if (needed == null || needed == names.keys.firstOrNull()) return null
-    return names[needed]?.let { "This board needed $it: solved without help." }
+    return names[needed]?.let { tr("This board needed $it: solved without help.", "Для этого поля нужен приём «$it»: решено без помощи.") }
 }
 
 /** Where a shared result points: the web build, which anyone can open without installing anything. */

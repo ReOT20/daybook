@@ -1,5 +1,7 @@
 package com.joebywan.daybook.platform
 
+import com.joebywan.daybook.core.i18n.tr
+
 import android.Manifest
 import android.app.AlarmManager
 import android.app.NotificationChannel
@@ -128,7 +130,7 @@ internal object DailyReminder {
         if (!manager.areNotificationsEnabled()) return
         if (Build.VERSION.SDK_INT >= 26) {
             context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Daily reminder", NotificationManager.IMPORTANCE_DEFAULT),
+                NotificationChannel(CHANNEL, tr("Daily reminder", "Ежедневное напоминание"), NotificationManager.IMPORTANCE_DEFAULT),
             )
         }
         val open = PendingIntent.getActivity(

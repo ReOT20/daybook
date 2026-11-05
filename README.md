@@ -242,6 +242,10 @@ browser (see the standards doc, sections 4 and 5).
 
 ## Building
 
+The interface follows the device/browser language: Russian or English. Russian currently covers app
+navigation, settings, calendars, play controls, results and sharing; puzzle rules, teaching content,
+achievements and word puzzles remain English. See [localization notes](docs/LOCALIZATION.md).
+
 Build with **Java 17**, the JDK CI uses. Gradle 9 will run on newer ones, but nothing else is checked.
 
 ```bash

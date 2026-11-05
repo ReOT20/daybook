@@ -1,5 +1,10 @@
 package com.joebywan.daybook.platform
 
+import com.joebywan.daybook.core.i18n.calendarDate
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.russianPlural
+import com.joebywan.daybook.core.i18n.isRussianLanguage
+
 import com.joebywan.daybook.ui.card
 import com.joebywan.daybook.ui.CardText
 import androidx.compose.foundation.background
@@ -60,6 +65,10 @@ import com.joebywan.daybook.web.resources.fredoka_medium
 import com.joebywan.daybook.web.resources.fredoka_regular
 import com.joebywan.daybook.web.resources.fredoka_semibold
 import com.joebywan.daybook.web.resources.noto_sans_math
+import com.joebywan.daybook.web.resources.noto_sans_cyrillic_regular
+import com.joebywan.daybook.web.resources.noto_sans_cyrillic_medium
+import com.joebywan.daybook.web.resources.noto_sans_cyrillic_semibold
+import com.joebywan.daybook.web.resources.noto_sans_cyrillic_bold
 import com.joebywan.daybook.web.resources.noto_sans_symbols2
 import com.joebywan.daybook.web.resources.noto_sans_symbols_arrows
 import kotlinx.coroutines.delay
@@ -87,28 +96,13 @@ private fun localDateCode(): Int =
 fun currentDate(): LocalDate =
     dateOverride ?: localDateCode().let { LocalDate(it / 10000, it / 100 % 100, it % 100) }
 
-private val DAY_NAMES = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-private val MONTH_NAMES = listOf(
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-)
+fun platformLanguage(): String = js("navigator.language || 'en'")
 
 /**
- * The few `DateTimeFormatter` patterns the screens use, in English. A browser has no JVM locale
+ * The few `DateTimeFormatter` patterns the screens use. A browser has no JVM locale
  * data, and the fields are simple enough that spelling them out beats shipping a formatter.
  */
-fun formatDate(date: LocalDate, pattern: String): String =
-    pattern.split(' ').joinToString(" ") { field ->
-        when (field) {
-            "EEEE" -> DAY_NAMES[date.dayOfWeek.ordinal]
-            "EEE" -> DAY_NAMES[date.dayOfWeek.ordinal].take(3)
-            "d" -> date.day.toString()
-            "MMMM" -> MONTH_NAMES[date.month.ordinal]
-            "MMM" -> MONTH_NAMES[date.month.ordinal].take(3)
-            "yyyy" -> date.year.toString()
-            else -> error("formatDate: unsupported field '$field' in '$pattern'")
-        }
-    }
+fun formatDate(date: LocalDate, pattern: String): String = calendarDate(date, pattern, platformLanguage())
 
 @Composable
 fun rememberKeyValueStore(name: String): KeyValueStore = remember(name) { WebStores.get(name) }
@@ -182,7 +176,7 @@ fun BackButton(onBack: () -> Unit) {
         Modifier.padding(start = 6.dp).size(48.dp).clip(CircleShape).clickable(onClick = onBack),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = scheme.onSurfaceVariant)
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, tr("Back", "Назад"), tint = scheme.onSurfaceVariant)
     }
 }
 
@@ -214,18 +208,20 @@ fun BackupControls() {
     // A backup picked and read, waiting for the player to say it may replace what is here.
     var pending by remember { mutableStateOf<Backup.Pending?>(null) }
     pending?.let { p ->
-        fun solves(n: Int) = if (n == 1) "1 solve" else "$n solves"
+        fun solves(n: Int) = tr(if (n == 1) "1 solve" else "$n solves", "$n ${russianPlural(n, "решение", "решения", "решений")}")
         AlertDialog(
             onDismissRequest = { pending = null },
-            title = { Text("Replace your progress?") },
+            title = { Text(tr("Replace your progress?", "Заменить ваш прогресс?")) },
             text = {
                 Text(
-                    "This browser has ${solves(p.solvesHere)}; the backup has ${solves(p.solvesInBackup)}. " +
+                    tr("This browser has ${solves(p.solvesHere)}; the backup has ${solves(p.solvesInBackup)}. " +
                         "Importing replaces everything here with the backup.",
+                        "В этом браузере: ${solves(p.solvesHere)}; в копии: ${solves(p.solvesInBackup)}. " +
+                            "Импорт полностью заменит текущий прогресс данными из копии."),
                 )
             },
-            confirmButton = { TextButton(onClick = { pending = null; message = Backup.restore(p) }) { Text("Replace") } },
-            dismissButton = { TextButton(onClick = { pending = null; message = "Nothing imported." }) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = { pending = null; message = Backup.restore(p) }) { Text(tr("Replace", "Заменить")) } },
+            dismissButton = { TextButton(onClick = { pending = null; message = tr("Nothing imported.", "Ничего не импортировано.") }) { Text(tr("Cancel", "Отмена")) } },
         )
     }
     Column(
@@ -235,13 +231,13 @@ fun BackupControls() {
             .card(scheme.surface)
             .padding(14.dp),
     ) {
-        CardText("Backup", "Progress lives in this browser only. Keep a copy, or move it to another device.")
+        CardText(tr("Backup", "Резервная копия"), tr("Progress lives in this browser only. Keep a copy, or move it to another device.", "Прогресс хранится только в этом браузере. Сохраните копию или перенесите её на другое устройство."))
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BackupButton("Export", Modifier.weight(1f)) {
+            BackupButton(tr("Export", "Экспорт"), Modifier.weight(1f)) {
                 message = Backup.export()
             }
-            BackupButton("Import", Modifier.weight(1f)) {
+            BackupButton(tr("Import", "Импорт"), Modifier.weight(1f)) {
                 Backup.import(onError = { message = it }, onReady = { pending = it })
             }
         }
@@ -286,9 +282,11 @@ fun GetTheAppCard() {
     ) {
         if (device == 'a') {
             CardText(
-                "Get the Android app",
-                "The same daily puzzles, installed. It asks for no permissions at all, not even the internet, " +
+                tr("Get the Android app", "Приложение для Android"),
+                tr("The same daily puzzles, installed. It asks for no permissions at all, not even the internet, " +
                     "so there is no tracking and nothing to sign up for. No ads, free, works offline.",
+                    "Те же ежедневные головоломки в приложении. Никаких разрешений, даже на интернет, " +
+                        "слежки и регистрации. Бесплатно, без рекламы, работает без сети."),
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -297,10 +295,13 @@ fun GetTheAppCard() {
             }
         } else {
             CardText(
-                "Add Daybook to your Home Screen",
-                "Tap Share, then Add to Home Screen. It opens full screen like an app and works offline, and " +
+                tr("Add Daybook to your Home Screen", "Добавить Daybook на экран «Домой»"),
+                tr("Tap Share, then Add to Home Screen. It opens full screen like an app and works offline, and " +
                     "your progress is safer: Safari can clear a website's data after a week unused, " +
                     "but not a Home Screen app's.",
+                    "Нажмите «Поделиться», затем «На экран „Домой“». Игра откроется на весь экран и будет работать без сети. " +
+                        "Так прогресс сохранится надёжнее: Safari может удалить данные сайта после недели без посещений, " +
+                        "но данные приложения с экрана «Домой» остаются."),
             )
         }
     }
@@ -378,8 +379,10 @@ fun readyBoard(puzzle: PuzzleType, seed: Long, difficulty: Difficulty): PuzzleSt
 const val GENERATION_ANIMATES: Boolean = false
 
 /** Settings text under the Sound switch: what else keeps the chime quiet on this platform. */
-const val SOLVE_SOUND_NOTE: String =
-    "A browser cannot see your phone's silent switch, so turn this off if you want it quiet."
+val SOLVE_SOUND_NOTE: String get() = tr(
+    "A browser cannot see your phone's silent switch, so turn this off if you want it quiet.",
+    "Браузер не определяет беззвучный режим телефона. Отключите звук здесь, если нужна тишина.",
+)
 
 /** How long the home grid is up before the first board is made, so an early tap is not kept waiting. */
 private const val PREPARE_AFTER_MS = 400L
@@ -412,13 +415,18 @@ suspend fun prepareBoards(day: LocalDate, difficulty: Difficulty) {
 /** [base] in the bundled Fredoka; [WithSymbolFonts] supplies what Skia falls back to for a glyph it lacks. */
 @Composable
 fun platformTypography(base: Typography): Typography {
-    val fredoka = FontFamily(
+    val family = if (isRussianLanguage(platformLanguage())) FontFamily(
+        Font(Res.font.noto_sans_cyrillic_regular, FontWeight.Normal),
+        Font(Res.font.noto_sans_cyrillic_medium, FontWeight.Medium),
+        Font(Res.font.noto_sans_cyrillic_semibold, FontWeight.SemiBold),
+        Font(Res.font.noto_sans_cyrillic_bold, FontWeight.Bold),
+    ) else FontFamily(
         Font(Res.font.fredoka_regular, FontWeight.Normal),
         Font(Res.font.fredoka_medium, FontWeight.Medium),
         Font(Res.font.fredoka_semibold, FontWeight.SemiBold),
         Font(Res.font.fredoka_bold, FontWeight.Bold),
     )
-    return remember(base, fredoka) { base.withFamily(fredoka) }
+    return remember(base, family) { base.withFamily(family) }
 }
 
 /**
@@ -430,11 +438,16 @@ fun platformTypography(base: Typography): Typography {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun WithSymbolFonts(content: @Composable () -> Unit) {
-    val fonts = listOf(
+    val fonts = (listOf(
         preloadFont(Res.font.noto_sans_symbols_arrows),
         preloadFont(Res.font.noto_sans_symbols2),
         preloadFont(Res.font.noto_sans_math),
-    ).map { it.value }
+    ) + if (isRussianLanguage(platformLanguage())) listOf(
+        preloadFont(Res.font.noto_sans_cyrillic_regular),
+        preloadFont(Res.font.noto_sans_cyrillic_medium),
+        preloadFont(Res.font.noto_sans_cyrillic_semibold),
+        preloadFont(Res.font.noto_sans_cyrillic_bold),
+    ) else emptyList()).map { it.value }
     val resolver = LocalFontFamilyResolver.current
     var ready by remember { mutableStateOf(false) }
     // Restarts as each font arrives, preloading whichever have (again: the resolver caches them).
@@ -552,7 +565,7 @@ private fun copyToClipboard(text: String): Unit =
 @Composable
 fun rememberSharer(): (String) -> String? = remember {
     { text ->
-        if (canShare()) { shareNatively(text); null } else { copyToClipboard(text); "Copied" }
+        if (canShare()) { shareNatively(text); null } else { copyToClipboard(text); tr("Copied", "Скопировано") }
     }
 }
 
@@ -573,7 +586,7 @@ fun rememberReducedMotion(): Boolean {
 }
 
 /** Settings text under the Vibration switch: what else keeps it still on this platform. */
-const val VIBRATION_NOTE: String = "Only where the browser can vibrate: Chrome on Android can, iPhone and iPad cannot."
+val VIBRATION_NOTE: String get() = tr("Only where the browser can vibrate: Chrome on Android can, iPhone and iPad cannot.", "Вибрация доступна в Chrome на Android, но недоступна на iPhone и iPad.")
 
 // `navigator.vibrate` is missing on iOS and may refuse before the first tap; either way nothing happens.
 private fun vibrate(ms: Int): Unit = js("navigator.vibrate && navigator.vibrate(ms)")
@@ -590,7 +603,7 @@ fun rememberHaptics(enabled: Boolean): Haptics = remember(enabled) {
 @Composable
 fun rememberRateLink(): RateLink {
     val uri = LocalUriHandler.current
-    return remember(uri) { githubRateLink(uri::openUri) }
+    return remember(uri, platformLanguage()) { githubRateLink(uri::openUri) }
 }
 
 /** Opens a web page in a new tab, so the game stays where it was. */

@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.theme
 
+import com.joebywan.daybook.core.i18n.tr
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -7,10 +8,16 @@ import com.joebywan.daybook.platform.SystemBarsAppearance
 import com.joebywan.daybook.platform.platformTypography
 
 /** The player's light or dark choice in Settings; [SYSTEM] follows the device. */
-enum class Appearance(val label: String) {
-    SYSTEM("System"),
-    LIGHT("Light"),
-    DARK("Dark"),
+enum class Appearance {
+    SYSTEM,
+    LIGHT,
+    DARK;
+
+    val label: String get() = when (this) {
+        SYSTEM -> tr("System", "Системная")
+        LIGHT -> tr("Light", "Светлая")
+        DARK -> tr("Dark", "Тёмная")
+    }
 }
 
 @Composable

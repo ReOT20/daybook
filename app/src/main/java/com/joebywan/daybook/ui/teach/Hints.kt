@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui.teach
 
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ScrollState
@@ -271,10 +272,10 @@ fun WatchHint(session: HintSession, puzzle: PuzzleType, state: PuzzleState, onRe
 fun HintSession.buttonLabel(): String = when {
     // Mosaic's hardest hint took ~1.2 s on the emulator; a button that said nothing for that long
     // would read as a missed tap.
-    thinking -> "Thinking..."
-    !active || stage == HintStage.CONFIRMED -> "Hint"
-    stage == HintStage.NUDGE -> "Why?"
-    else -> "Show me"
+    thinking -> tr("Thinking...", "Думаю...")
+    !active || stage == HintStage.CONFIRMED -> tr("Hint", "Подсказка")
+    stage == HintStage.NUDGE -> tr("Why?", "Почему?")
+    else -> tr("Show me", "Показать ход")
 }
 
 /**
@@ -331,7 +332,7 @@ fun HintPanel(
         val text = when (session.stage) {
             HintStage.NUDGE -> d.nudge
             HintStage.EXPLAIN -> d.explanation
-            HintStage.CONFIRMED -> if (d.mistake) "Fixed." else "That's it."
+            HintStage.CONFIRMED -> if (d.mistake) tr("Fixed.", "Исправлено.") else tr("That's it.", "Верно.")
         }
         // Scrolls rather than clipping, for the rare explanation past five lines; the slot never
         // grows. A new text starts at the top again.
@@ -361,7 +362,7 @@ fun HintPanel(
             LocalHintAction.current(d, session.stage)
             if (session.stage != HintStage.CONFIRMED) {
                 TextButton(onClick = { session.clear() }) {
-                    Text("Close", color = scheme.onSurfaceVariant)
+                    Text(tr("Close", "Закрыть"), color = scheme.onSurfaceVariant)
                 }
                 TextButton(onClick = onNext) { Text(session.buttonLabel(), color = BoardHues.textOn(ink, fade)) }
             }

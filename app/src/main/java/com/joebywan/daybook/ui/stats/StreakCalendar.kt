@@ -32,7 +32,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.DailySeed
 import com.joebywan.daybook.core.forgivenDays
+import com.joebywan.daybook.core.i18n.localized
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.platform.formatDate
+import com.joebywan.daybook.platform.platformLanguage
 import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -70,13 +75,13 @@ fun StreakCalendar(played: Set<LocalDate>, today: LocalDate, modifier: Modifier,
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(10.dp).clip(CircleShape).background(scheme.primary))
-            Text(" played    ", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(tr(" played    ", " играли    "), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
             Box(Modifier.size(10.dp).border(BorderStroke(1.5.dp, scheme.primary.copy(alpha = 0.6f)), CircleShape))
-            Text(" missed, streak kept", style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(tr(" missed, streak kept", " пропуск, серия сохранена"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "Play on 5 of any 7 days to keep your streak going.",
+            tr("Play on 5 of any 7 days to keep your streak going.", "Играйте в любые 5 из 7 дней, чтобы сохранить серию."),
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
         )
@@ -134,7 +139,7 @@ internal fun MonthBar(month: LocalDate, back: Boolean, forward: Boolean, onMonth
     Row(verticalAlignment = Alignment.CenterVertically) {
         Arrow("‹", back) { onMonth(month.minus(DatePeriod(months = 1))) }
         Text(
-            month.month.name.lowercase().replaceFirstChar { it.uppercase() } + " " + month.year,
+            formatDate(month, "LLLL yyyy"),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
@@ -167,7 +172,7 @@ internal fun MonthGrid(
                     val n = w * 7 + c - lead + 1
                     when {
                         w < 0 -> Text(
-                            "MTWTFSS"[c].toString(),
+                            calendarWeekday(DayOfWeek.entries[c]),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -183,3 +188,14 @@ internal fun MonthGrid(
 }
 
 internal fun LocalDate.firstOfMonth() = LocalDate(year, month, 1)
+
+/** Captions keep the calendar's Monday-first order in both languages. */
+internal fun calendarWeekday(day: DayOfWeek, languageTag: String = platformLanguage()): String = when (day) {
+    DayOfWeek.MONDAY -> localized("M", "Пн", languageTag)
+    DayOfWeek.TUESDAY -> localized("T", "Вт", languageTag)
+    DayOfWeek.WEDNESDAY -> localized("W", "Ср", languageTag)
+    DayOfWeek.THURSDAY -> localized("T", "Чт", languageTag)
+    DayOfWeek.FRIDAY -> localized("F", "Пт", languageTag)
+    DayOfWeek.SATURDAY -> localized("S", "Сб", languageTag)
+    DayOfWeek.SUNDAY -> localized("S", "Вс", languageTag)
+}

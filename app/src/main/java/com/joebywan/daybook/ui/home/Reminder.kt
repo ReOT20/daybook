@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.home
 
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.russianPlural
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,12 +40,12 @@ val REMINDER_HOURS = listOf(8, 12, 17, 19, 21)
 const val DEFAULT_REMINDER_HOUR = 19
 
 /** 19 as "7 pm". */
-fun hourLabel(hour: Int): String = when {
+fun hourLabel(hour: Int): String = tr(when {
     hour == 0 -> "12 am"
     hour < 12 -> "$hour am"
     hour == 12 -> "12 pm"
     else -> "${hour - 12} pm"
-}
+}, "${hour.toString().padStart(2, '0')}:00")
 
 private val NUMBER_WORDS = listOf("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven")
 
@@ -53,20 +55,20 @@ private val NUMBER_WORDS = listOf("no", "one", "two", "three", "four", "five", "
  */
 fun reminderText(hour: Int, minute: Int = 0): String {
     val greeting = when (hour) {
-        in 5..11 -> "Good morning!"
-        in 12..16 -> "Good afternoon!"
-        in 17..23 -> "Good evening!"
-        else -> "Hello!"
+        in 5..11 -> tr("Good morning!", "Доброе утро!")
+        in 12..16 -> tr("Good afternoon!", "Добрый день!")
+        in 17..23 -> tr("Good evening!", "Добрый вечер!")
+        else -> tr("Hello!", "Здравствуйте!")
     }
     val left = 24 * 60 - (hour * 60 + minute)
     val hours = (left + 30) / 60
     val time = when {
-        left < 45 -> "Not long left today"
-        hours >= 12 -> "The whole day is ahead of you"
-        hours == 1 -> "About an hour left today"
-        else -> "About ${NUMBER_WORDS[hours]} hours left today"
+        left < 45 -> tr("Not long left today", "День подходит к концу")
+        hours >= 12 -> tr("The whole day is ahead of you", "Впереди ещё целый день")
+        hours == 1 -> tr("About an hour left today", "До конца дня остался примерно час")
+        else -> tr("About ${NUMBER_WORDS[hours]} hours left today", "До конца дня осталось примерно $hours ${russianPlural(hours, "час", "часа", "часов")}")
     }
-    return "$greeting $time: your puzzles are ready when you are."
+    return tr("$greeting $time: your puzzles are ready when you are.", "$greeting $time. Головоломки ждут вас.")
 }
 
 /**
@@ -109,12 +111,12 @@ fun ReminderOffer(completions: List<Completion>, today: LocalDate) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CardText(
-            "A reminder each day?",
-            "One quiet note at ${hourLabel(hour)}, and none on a day you've already played. " +
-                "You can change the time or turn it off in Settings.",
+            tr("A reminder each day?", "Напоминать каждый день?"),
+            tr("One quiet note at ${hourLabel(hour)}, and none on a day you've already played. " +
+                "You can change the time or turn it off in Settings.", "Одно тихое уведомление в ${hourLabel(hour)}. Если вы уже играли сегодня, уведомления не будет. Время можно изменить, а напоминание — отключить в настройках."),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            TextButton(onClick = { scope.launch { prefs.setReminderOffered() } }) { Text("No thanks") }
+            TextButton(onClick = { scope.launch { prefs.setReminderOffered() } }) { Text(tr("No thanks", "Нет, спасибо")) }
             Button(onClick = {
                 ask { granted ->
                     scope.launch {
@@ -126,7 +128,7 @@ fun ReminderOffer(completions: List<Completion>, today: LocalDate) {
                         }
                     }
                 }
-            }) { Text("Remind me") }
+            }) { Text(tr("Remind me", "Напоминать")) }
         }
     }
 }

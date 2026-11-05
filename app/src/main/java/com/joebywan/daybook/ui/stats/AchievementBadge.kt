@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.joebywan.daybook.core.ACHIEVEMENTS
 import com.joebywan.daybook.core.AchievementCategory
 import com.joebywan.daybook.core.Training
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.puzzles.Mines
 import kotlin.math.PI
 import kotlin.math.cos
@@ -66,7 +67,7 @@ fun AchievementBadge(id: String, earned: Boolean, modifier: Modifier = Modifier)
     // Opaque, so the ribbon and the disc read as one flat shape where they overlap.
     val sil = scheme.onSurface.copy(alpha = 0.14f).compositeOver(scheme.background)
     BoxWithConstraints(
-        modifier.aspectRatio(0.8f).semantics { contentDescription = if (earned) a.title else "Locked achievement" },
+        modifier.aspectRatio(0.8f).semantics { contentDescription = if (earned) a.title else tr("Locked achievement", "Достижение не получено") },
         contentAlignment = Alignment.TopCenter,
     ) {
         val bw = maxWidth.value

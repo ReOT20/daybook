@@ -1,5 +1,6 @@
 package com.joebywan.daybook.ui
 
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.Training
 import com.joebywan.daybook.core.TrainingRecord
@@ -514,7 +515,7 @@ private fun DaybookScreens(
                     else TechniquePractice(
                         course, current.technique, trained, pass, onBack,
                         // Opened by "Practise this" or "Practise", back returns to the game or the Techniques page.
-                        done = if (current.fromHint) "Continue" else "Back to ${course.puzzle.displayName} training",
+                        done = if (current.fromHint) tr("Continue", "Продолжить") else tr("Back to ${course.puzzle.displayName} training", "К тренировке: ${course.puzzle.displayName}"),
                     )
                 }
             }
@@ -700,10 +701,10 @@ private fun DaybookScreens(
                             else -> null
                         }
                         praise.copy(
-                            title = if (levelDone) "Level $level done" else praise.title,
+                            title = if (levelDone) tr("Level $level done", "Уровень $level пройден") else praise.title,
                             share = card,
                             setShare = setShare,
-                            setShareLabel = if (level != null) "Share level" else "Share three",
+                            setShareLabel = if (level != null) tr("Share level", "Уровень") else tr("Share three", "Три за день"),
                         )
                     },
                     options = options,

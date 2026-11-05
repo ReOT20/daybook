@@ -89,6 +89,10 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   sheet) and `≠` (drawn as strokes in Dominoes) need no glyph. A new non-Latin-1 character in a drawn string
   needs the web fonts re-cut; check it by rendering it with the network logged. Board glyphs
   drawn with their own `TextStyle` (Sudoku, Snap, Nonogram, ...) name no family and are still the default font.
+  The Russian shell uses four additional Noto Sans subsets on both platforms, with all Russian letters
+  and quotation marks. `WithSymbolFonts` also preloads these for a Russian browser locale. Fredoka and
+  the symbol subsets remain unchanged; source/version, regeneration and localization scope are in
+  `docs/LOCALIZATION.md`.
 - The Material icons: JetBrains' `material-icons-extended` (`libs.jb.compose.material.icons.extended`) costs 4.5 KB of wasm (<1 KB gzipped) over the
   core set, because Kotlin/Wasm drops every unreferenced icon.
 

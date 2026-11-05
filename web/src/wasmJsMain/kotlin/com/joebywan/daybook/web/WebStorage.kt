@@ -1,5 +1,7 @@
 package com.joebywan.daybook.web
 
+import com.joebywan.daybook.core.i18n.tr
+
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.KeyValueStore
 import com.joebywan.daybook.data.ProgressStore
@@ -147,7 +149,7 @@ object Backup {
             )
         )
         downloadText("daybook-backup-${com.joebywan.daybook.platform.currentDate()}.json", payload.toString())
-        return "Exported ${entries.size} entries."
+        return tr("Exported ${entries.size} entries.", "Экспортировано записей: ${entries.size}.")
     }
 
     /** A backup read and checked, held until the player confirms it should replace this browser's progress. */
@@ -178,13 +180,13 @@ object Backup {
 
     private fun problem(text: String): String =
         if (runCatching { StoreJson.parseToJsonElement(text).jsonObject["format"]?.jsonPrimitive?.content }.getOrNull() == FORMAT) {
-            "That backup is damaged."
-        } else "That file is not a Daybook backup."
+            tr("That backup is damaged.", "Резервная копия повреждена.")
+        } else tr("That file is not a Daybook backup.", "Этот файл не является резервной копией Daybook.")
 
     /** Replaces this browser's progress with [pending]'s; if it does not all fit, what was here is put back. */
     fun restore(pending: Pending): String {
         val ok = replaceEntries(ownEntries(), pending.entries, ::lsSet, ::lsRemove)
         WebStores.reloadAll()
-        return if (ok) "Restored ${pending.entries.size} entries." else "That backup did not fit in this browser's storage. Nothing changed."
+        return if (ok) tr("Restored ${pending.entries.size} entries.", "Восстановлено записей: ${pending.entries.size}.") else tr("That backup did not fit in this browser's storage. Nothing changed.", "В хранилище браузера не хватило места для этой копии. Данные не изменены.")
     }
 }

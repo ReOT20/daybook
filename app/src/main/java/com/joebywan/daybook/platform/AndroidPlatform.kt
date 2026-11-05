@@ -1,5 +1,9 @@
 package com.joebywan.daybook.platform
 
+import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.isRussianLanguage
+import java.util.Locale
+
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -66,11 +70,15 @@ import java.util.concurrent.atomic.AtomicInteger
 /** Today on the device's own calendar and time zone. */
 fun currentDate(): LocalDate = java.time.LocalDate.now().toKotlinLocalDate()
 
-private val formatters = HashMap<String, DateTimeFormatter>()
+fun platformLanguage(): String = Locale.getDefault().toLanguageTag()
+
+private val formatters = HashMap<Pair<String, Locale>, DateTimeFormatter>()
 
 /** [date] in a `DateTimeFormatter` [pattern], in the device's locale. */
-fun formatDate(date: LocalDate, pattern: String): String =
-    date.toJavaLocalDate().format(formatters.getOrPut(pattern) { DateTimeFormatter.ofPattern(pattern) })
+fun formatDate(date: LocalDate, pattern: String): String {
+    val locale = Locale.getDefault()
+    return date.toJavaLocalDate().format(formatters.getOrPut(pattern to locale) { DateTimeFormatter.ofPattern(pattern, locale) })
+}
 
 /** The DataStore file named [name], behind the shared [KeyValueStore] interface. */
 @Composable
@@ -134,8 +142,10 @@ fun readyBoard(puzzle: PuzzleType, seed: Long, difficulty: Difficulty): PuzzleSt
 const val GENERATION_ANIMATES: Boolean = true
 
 /** Settings text under the Sound switch: what else keeps the chime quiet on this platform. */
-const val SOLVE_SOUND_NOTE: String =
-    "It follows your media volume and stays quiet when your phone is on silent or vibrate."
+val SOLVE_SOUND_NOTE: String get() = tr(
+    "It follows your media volume and stays quiet when your phone is on silent or vibrate.",
+    "Громкость зависит от громкости мультимедиа. В беззвучном режиме и режиме вибрации звука нет.",
+)
 
 /**
  * Called while the home grid is showing. Android generates each board off the main thread when it
@@ -146,13 +156,21 @@ suspend fun prepareBoards(day: LocalDate, difficulty: Difficulty) = Unit
 
 /** The app's typography in Fredoka (`res/font`, SIL OFL); glyphs it lacks fall back to the system font. */
 @Composable
-fun platformTypography(base: Typography): Typography = base.withFamily(fredoka)
+fun platformTypography(base: Typography): Typography =
+    base.withFamily(if (isRussianLanguage(platformLanguage())) cyrillic else fredoka)
 
 private val fredoka = FontFamily(
     Font(R.font.fredoka_regular, FontWeight.Normal),
     Font(R.font.fredoka_medium, FontWeight.Medium),
     Font(R.font.fredoka_semibold, FontWeight.SemiBold),
     Font(R.font.fredoka_bold, FontWeight.Bold),
+)
+
+private val cyrillic = FontFamily(
+    Font(R.font.noto_sans_cyrillic_regular, FontWeight.Normal),
+    Font(R.font.noto_sans_cyrillic_medium, FontWeight.Medium),
+    Font(R.font.noto_sans_cyrillic_semibold, FontWeight.SemiBold),
+    Font(R.font.noto_sans_cyrillic_bold, FontWeight.Bold),
 )
 
 private val soundScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -261,7 +279,7 @@ fun rememberReducedMotion(): Boolean {
 }
 
 /** Settings text under the Vibration switch: what else keeps it still on this platform. */
-const val VIBRATION_NOTE: String = "It also follows your phone's touch vibration setting."
+val VIBRATION_NOTE: String get() = tr("It also follows your phone's touch vibration setting.", "Также учитывается системная настройка вибрации при касании.")
 
 /**
  * The game's buzzes, if [enabled], through `View.performHapticFeedback`, which honours the system's touch
@@ -292,12 +310,12 @@ fun rememberHaptics(enabled: Boolean): Haptics {
 @Composable
 fun rememberRateLink(): RateLink {
     val context = LocalContext.current
-    return remember(context) {
+    return remember(context, platformLanguage()) {
         if (installerOf(context) == "com.android.vending") {
             val id = context.packageName
             RateLink(
-                title = "Rate Daybook",
-                detail = "If Daybook has earned it, a rating on Google Play helps other puzzlers find it.",
+                title = tr("Rate Daybook", "Оценить Daybook"),
+                detail = tr("If Daybook has earned it, a rating on Google Play helps other puzzlers find it.", "Если вам нравится Daybook, оценка в Google Play поможет другим любителям головоломок найти игру."),
                 open = {
                     openUri(context, "market://details?id=$id", fallback = "https://play.google.com/store/apps/details?id=$id")
                 },

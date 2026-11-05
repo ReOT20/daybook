@@ -47,6 +47,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.earnedAchievements
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.PuzzleType
+import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.KeptCard
 import com.joebywan.daybook.data.PuzzleTechniques
@@ -82,7 +83,7 @@ fun StatsScreen(
     keptCards.firstOrNull { keyOf(it) == open }?.let { SharePreview(it.card) { open = null } }
     val streak = Stats.streak(completions, today)
 
-    TitledScreen("Statistics", "All time, on this device.", onBack, trailing = {
+    TitledScreen(tr("Statistics", "Статистика"), tr("All time, on this device.", "За всё время на этом устройстве."), onBack, trailing = {
         // Only once a daily is solved today. The title's two lines are taller than the button, so it moves nothing.
         val card = remember(completions, today) {
             dayShareCard(PuzzleRegistry.all.map { it.id }, completions, today, formatDate(today, "d MMM"), streak.current)
@@ -93,7 +94,7 @@ fun StatsScreen(
             TextButton(onClick = { sharing = true }, Modifier.padding(end = 8.dp)) {
                 Icon(Icons.Default.Share, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Share today")
+                Text(tr("Share today", "Поделиться"))
             }
             if (sharing) SharePreview(card) { sharing = false }
         }
@@ -108,9 +109,9 @@ fun StatsScreen(
 
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Tile("Solved", completions.size.toString(), Modifier.weight(1f))
-                    Tile("Streak", if (streak.alive) streak.current.toString() else DASH, Modifier.weight(1f))
-                    Tile("Best streak", streak.best.toString(), Modifier.weight(1f))
+                    Tile(tr("Solved", "Решено"), completions.size.toString(), Modifier.weight(1f))
+                    Tile(tr("Streak", "Серия"), if (streak.alive) streak.current.toString() else DASH, Modifier.weight(1f))
+                    Tile(tr("Best streak", "Лучшая серия"), streak.best.toString(), Modifier.weight(1f))
                 }
             }
 
@@ -120,8 +121,8 @@ fun StatsScreen(
                     Modifier.fillMaxWidth().card(scheme.surface).clickable(onClick = onAchievements).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Achievements", style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
-                    Text("$got of ${ACHIEVEMENTS.size}", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                    Text(tr("Achievements", "Достижения"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
+                    Text(tr("$got of ${ACHIEVEMENTS.size}", "$got из ${ACHIEVEMENTS.size}"), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
 
@@ -133,8 +134,8 @@ fun StatsScreen(
                         .clickable(onClick = onTechniques).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Techniques", style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
-                    if (met > 0) Text("$met shown", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                    Text(tr("Techniques", "Приёмы"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
+                    if (met > 0) Text(tr("$met shown", "Показано: $met"), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
 
@@ -180,7 +181,7 @@ private fun PuzzleStats(
         // Never played: one line, not three tiers of dashes and zeroes.
         if (completions.none { it.puzzleId == puzzle.id }) {
             Spacer(Modifier.height(8.dp))
-            Text("Not played yet", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            Text(tr("Not played yet", "Вы ещё не играли"), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
         } else Difficulty.entries.forEach { difficulty ->
             val best = Stats.bestTime(completions, puzzle.id, difficulty)
             val count = completions.count { it.puzzleId == puzzle.id && it.difficulty == difficulty }
@@ -190,11 +191,11 @@ private fun PuzzleStats(
                 Text(if (best == null) DASH else formatClock(best), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("$count solved", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                Text(tr("$count solved", "Решено: $count"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                 // Always laid out, greyed when there is nothing to share, so a card arriving moves nothing.
                 fun kept(best: Boolean) = keptCards.firstOrNull { it.puzzleId == puzzle.id && it.difficulty == difficulty && it.best == best }
-                ShareLink("Best", kept(true), accent, onOpen)
-                ShareLink("Last", kept(false), accent, onOpen)
+                ShareLink(tr("Best", "Рекорд"), kept(true), accent, onOpen)
+                ShareLink(tr("Last", "Последний"), kept(false), accent, onOpen)
             }
         }
         remember(completions, today, puzzle.id) { ThisWeek.trend(completions, puzzle.id, today) }?.let { TrendLine(it, accent) }
