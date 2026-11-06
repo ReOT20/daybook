@@ -22,7 +22,8 @@ APK was built from the current checkout; the report records both the artifact ha
 
 The command fails if a required check or prerequisite is missing. It does not turn an unavailable
 emulator into a pass. `--preflight` checks prerequisites without building or launching anything.
-`--full` also runs the whole JVM suite and the existing 365-day JVM/Chromium/WebKit board comparison;
+`--full` also runs the whole JVM suite and the existing 365-day JVM/Chromium/WebKit board comparison
+(all 40 puzzles and the original level plans);
 the normal CI workflow already runs those longer checks separately.
 
 ## Prerequisites

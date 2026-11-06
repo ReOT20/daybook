@@ -128,7 +128,8 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   and diffs each puzzle against the JVM file (N is read from it), printing the first differences by
   puzzle, date and tier. Exit 1 on any difference, missing line, page error or timeout. Four pages
   bound Wasm memory and CPU contention; the engines run sequentially. With 40 puzzles, a full year
-  compares 45,625 boards, including 365 five-board levels. Runtime varies with the runner: Russian
+  compares 45,625 boards, including 365 original five-board level plans. Language-specific Levels
+  are covered separately by plan/seed contracts and browser save/retention checks. Runtime varies with the runner: Russian
   word generators exceeded the old 900-second page deadline while still making progress. The default
   page limit is now 1,800 seconds, with a 90-minute CI job budget; coverage and comparisons are unchanged.
   CI always compares all 365 days. `WebParityDumpTest` takes `DAYBOOK_PARITY_DAYS`

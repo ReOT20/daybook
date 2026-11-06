@@ -18,8 +18,37 @@ levels per language deal five unique matching families. Legacy plans, seeds and 
   themes and 1×/2× text. All seven Russian motifs are visually reviewed; actual Home taps open matching EN/RU
   Lexicon boards. Live switches retain 14 frozen records, both freshly played boards and the full stored order,
   with no browser errors or external requests. Evidence: `/tmp/daybook-language-menu-fix/acceptance-summary.json`.
-- [ ] Final Levels runtime checks on the updated distribution, native verifier, refreshed README home image,
-  signed `1.39.3` APK and draft PR update.
+- [x] Final Levels runtime passes both engines: 98 screenshots, exact JVM save keys for real Sudoku/Word Wheel
+  moves in both lanes, switching/reload retention, and matching level-101 tiles. A real prior-build Sudoku save
+  restores the same board and entered move through Previous levels. All 14 frozen word saves, original raw
+  level entries, history and stored ordering remain unchanged. Evidence:
+  `/tmp/daybook-language-menu-fix-levels/acceptance-summary.json`.
+- [x] Signed `1.39.3` APK delivered with the same persistent test certificate; signature, permissions,
+  non-debuggable package and 16 KiB ZIP/arm64 alignment pass. SHA-256:
+  `cbf5af59051806f19916e9e964ec7394a9be3c2129ad7148b7c9bd8009629365`.
+  Source `8ff85ba7`; evidence: `/tmp/daybook-language-menu-fix-apk-build/artifact-verification.json`.
+- [x] Catalog/font checks (10) and verifier self-checks (8) pass; both catalogs contain 3,465 keys.
+- [x] The full [CI build](https://github.com/ReOT20/daybook/actions/runs/42198122266/job/127826399395)
+  executed the complete unit suite and passed all 40 guide pages and release assembly. Its test task was
+  not restored from cache; log: `/tmp/daybook-ci8ff-native/build-full-job.log`.
+- [x] The complete [native/offline verifier](https://github.com/ReOT20/daybook/actions/runs/42198122253)
+  passes all nine stages on clean merge `a4058a07`, containing source `8ff85ba7`: 231 targeted JVM tests
+  with zero failures/errors and four skips, all 144 frozen saves unchanged (zero lost/changed), and all 14
+  English/Russian identities retained through eight API 34 lifecycle cases. All four Chromium/WebKit ×
+  English/Russian offline cases pass with eleven required fonts cached and no errors or external requests.
+  Evidence: `/tmp/daybook-ci8ff-native/report.json`, `android-save-check.log` and `web/results.json`.
+- [x] Both native home captures are visually reviewed. The English capture replaces the README image at
+  540×1200 and its alt text now describes the 33-game menu. An unrelated Russian native month-case issue
+  found in the capture is recorded in `TODO.md`.
+- [x] The current [annual comparison](https://github.com/ReOT20/daybook/actions/runs/42198122266/job/127826399802)
+  passes on the same clean merge: all 41 pages and 45,625 boards match the JVM in each of Chromium and
+  WebKit. This covers all 40 puzzles at three tiers for 365 days and 365 original five-board level plans;
+  new language-specific Levels have the separate plan/seed and runtime checks above. Evidence:
+  `/tmp/daybook-ci8ff-native/parity-full-job.log`.
+
+The verified application and harness source is `8ff85ba7`. The closing follow-up changes documentation
+and the native README capture only; [PR2](https://github.com/ReOT20/daybook/pull/2) stays a draft stacked
+on the shared-guidance branch.
 
 ## Initial implementation acceptance
 
@@ -62,7 +91,7 @@ Constraints and evidence:
 
 - `Message.english`, `.length` and `.toString()` remain canonical English. Teacher text-length gates
   affect generation: resolve Russian only at UI boundaries. Hints must retain typed nested descriptors.
-- Display language never selects content. Existing ids, serializers, corpus order, seeds and level deal
+- An existing board's display language never rewrites its content. Existing ids, serializers, corpus order, seeds and level deal
   versions stay stable. Append state fields only with English defaults; RU IDs keep separate records.
 - User authorized CLI build-dependency downloads and isolated local headless tests. No personal browser,
   account session, or physical device was used. Local test signing key is outside the checkout.

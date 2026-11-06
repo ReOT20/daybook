@@ -1,11 +1,5 @@
 # Daybook TODO
 
-## Language menu follow-up acceptance
-
-The tester's menu and icon fixes are implemented. Finish the final language-level browser checks,
-native verifier/updated home capture and signed APK delivery; evidence is tracked in
-`docs/LOCALIZATION_PROGRESS.md`.
-
 ## Arcade: the rest of the boards
 
 Six boards are fully converted (`docs/COLOUR.md`, top). The other 25 are on the lighter look, so the app is uneven until they are done. Also owed:
@@ -26,6 +20,11 @@ Size: **S** under an hour, **M** a few hours, **L** a day or more. Sources are n
 from a measurement or review, so you can check it is still true.
 
 ## Could affect players
+
+- [ ] **Russian native home date uses the standalone month.** API 34 capture
+  `/tmp/daybook-ci8ff-native/android-home-ru.png` reads "четверг 24 сентябрь" rather than "четверг 24 сентября".
+  Check Android `formatDate`/locale formatting for `HomeScreen`'s `EEEE d MMMM`; web uses the CLDR date forms.
+  Add a native date-form regression check with the correction. Found during the menu/icon follow-up. *S.*
 
 - [ ] **Boards not yet on the digit scale** (`BoardGlyph`, `ui/BoardText.kt`). Moved: Sudoku, Cage Sudoku, Inequality,
   Regions, Nonogram, Tally, Mosaic. Still on their own shares: Tents' clues (0.55 SemiBold), Mines' numbers (0.6), Lamps'

@@ -15,7 +15,7 @@ Each puzzle has a page in the **[player guide](https://knowhowit.com.au/daybook/
 
 | Every puzzle, every day | Sudoku | Cage Sudoku | Word Wheel |
 |---|---|---|---|
-| ![The home screen: Daily/Random, Levels and Training above the tiers, today's three and the 40-puzzle grid](docs/screenshots/home.png) | ![A Sudoku board with a hint open, offering to practise its technique](docs/screenshots/sudoku.png) | ![A Hard Cage Sudoku board with a hint open](docs/screenshots/cage-sudoku.png) | ![A Word Wheel board](docs/screenshots/word-wheel.png) |
+| ![The home screen: Daily/Random, Levels and Training above the tiers, today's three and the 33-puzzle language-specific grid](docs/screenshots/home.png) | ![A Sudoku board with a hint open, offering to practise its technique](docs/screenshots/sudoku.png) | ![A Hard Cage Sudoku board with a hint open](docs/screenshots/cage-sudoku.png) | ![A Word Wheel board](docs/screenshots/word-wheel.png) |
 
 ![On a tablet the board sits beside the title, hints and tools: a Cage Sudoku with a hint open](docs/screenshots/tablet-cage-sudoku.png)
 
