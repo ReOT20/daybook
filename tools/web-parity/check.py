@@ -15,8 +15,8 @@ the `RANGE <fingerprint>` console lines until `DUMP DONE`, and compares them wit
 
 The range is read from the JVM file (lines per puzzle / 3 tiers), so the two cannot disagree about
 it. The JVM file also holds levels 1..N under the pseudo-puzzle `levels` (five boards a level), which is
-one more page, `&puzzle=levels`. One page per puzzle, all at once: a year is twelve independent pages, and the slowest puzzle sets
-the pace. Exits 0 when every line of every puzzle matches in every browser; 1 on any difference,
+one more page, `&puzzle=levels`. One page per puzzle, at most four at once: each Wasm instance owns
+its dictionaries, so loading all forty together exhausts a CI runner's memory. Exits 0 when every line of every puzzle matches in every browser; 1 on any difference,
 missing line, page error, crash or timeout; 2 on bad inputs.
 
 Needs `pip install playwright` and `python -m playwright install chromium webkit` (add
@@ -113,8 +113,14 @@ async def check_browser(pw, name: str, base: str, expected: dict[str, list[str]]
     browser = await getattr(pw, name).launch()
     started = time.monotonic()
     errors: list[str] = []
+    slots = asyncio.Semaphore(4)
+
+    async def dump(puzzle):
+        async with slots:
+            return await dump_one(browser, base, puzzle, days, timeout, errors)
+
     try:
-        results = await asyncio.gather(*(dump_one(browser, base, p, days, timeout, errors) for p in expected))
+        results = await asyncio.gather(*(dump(p) for p in expected))
     finally:
         await browser.close()
     problems = list(errors)
@@ -133,7 +139,7 @@ async def main_async(args, expected: dict[str, list[str]], days: int) -> int:
     with Server(args.dist) as server:
         base = server.url.rstrip("/")
         async with async_playwright() as pw:
-            # One browser at a time: twelve wasm pages already saturate a CI runner's cores, and
+            # One browser at a time: four Wasm pages already saturate a CI runner's cores, and
             # two browsers at once would only make both slower and the timeout less meaningful.
             for name in args.browsers:
                 problems += await check_browser(pw, name, base, expected, days, args.timeout, args.show)

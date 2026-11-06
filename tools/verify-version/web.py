@@ -18,6 +18,11 @@ RUSSIAN_ALPHABET = "абвгдежзийклмнопрстуфхцчшщъыьэ
 SAVED_KEY = "daybook.saved_games"
 
 
+def wait_ready(page):
+    # A cold Wasm compile can outlast a screenshot's settling window on a shared CI runner.
+    page.wait_for_function("() => !document.getElementById('loading')", timeout=60000)
+
+
 def saved_state(page, puzzle, predicate="state.moves > 0"):
     """Read the real debounced save, rather than accepting a painted keyboard as proof of input."""
     expression = """([key, prefix]) => {
@@ -57,6 +62,7 @@ def word_boards(page, server, screenshot, opposite_language):
 
     def open_board(puzzle):
         page.goto(server.url + "?date=2026-11-05&puzzle=" + puzzle, timeout=60000)
+        wait_ready(page)
         R.settle(page, 20)
 
     for puzzle in RUSSIAN_WORD_IDS:
@@ -117,6 +123,7 @@ def word_boards(page, server, screenshot, opposite_language):
         screenshot("offline-" + puzzle + "-english-content")
 
     page.goto(server.url + "?screen=settings", timeout=60000)
+    wait_ready(page)
     R.settle(page, 20)
     choose(page, opposite_language)
     for puzzle, snapshot in snapshots.items():
@@ -131,6 +138,7 @@ def word_boards(page, server, screenshot, opposite_language):
 def short_layout(page, server, screenshot):
     """Keep the formerly crashing 2× tutorial and zero-room resize in the repeatable gate."""
     page.goto(server.url + "?screen=settings", timeout=60000)
+    wait_ready(page)
     R.settle(page, 20)
     language = choose(page, "")
     page.evaluate("key => localStorage.setItem(key, '[]')", R.SEEN_KEY)
@@ -202,6 +210,7 @@ def check_locale(browser, engine, server, out, locale):
         [Path(urlparse(response.url).path).name, response.status]))
 
     def screenshot(name):
+        wait_ready(page)
         png, _ = R.settle(page, 12)
         path = out / f"{prefix}-{name}.png"
         path.write_bytes(png)
