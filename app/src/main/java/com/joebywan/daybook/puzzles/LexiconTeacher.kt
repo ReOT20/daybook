@@ -1,7 +1,17 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.listed
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.words.WordContent
 
 /**
  * Lexicon, reasoned the way a person reasons it: from the marks already on the board.
@@ -64,15 +74,19 @@ internal object LexiconTeacher {
      * (the mean number left, sum of squared outcome sizes over the list), five letters 48.4 for RAISE to 52.0 for STARE,
      * four letters 98.1 for TALE to 110.1 for LEAN, within 12% of the best. `LexiconTeachingTest` re-measures them.
      */
-    fun openers(length: Int): List<String> =
-        if (length == 4) listOf("tale", "sale", "late", "real", "lane", "seal", "lean")
+    fun openers(length: Int, contentLanguage: String = "en"): List<String> =
+        if (contentLanguage == "ru") {
+            // Measured over every Russian answer: all four are within 12% of the best mean words left.
+            if (length == 4) listOf("кора", "сера", "нора", "кола")
+            else listOf("тоска", "катер", "корма", "салон")
+        } else if (length == 4) listOf("tale", "sale", "late", "real", "lane", "seal", "lean")
         else listOf("raise", "arise", "irate", "slate", "arose", "alert", "stare")
 
     /** The opener for [pick], a board's [LexiconState.opener]. */
-    fun opener(length: Int, pick: Int = 0): String = openers(length).let { it[pick.mod(it.size)] }
+    fun opener(length: Int, pick: Int = 0, contentLanguage: String = "en"): String = openers(length, contentLanguage).let { it[pick.mod(it.size)] }
 
     /** "Clue: Lift (5)": a clue to [word] without the word, ready to drop into an explanation. */
-    private fun clueFor(word: String) = "\u201C${WordList.clue(word)}\u201D (${word.length})"
+    private fun clueFor(word: String, contentLanguage: String = "en") = message("teacher.words.clue_for.1", "value1" to (WordList.clue(word, contentLanguage)), "word_length" to (word.length))
 
     // ---- what the indices in a Deduction mean on Lexicon's board -----------------------------------
     // A tile is `row * length + slot`, rows counting down the grid with the row being typed after the
@@ -84,7 +98,7 @@ internal object LexiconTeacher {
 
     fun tile(length: Int, row: Int, slot: Int) = row * length + slot
 
-    fun key(letter: Char) = KEY + (letter - 'a')
+    fun key(letter: Char, contentLanguage: String = "en") = KEY + WordContent.index(letter, contentLanguage)
 
     /** What a step asks the player to do. */
     sealed interface Move {
@@ -109,34 +123,41 @@ internal object LexiconTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     /** Answer-list words that would have drawn every mark on the board. */
-    fun candidates(length: Int, guesses: List<String>, marks: List<List<Int>>): List<String> =
-        WordList.answers(length).filter { LexiconRules.consistent(it, guesses, marks) }
+    fun candidates(length: Int, guesses: List<String>, marks: List<List<Int>>, contentLanguage: String = "en"): List<String> =
+        WordList.answers(length, contentLanguage).filter { LexiconRules.consistent(it, guesses, marks) }
 
     /** What the marks say, slot by slot and letter by letter. */
-    private class Clues(val length: Int, val guesses: List<String>, val marks: List<List<Int>>) {
+    private class Clues(val length: Int, val guesses: List<String>, val marks: List<List<Int>>, val contentLanguage: String) {
+        val alphabet = WordContent.alphabet(contentLanguage)
         /** The letter a green fixed in each slot, and the guess that showed it. */
         val green = arrayOfNulls<Char>(length)
         val greenGuess = IntArray(length) { -1 }
 
         /** At least this many of each letter: the most any one guess showed as green or yellow. */
-        val min = IntArray(26)
+        val min = IntArray(alphabet.length)
 
         /** Whether a slot is ruled out for a letter, and the guess that ruled it out. */
-        val ruledBy = Array(length) { IntArray(26) { -1 } }
+        val ruledBy = Array(length) { IntArray(alphabet.length) { -1 } }
 
         /** The first tile showing each letter as green or yellow, or -1. */
-        val shownAt = IntArray(26) { -1 }
+        val shownAt = IntArray(alphabet.length) { -1 }
 
         init {
             for (g in guesses.indices) {
-                val seen = IntArray(26)
+                val seen = IntArray(alphabet.length)
                 for (i in 0 until length) {
-                    val k = guesses[g][i] - 'a'
+                    val k = WordContent.index(guesses[g][i], contentLanguage)
                     when (marks[g][i]) {
                         LexiconMark.CORRECT -> {
                             seen[k]++
@@ -154,7 +175,7 @@ internal object LexiconTeacher {
                         else -> if (ruledBy[i][k] < 0) ruledBy[i][k] = g
                     }
                 }
-                for (k in 0 until 26) if (seen[k] > min[k]) min[k] = seen[k]
+                for (k in alphabet.indices) if (seen[k] > min[k]) min[k] = seen[k]
             }
         }
     }
@@ -165,10 +186,11 @@ internal object LexiconTeacher {
         marks: List<List<Int>>,
         current: String,
         opener: Int = 0,
+        contentLanguage: String = "en",
     ): Step? {
-        val clues = Clues(length, guesses, marks)
+        val clues = Clues(length, guesses, marks, contentLanguage)
         mistake(clues, current)?.let { return it }
-        if (guesses.isEmpty()) return opening(length, opener)
+        if (guesses.isEmpty()) return opening(length, opener, contentLanguage)
         pin(clues, current)?.let { return it }
         return choose(clues, current)
     }
@@ -178,15 +200,14 @@ internal object LexiconTeacher {
     private fun mistake(c: Clues, current: String): Step? {
         val row = c.guesses.size
         if (current.length != c.length) return null
-        if (!WordList.isWord(current)) {
+        if (!WordList.isWord(current, c.contentLanguage)) {
             return Step(
                 MISTAKE, Move.Retype(c.length - 1),
                 focus = (0 until c.length).map { tile(c.length, row, it) }.toSet(),
                 cited = emptySet(),
                 targets = setOf(DELETE),
-                nudge = "Look at the row you typed.",
-                explanation = "${current.uppercase()} isn't in the word list, so Enter won't take it. " +
-                    "Change a letter or two.",
+                nudge = message("teacher.words.mistake.1"),
+                explanation = message("teacher.words.mistake.2", "current_uppercase_" to (current.uppercase())),
             )
         }
         return null
@@ -194,16 +215,15 @@ internal object LexiconTeacher {
 
     // ---- opener -----------------------------------------------------------------------------------
 
-    private fun opening(length: Int, pick: Int): Step {
-        val word = opener(length, pick)
+    private fun opening(length: Int, pick: Int, contentLanguage: String): Step {
+        val word = opener(length, pick, contentLanguage)
         return Step(
             OPENER, Move.Open(word),
             focus = (0 until length).map { tile(length, 0, it) }.toSet(),
             cited = emptySet(),
-            targets = word.map { key(it) }.toSet(),
-            nudge = "Nothing is known yet. Start with a word of common letters.",
-            explanation = "A good first guess has common letters, so it cuts the list down fast. " +
-                "Try the word that goes ${clueFor(word)}.",
+            targets = word.map { key(it, contentLanguage) }.toSet(),
+            nudge = message("teacher.words.opening.1"),
+            explanation = message("teacher.words.opening.2", "value1" to (clueFor(word, contentLanguage))),
         )
     }
 
@@ -211,9 +231,9 @@ internal object LexiconTeacher {
 
     private fun pin(c: Clues, current: String): Step? {
         val row = c.guesses.size
-        for (k in 0 until 26) {
+        for (k in c.alphabet.indices) {
             if (c.min[k] == 0) continue
-            val letter = 'a' + k
+            val letter = c.alphabet[k]
             val fixed = (0 until c.length).count { c.green[it] == letter }
             val need = c.min[k] - fixed
             if (need <= 0) continue
@@ -233,25 +253,25 @@ internal object LexiconTeacher {
                     .map { tile(c.length, g, it) }
             }.toSet()
             val shout = letter.uppercaseChar()
-            val where = if (need == 1) "slot ${slot + 1}" else "slots ${listed(open.map { it + 1 })}"
-            val long = buildString {
-                append("$shout is in the word, but ")
-                if (ruled.isNotEmpty()) append("not in ${slots(ruled)}")
-                if (ruled.isNotEmpty() && taken.isNotEmpty()) append(", and ")
+            val where = if (need == 1) message("teacher.words.pin.1", "slot_1" to (slot + 1)) else message("teacher.words.pin.2", "listed_open_map_it_1_" to (listedMessage(open.map { it + 1 })))
+            val long = buildList<Message> {
+                add(message("teacher.words.pin.3", "shout" to (shout)))
+                if (ruled.isNotEmpty()) add(message("teacher.words.pin.4", "slots_ruled_" to (slots(ruled))))
+                if (ruled.isNotEmpty() && taken.isNotEmpty()) add(message("teacher.words.pin.5"))
                 if (taken.isNotEmpty()) {
-                    append("${slots(taken)} already ${if (taken.size == 1) "holds" else "hold"} ")
-                    append(listed(taken.map { c.green[it]!!.uppercaseChar() }))
+                    add(message("teacher.words.pin.6", "slots_taken_" to (slots(taken)), "value2" to (if (taken.size == 1) message("teacher.words.pin.extra.1") else message("teacher.words.pin.extra.2"))))
+                    add(listedMessage(taken.map { c.green[it]!!.uppercaseChar() }))
                 }
-                append(if (need == 1) ", so it goes in $where." else ", so it fills $where.")
-            }
+                add(if (need == 1) message("teacher.words.pin.7", "where" to (where)) else message("teacher.words.pin.8", "where" to (where)))
+            }.joinedMessages("")
             val explanation = if (long.length <= MAX_EXPLANATION) long
-            else "$shout is in the word, and every slot but $where is ruled out or taken."
+            else message("teacher.words.pin.9", "shout" to (shout), "where" to (where))
             return Step(
                 PIN, Move.Pin(slot, letter, word),
                 focus = shownTiles,
                 cited = cited,
-                targets = setOf(tile(c.length, row, slot), key(letter)),
-                nudge = "Look at where $shout has been marked.",
+                targets = setOf(tile(c.length, row, slot), key(letter, c.contentLanguage)),
+                nudge = message("teacher.words.pin.10", "shout" to (shout)),
                 explanation = explanation,
             )
         }
@@ -260,7 +280,7 @@ internal object LexiconTeacher {
 
     /** The best answer-list word that fits every mark and has [letter] in [slot], or null. */
     private fun wordWith(c: Clues, letter: Char, slot: Int): String? {
-        val fits = candidates(c.length, c.guesses, c.marks).filter { it[slot] == letter }
+        val fits = candidates(c.length, c.guesses, c.marks, c.contentLanguage).filter { it[slot] == letter }
         return if (fits.isEmpty()) null else bestGuess(fits)
     }
 
@@ -268,7 +288,7 @@ internal object LexiconTeacher {
 
     private fun choose(c: Clues, current: String): Step? {
         val row = c.guesses.size
-        val fits = candidates(c.length, c.guesses, c.marks)
+        val fits = candidates(c.length, c.guesses, c.marks, c.contentLanguage)
         if (fits.isEmpty()) return null
         val rowFits = current.length == c.length && fits.contains(current)
         if (rowFits) {
@@ -277,9 +297,8 @@ internal object LexiconTeacher {
                 focus = (0 until c.length).map { tile(c.length, row, it) }.toSet(),
                 cited = emptySet(),
                 targets = setOf(ENTER),
-                nudge = "Your row fits every mark.",
-                explanation = "${current.uppercase()} fits every mark so far, so it could be the word. " +
-                    "Press Enter to try it.",
+                nudge = message("teacher.words.choose.1"),
+                explanation = message("teacher.words.choose.2", "current_uppercase_" to (current.uppercase())),
             )
         }
         val lastRow = (0 until c.length).map { tile(c.length, row - 1, it) }.toSet()
@@ -289,19 +308,19 @@ internal object LexiconTeacher {
                 ONLY_WORD, Move.Fill(word),
                 focus = lastRow,
                 cited = lastRow,
-                targets = word.map { key(it) }.toSet(),
-                nudge = "Check every mark against the word list.",
-                explanation = "Only one word on the answer list fits every mark. Its clue: ${clueFor(word)}. Type it.",
+                targets = word.map { key(it, c.contentLanguage) }.toSet(),
+                nudge = message("teacher.words.choose.3"),
+                explanation = message("teacher.words.choose.4", "value1" to (clueFor(word, c.contentLanguage))),
             )
         }
         val word = bestGuess(fits)
-        val shown = splitText(word, fits)
+        val shown = splitText(word, fits, c.contentLanguage)
         return Step(
             CHOOSE, Move.Fill(word),
             focus = lastRow,
             cited = lastRow,
-            targets = word.map { key(it) }.toSet(),
-            nudge = "Nothing more is forced. Pick a word that fits and splits what is left.",
+            targets = word.map { key(it, c.contentLanguage) }.toSet(),
+            nudge = message("teacher.words.choose.5"),
             explanation = shown,
         )
     }
@@ -338,20 +357,17 @@ internal object LexiconTeacher {
      * mark. Try the one that goes "Lift" (5): it can be marked 5 ways, and none leaves more than 2." Read off the
      * candidates alone, as the pick is; shortened when the clue makes it too long for the panel.
      */
-    private fun splitText(word: String, fits: List<String>): String {
+    private fun splitText(word: String, fits: List<String>, contentLanguage: String): Message {
         val counts = outcomes(word, fits)
         val worst = counts.values.max()
-        val clue = clueFor(word)
+        val clue = clueFor(word, contentLanguage)
         val long = when {
-            fits.size == 2 -> "Two words fit every mark, and either could be it. Try the one that goes $clue: " +
-                "if it isn't the word, its marks point to the other."
-            worst == 1 -> "${fits.size} words on the answer list fit every mark. Try the one that goes $clue: " +
-                "each of them would mark it differently, so after it you will know the word."
-            else -> "${fits.size} words on the answer list fit every mark. Try the one that goes $clue: " +
-                "it can be marked ${counts.size} ways, and none leaves more than $worst."
+            fits.size == 2 -> message("teacher.words.split_text.1", "clue" to (clue))
+            worst == 1 -> message("teacher.words.split_text.2", "fits_size" to (fits.size), "clue" to (clue))
+            else -> message("teacher.words.split_text.3", "fits_size" to (fits.size), "clue" to (clue), "counts_size" to (counts.size), "worst" to (worst))
         }
-        val short = if (fits.size == 2) "Two words fit. Try $clue: if it isn't the word, it is the other."
-        else "${fits.size} words fit. Try $clue: whatever its marks, at most $worst will be left."
+        val short = if (fits.size == 2) message("teacher.words.split_text.4", "clue" to (clue))
+        else message("teacher.words.split_text.5", "fits_size" to (fits.size), "clue" to (clue), "worst" to (worst))
         return if (long.length <= MAX_EXPLANATION) long else short
     }
 
@@ -367,6 +383,6 @@ internal object LexiconTeacher {
 
     // ---- wording ----------------------------------------------------------------------------------
 
-    private fun slots(slots: List<Int>): String =
-        (if (slots.size == 1) "slot " else "slots ") + listed(slots.map { it + 1 })
+    private fun slots(slots: List<Int>): Message =
+        (if (slots.size == 1) message("teacher.words.slots.1") else message("teacher.words.slots.2")) + listedMessage(slots.map { it + 1 })
 }

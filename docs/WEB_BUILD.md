@@ -35,8 +35,10 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   Android's `BackButton` draws nothing.
 - **Offline:** `sw.js` is network-first for unhashed files (page, `daybook.js`, manifest) and
   cache-first for the content-hashed `.wasm`; the page posts its resource list to the worker, since
-  the first visit loads before the worker controls it. `manifest.webmanifest` and the icons make it
-  installable to the home screen.
+  the first visit loads before the worker controls it. All eleven bundled fonts are explicitly precached during
+  worker installation: Cyrillic weights and symbol fallbacks remain available when the player switches language
+  offline, even if their first loads finish after the page's resource reports. `tools/i18n/test_fonts.py` checks
+  this list against the bundled files. `manifest.webmanifest` and the icons make it installable to the home screen.
   The player guide (`guide/`, `tools/guide/`) and the F-Droid repo (`fdroid/`) share the scope and are passed through untouched: `cacheKey` would store their pages, or an APK, as the app's.
 - **Favicon and link preview.** `favicon.svg` (the launcher mark simplified for a tab: no rays,
   bigger sun lifted clear of a wider book — a sun touching the book reads as a head), `favicon.ico`
@@ -89,8 +91,9 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   sheet) and `≠` (drawn as strokes in Dominoes) need no glyph. A new non-Latin-1 character in a drawn string
   needs the web fonts re-cut; check it by rendering it with the network logged. Board glyphs
   drawn with their own `TextStyle` (Sudoku, Snap, Nonogram, ...) name no family and are still the default font.
-  The Russian shell uses four additional Noto Sans subsets on both platforms, with all Russian letters
-  and quotation marks. `WithSymbolFonts` also preloads these for a Russian browser locale. Fredoka and
+  Russian text uses four additional Noto Sans subsets on both platforms, with Russian letters,
+  quotation marks and the Greek letters used in native word clues. `WithSymbolFonts` preloads both
+  text families so an in-app language switch works immediately offline. Fredoka and
   the symbol subsets remain unchanged; source/version, regeneration and localization scope are in
   `docs/LOCALIZATION.md`.
 - The Material icons: JetBrains' `material-icons-extended` (`libs.jb.compose.material.icons.extended`) costs 4.5 KB of wasm (<1 KB gzipped) over the

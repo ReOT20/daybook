@@ -23,7 +23,7 @@ sealed interface WheelKeyAction {
 }
 
 /** The action for [key], or null for a key the board does not use. The caller has already ruled out chords. */
-fun wordWheelKeyAction(key: Key): WheelKeyAction? = letterKey(key)?.let { WheelKeyAction.Letter(it) } ?: when {
+fun wordWheelKeyAction(key: Key, contentLanguage: String = "en"): WheelKeyAction? = (if (contentLanguage == "en") letterKey(key) else null)?.let { WheelKeyAction.Letter(it) } ?: when {
     isEnterKey(key) -> WheelKeyAction.Enter
     isEraseKey(key) -> WheelKeyAction.Backspace
     key == Key.Escape -> WheelKeyAction.Clear

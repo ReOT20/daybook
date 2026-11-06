@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
 import com.joebywan.daybook.core.Verdict
@@ -40,11 +49,17 @@ internal object DwindleTeacher {
     class Step(
         override val technique: String,
         val word: String,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         override val focus: Set<Int>,
         override val cited: Set<Int> = emptySet(),
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = focus
     }
 
@@ -52,18 +67,18 @@ internal object DwindleTeacher {
     class Candidate(val word: String, val cells: List<Int>)
 
     /** The words that can still be goals, by length then list order. Nothing here can see the goals. */
-    fun candidates(width: Int, height: Int, letters: String, counts: IntArray, openLengths: List<Int>, tried: List<String>, diagonal: Boolean = false): List<Candidate> =
+    fun candidates(width: Int, height: Int, letters: String, counts: IntArray, openLengths: List<Int>, tried: List<String>, diagonal: Boolean = false, contentLanguage: String = "en"): List<Candidate> =
         openLengths.distinct().sorted().flatMap { n ->
-            WheelWords.grid(n).mapNotNull { w ->
-                if (w in tried || !WheelWords.spellable(w, letters)) return@mapNotNull null
+            WheelWords.grid(n, contentLanguage).mapNotNull { w ->
+                if (w in tried || !WheelWords.spellable(w, letters, contentLanguage)) return@mapNotNull null
                 val v = DwindleLogic.ways(letters, width, height, w, diagonal = diagonal)
                 if (v is Verdict.ExactlyOne && v.value.all { counts[it] > 0 }) Candidate(w, v.value) else null
             }
         }
 
     /** A forced word from visible facts only: no parameter through which a goal could arrive except the dashes' lengths. */
-    fun deduce(width: Int, height: Int, letters: String, counts: IntArray, openLengths: List<Int>, tried: List<String>, diagonal: Boolean = false): Step? {
-        val all = candidates(width, height, letters, counts, openLengths, tried, diagonal)
+    fun deduce(width: Int, height: Int, letters: String, counts: IntArray, openLengths: List<Int>, tried: List<String>, diagonal: Boolean = false, contentLanguage: String = "en"): Step? {
+        val all = candidates(width, height, letters, counts, openLengths, tried, diagonal, contentLanguage)
         for (t in counts.indices) {
             val c = counts[t]
             if (c == 0) continue
@@ -72,9 +87,9 @@ internal object DwindleTeacher {
             val word = through[0].word
             return Step(
                 THROUGH, word,
-                nudge = "Count the words that can run through this tile.",
-                explanation = if (c == 1) "One use left, and only one well-known word runs through this tile, so it is a goal. Its clue: ${clueFor(word)}."
-                    else "$c uses left, and just $c well-known words run through this tile, so each is a goal. One is clued ${clueFor(word)}.",
+                nudge = message("teacher.dwindle.deduce.1"),
+                explanation = if (c == 1) message("teacher.dwindle.deduce.2", "value1" to (clueFor(word, contentLanguage)))
+                    else message("teacher.dwindle.deduce.3", "c" to (c), "value2" to (clueFor(word, contentLanguage))),
                 focus = setOf(t),
             )
         }
@@ -85,9 +100,9 @@ internal object DwindleTeacher {
             val word = fits[0].word
             return Step(
                 LENGTH, word,
-                nudge = "How many $n-letter words are left on these tiles?",
-                explanation = (if (open == 1) "Only one well-known $n-letter word is left on these tiles" else "Just $open well-known $n-letter words are left on these tiles") +
-                    ", and $open ${if (open == 1) "dash is" else "dashes are"} open. Clue: ${clueFor(word)}.",
+                nudge = message("teacher.dwindle.deduce.4", "n" to (n)),
+                explanation = (if (open == 1) message("teacher.dwindle.deduce.5", "n" to (n)) else message("teacher.dwindle.deduce.6", "open" to (open), "n" to (n))) +
+                    message("teacher.dwindle.deduce.7", "open" to (open), "value2" to (if (open == 1) message("teacher.dwindle.deduce.extra.1") else message("teacher.dwindle.deduce.extra.2")), "value3" to (clueFor(word, contentLanguage))),
                 focus = emptySet(),
             )
         }
@@ -95,8 +110,8 @@ internal object DwindleTeacher {
         val tile = forced.cells.minBy { counts[it] }
         return Step(
             ALL_TILES, forced.word,
-            nudge = "Take all the tiles' numbers together.",
-            explanation = "Working every number together, each way of using up all the tiles includes one word through this tile. Its clue: ${clueFor(forced.word)}.",
+            nudge = message("teacher.dwindle.deduce.8"),
+            explanation = message("teacher.dwindle.deduce.9", "value1" to (clueFor(forced.word, contentLanguage))),
             focus = setOf(tile),
         )
     }
@@ -174,30 +189,30 @@ internal object DwindleTeacher {
         val open = s.goals.filter { it.word !in s.found }
         val tried = s.found + s.bonus
         val lengths = open.map { it.word.length }
-        val step = deduce(s.width, s.height, s.letters, counts, lengths, tried, s.diagonal) ?: clue(s, counts, open, lengths, tried)
+        val step = deduce(s.width, s.height, s.letters, counts, lengths, tried, s.diagonal, s.contentLanguage) ?: clue(s, counts, open, lengths, tried)
         // A length step names dashes; only the state knows which of them are open.
         return if (step.technique != LENGTH) step else Step(
-            step.technique, step.word, step.nudge, step.explanation,
+            step.technique, step.word, step.nudgeMessage, step.explanationMessage,
             s.goals.indices.filter { s.goals[it].word !in s.found && s.goals[it].word.length == step.word.length }.map { DASH + it }.toSet(),
         )
     }
 
     /** Nothing is forced: the tile with the fewest words to spare, with a goal through it given by its clue. Reads a stored goal. */
     private fun clue(s: DwindleState, counts: IntArray, open: List<DwindleGoal>, lengths: List<Int>, tried: List<String>): Step {
-        val all = candidates(s.width, s.height, s.letters, counts, lengths, tried, s.diagonal)
+        val all = candidates(s.width, s.height, s.letters, counts, lengths, tried, s.diagonal, s.contentLanguage)
         val tile = counts.indices.filter { counts[it] > 0 }.minBy { t -> all.count { t in it.cells } - counts[t] }
         val word = open.first { tile in it.cells }.word
         val n = all.count { tile in it.cells }
         return Step(
             CLUE, word,
-            nudge = "Look at the words that can run through this tile.",
-            explanation = "$n words could run through this tile. The hint reads the list here: one of them is clued ${clueFor(word)}.",
+            nudge = message("teacher.dwindle.clue.1"),
+            explanation = message("teacher.dwindle.clue.2", "n" to (n), "value2" to (clueFor(word, s.contentLanguage))),
             focus = setOf(tile),
         )
     }
 
     /** "“Lift” (5)": a crossword clue to [word] without the word. Only "Show me" enters it. */
-    private fun clueFor(word: String) = "“${WheelWords.clue(word)}” (${word.length})"
+    private fun clueFor(word: String, contentLanguage: String) = message("teacher.dwindle.clue_for.extra.1", "value1" to (WheelWords.clue(word, contentLanguage)), "word_length" to (word.length))
 
     /** The [Deduction] for the play screen; `Dwindle.teach` is just this. */
     fun deduction(s: DwindleState): Deduction? {

@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.stats
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.card
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -32,8 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.DailySeed
 import com.joebywan.daybook.core.forgivenDays
-import com.joebywan.daybook.core.i18n.localized
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.calendarDayCaption
 import com.joebywan.daybook.platform.formatDate
 import com.joebywan.daybook.platform.platformLanguage
 import kotlinx.datetime.DatePeriod
@@ -75,13 +76,13 @@ fun StreakCalendar(played: Set<LocalDate>, today: LocalDate, modifier: Modifier,
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(10.dp).clip(CircleShape).background(scheme.primary))
-            Text(tr(" played    ", " играли    "), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(text("ui.streak_calendar.played"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
             Box(Modifier.size(10.dp).border(BorderStroke(1.5.dp, scheme.primary.copy(alpha = 0.6f)), CircleShape))
-            Text(tr(" missed, streak kept", " пропуск, серия сохранена"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(text("ui.streak_calendar.missed_streak_kept"), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            tr("Play on 5 of any 7 days to keep your streak going.", "Играйте в любые 5 из 7 дней, чтобы сохранить серию."),
+            text("ui.streak_calendar.play_on_5_of_any_7"),
             style = MaterialTheme.typography.labelMedium,
             color = scheme.onSurfaceVariant,
         )
@@ -190,12 +191,5 @@ internal fun MonthGrid(
 internal fun LocalDate.firstOfMonth() = LocalDate(year, month, 1)
 
 /** Captions keep the calendar's Monday-first order in both languages. */
-internal fun calendarWeekday(day: DayOfWeek, languageTag: String = platformLanguage()): String = when (day) {
-    DayOfWeek.MONDAY -> localized("M", "Пн", languageTag)
-    DayOfWeek.TUESDAY -> localized("T", "Вт", languageTag)
-    DayOfWeek.WEDNESDAY -> localized("W", "Ср", languageTag)
-    DayOfWeek.THURSDAY -> localized("T", "Чт", languageTag)
-    DayOfWeek.FRIDAY -> localized("F", "Пт", languageTag)
-    DayOfWeek.SATURDAY -> localized("S", "Сб", languageTag)
-    DayOfWeek.SUNDAY -> localized("S", "Вс", languageTag)
-}
+internal fun calendarWeekday(day: DayOfWeek, languageTag: String = platformLanguage()): String =
+    calendarDayCaption(day, languageTag)

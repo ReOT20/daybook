@@ -73,22 +73,33 @@ WEBKIT_SCREENSHOT_CSP = re.compile(r"^Refused to apply a stylesheet because its 
 # Puzzle ids, read from the code so a new puzzle is picked up without editing this file.
 # ---------------------------------------------------------------------------------------------
 
+def registry_ids(registry: str, sources: list[str]) -> list[str]:
+    """Read concrete PuzzleType objects, including multiple objects per source file."""
+    body = registry.split("val all: List<PuzzleType> = listOf(", 1)[1].split(")", 1)[0]
+    names = [name.strip() for name in body.split(",") if name.strip()]
+    objects = {}
+    declaration = re.compile(r"\bobject\s+(\w+)\s*:\s*PuzzleType\b")
+    for source in sources:
+        matches = list(declaration.finditer(source))
+        for i, match in enumerate(matches):
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(source)
+            identity = re.search(r'override val id\s*=\s*"([a-z0-9_-]+)"', source[match.end():end])
+            if identity:
+                objects[match.group(1)] = identity.group(1)
+    ids = [objects[name] for name in names]
+    if not ids or len(ids) != len(set(ids)):
+        raise ValueError("empty registry or duplicate puzzle ids")
+    return ids
+
+
 def puzzle_ids() -> list[str]:
     """The ids of every puzzle in core/PuzzleRegistry.kt, in home-grid order."""
     core = REPO / "app" / "src" / "main" / "java" / "com" / "joebywan" / "daybook"
     try:
-        registry = (core / "core" / "PuzzleRegistry.kt").read_text()
-        body = registry.split("val all: List<PuzzleType> = listOf(", 1)[1].split(")", 1)[0]
-        names = [n.strip() for n in body.split(",") if n.strip()]
-        ids = []
-        for name in names:
-            source = (core / "puzzles" / f"{name}.kt").read_text()
-            ids.append(re.search(r'override val id\s*=\s*"([a-z0-9_]+)"', source).group(1))
-        if ids:
-            return ids
-    except (OSError, IndexError, AttributeError):
-        pass
-    sys.exit("could not read puzzle ids from core/PuzzleRegistry.kt; pass them with -p")
+        return registry_ids((core / "core" / "PuzzleRegistry.kt").read_text(),
+                            [path.read_text() for path in (core / "puzzles").glob("*.kt")])
+    except (OSError, IndexError, KeyError, ValueError):
+        sys.exit("could not read puzzle ids from core/PuzzleRegistry.kt; pass them with -p")
 
 
 # ---------------------------------------------------------------------------------------------

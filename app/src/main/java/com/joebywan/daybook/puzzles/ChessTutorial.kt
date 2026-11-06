@@ -1,5 +1,7 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.core.BoardHighlight
 import com.joebywan.daybook.core.TutorialFrame
 
@@ -41,52 +43,52 @@ internal object ChessTutorial {
         listOf(
             TutorialFrame(
                 state(BACK_RANK, 1),
-                "Mate in 1: you play White and checkmate Black's king on g8. Its own pawns on f7, g7 and h7 box it in, and your rook on a1 can reach the back rank.",
+                message("puzzle.chess.tutorial.1.caption"),
                 hl(strong = setOf("g8"), soft = setOf("f7", "g7", "h7", "a1")),
             ),
             TutorialFrame(
                 state(BACK_RANK, 1),
-                "Tap the rook on a1, then tap a8. Two taps make one move: the first picks the piece up, the second puts it down.",
+                message("puzzle.chess.tutorial.2.caption"),
                 hl(strong = setOf("a1"), soft = setOf("a8")),
                 accepts = only(BACK_RANK, 1, "a1a8"),
-                retry = "Tap the glowing rook, then a8.",
-                done = "Ra8#. Check on the back rank, and the king's own pawns block every way out.",
+                retry = message("puzzle.chess.tutorial.2.retry"),
+                done = message("puzzle.chess.tutorial.2.done"),
             ),
             TutorialFrame(
                 state(LADDER, 2),
-                "Mate in 2: you move, Black replies, then you mate. Rd7 looks strong. Play it to see: tap the rook on d1, then d7.",
+                message("puzzle.chess.tutorial.3.caption"),
                 hl(strong = setOf("d1"), soft = setOf("d7")),
                 accepts = only(LADDER, 2, "d1d7"),
-                retry = "Tap the glowing rook, then d7.",
-                done = "Kb8, and no mate is left. In a game, Hint calls that a mistake.",
+                retry = message("puzzle.chess.tutorial.3.retry"),
+                done = message("puzzle.chess.tutorial.3.done"),
             ),
             TutorialFrame(
                 state(LADDER, 2),
-                "Back to the start. Black's king has a7, b7 and b8. The quiet move is the key: tap your king on a5, then b6, to guard a7 and b7.",
+                message("puzzle.chess.tutorial.4.caption"),
                 hl(strong = setOf("a5"), soft = setOf("b6", "a7", "b7")),
                 accepts = only(LADDER, 2, "a5b6"),
-                retry = "Tap the glowing king, then b6.",
-                done = "Kb6. Black's one legal move was Kb8.",
+                retry = message("puzzle.chess.tutorial.4.retry"),
+                done = message("puzzle.chess.tutorial.4.done"),
             ),
             TutorialFrame(
                 state(LADDER, 2, "a5b6"),
-                "Now tap the rook on d1, then d8. Your king guards a7, b7 and c7, and the rook takes a8 and c8.",
+                message("puzzle.chess.tutorial.5.caption"),
                 hl(strong = setOf("d1"), soft = setOf("d8", "a7", "b7", "c7")),
                 accepts = only(LADDER, 2, "a5b6", "d1d8"),
-                retry = "Tap the glowing rook, then d8.",
-                done = "Rd8#. Every square the king could use is covered.",
+                retry = message("puzzle.chess.tutorial.5.retry"),
+                done = message("puzzle.chess.tutorial.5.done"),
             ),
             TutorialFrame(
                 state(PROMOTION, 1),
-                "A pawn reaching the last rank becomes a piece. Tap h7, tap h8, then pick the queen: a rook would let the king escape to g7.",
+                message("puzzle.chess.tutorial.6.caption"),
                 hl(strong = setOf("h7"), soft = setOf("h8", "g7")).let { it.copy(soft = it.soft + queen) },
                 accepts = only(PROMOTION, 1, "h7h8q"),
-                retry = "Tap the glowing pawn, then h8, then the queen.",
-                done = "h8=Q#. The queen covers g7 and the h-file; your king covers g5 and g6.",
+                retry = message("puzzle.chess.tutorial.6.retry"),
+                done = message("puzzle.chess.tutorial.6.done"),
             ),
             TutorialFrame(
                 state(FREE, 2),
-                "Your turn: mate in 2. Stuck? Hint shows you why.",
+                message("puzzle.chess.tutorial.7.caption"),
                 freePlay = true,
             ),
         )

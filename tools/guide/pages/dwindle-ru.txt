@@ -1,0 +1,91 @@
+# Dwindle · RU
+> Russian words that clear the tiles
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Swipe through touching tiles to spell a word, across or up and down, never diagonally. Or tap the tiles in turn and press Enter.
+
+On a keyboard, type a word from the tiles, Backspace deletes, Enter tries the word, and Escape clears it.
+
+The dashes show the lengths of the goal words. Each tile's number is how many goal words still run through it, and at zero it vanishes. Tiles never fall or move.
+
+Any other real word is a bonus word: it uses nothing up. Tap the bonus line to see them all, А to Я. A word that won't do is refused with a note saying why.
+
+Each goal word has only one way on the board, and no order can leave you stuck.
+
+Stuck? The first tap on Hint says where to look, and the second gives a clue to a word. A hint glows one tile at most, because the word's own tiles would spell it. Only "Show me" enters the word.
+
+## Rules
+
+- Find every goal word.
+- A word has three letters or more and runs through touching tiles, using a tile at most once.
+
+## What changes per tier
+
+- Standard: 4x4 tiles, 6 or 7 words, words up to 5 letters.
+- Hard: 5x5 tiles, 10 to 12 words, words up to 6 letters.
+- Expert: 6x6 tiles, 15 to 18 words, words up to 7 letters.
+
+## Techniques
+
+These are the steps the hints teach. On each board, a tile is its letter and its number, so Н2 is an Н with two words left to run through it. A filled tile is where to look, and the rings mark the rest of the word.
+
+### clue | A word from its clue
+
+Sometimes nothing on the board forces a word. The hint then picks the tile with the fewest words to spare and gives the clue to a word through it. It reads the board's own goals to do that, and says so.
+
+### through | A tile only so many words reach
+
+Compare a tile's number with the well-known words that can run through it. If they're equal, every one of them is a goal.
+
+~~~board
+А1 Н2 И1 Р2
+З2 Г3 Е2 А1
+А2 Р1 Н2 С2
+Ф1 Р1 К1 А2
+content-language: ru
+fixture-lengths: 5 4 4 4 3 3 3
+fixture-letters: анирзгеаарнсфрка
+focus: r1c2
+answer: r1c2=Н2
+caption: This Н has 2 uses left. Exactly two printed-list words can run through it, РИНГ and ФАЗАН, so both must be goals.
+~~~
+
+### length | A length only so many words fit
+
+Count the open dashes of one length, then the well-known words of that length still on the tiles. If they match, those words are the goals.
+
+~~~board
+_ _ _ _ _ _
+_ _ _ _ _ _
+_ _ _ _ _ _
+_ _ Е1 В1 _ _
+_ Р2 К2 О1 _ _
+Б1 А2 А1 Н1 _ _
+content-language: ru
+fixture-lengths: 5 4 3
+fixture-letters: аваждьроуренаплевокневлздркоупбаанса
+fixture-tried: пара повар держава ров аул день ревень ковер пленка воз зов бард пас лупа консул
+caption: One five-letter dash remains. АРКАН is the only printed-list word of that length still possible on these tiles.
+~~~
+
+### all-tiles | Every tile's number taken together
+
+The numbers have to come out exactly, on every tile and for every dash. Think through the ways of using up the whole board: if one word is in all of them, it's a goal, whichever way the rest falls.
+
+~~~board
+Р1 У1 _ _ _
+_ Б1 _ _ _
+_ Л1 У1 П1 _
+_ Ь1 М1 _ _
+_ С2 О1 _ _
+content-language: ru
+fixture-lengths: 5 3 3
+fixture-letters: рударябьбмилупетьмуншсотк
+fixture-tried: пункт бармен омут дубль буря штиль дар пульт рябь
+focus: r2c2
+answer: r2c2=Б1
+caption: Every way of satisfying all remaining tile counts and word lengths includes БУР. The filled Б starts that word, regardless of how the other goals are chosen.
+~~~

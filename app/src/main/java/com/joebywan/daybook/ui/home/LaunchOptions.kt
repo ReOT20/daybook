@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.home
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.ArcadeBoard
 import com.joebywan.daybook.ui.theme.ArcadeFill
 import com.joebywan.daybook.ui.theme.arcadeGlow
@@ -73,10 +74,10 @@ enum class LaunchMode {
     TRAINING;
 
     val label: String get() = when (this) {
-        DAILY -> tr("Daily", "На сегодня")
-        LEVELS -> tr("Levels", "Уровни")
-        RANDOM -> tr("Random", "Случайная")
-        TRAINING -> tr("Training", "Обучение")
+        DAILY -> text("ui.launch_options.daily")
+        LEVELS -> text("ui.launch_options.levels")
+        RANDOM -> text("ui.launch_options.random")
+        TRAINING -> text("ui.launch_options.training")
     }
 
     /** Whether the tier row applies: Daily and Random only. */
@@ -301,10 +302,10 @@ fun LaunchOptions(
                 when (segment) {
                     ModeSegment.DAY -> {
                         contentDescription = dayMode.label
-                        stateDescription = if (selected) tr("Selected, double-tap for ${other.label}", "Выбрано. Двойное нажатие: ${other.label}") else tr("Not selected", "Не выбрано")
+                        stateDescription = if (selected) text("ui.launch_options.selected_double_tap_for", "other_label" to (other.label)) else text("ui.launch_options.not_selected")
                     }
-                    ModeSegment.LEVELS -> contentDescription = tr("Levels, $levelLine", "Уровни, $levelLine")
-                    ModeSegment.TRAINING -> contentDescription = tr("Training, $trainingLine courses graduated", "Обучение, завершено курсов: $trainingLine")
+                    ModeSegment.LEVELS -> contentDescription = text("ui.launch_options.levels_d82a74", "levelLine" to (levelLine))
+                    ModeSegment.TRAINING -> contentDescription = text("ui.launch_options.training_courses_graduated", "trainingLine" to (trainingLine))
                 }
             },
             content = { segment, ink, selected ->

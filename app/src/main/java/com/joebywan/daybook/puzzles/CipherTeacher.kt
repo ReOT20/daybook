@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.puzzles.CipherLogic.EMPTY
 
 /**
@@ -47,7 +56,6 @@ internal object CipherTeacher {
     val TECHNIQUES = listOf(LEADING, COLUMN, ONLY_LETTER, PAIR, CHAIN, WHAT_IF, FALLBACK)
 
     private const val ALL = (1 shl 10) - 1
-
 
 
     /**
@@ -259,11 +267,17 @@ internal object CipherTeacher {
         val digit: Int,
         val focus: Set<Int>,
         val cited: Set<Int>,
-        val nudge: String,
-        val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         /** False when the explanation is a summary ("only I = 0 fits both") rather than the working itself. */
         val shown: Boolean = true,
-    )
+    ) {
+
+        val nudgeMessage: Message = nudge.asMessage()
+        val explanationMessage: Message = explanation.asMessage()
+        val nudge: String get() = nudgeMessage.english
+        val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: CipherState): Step? {
         if (s.solved) return null
@@ -277,8 +291,8 @@ internal object CipherTeacher {
         val d = s.solution[l]
         return Step(
             FALLBACK, l, d, sum.tilesOf(l), emptySet(),
-            "This one takes a longer chain. Look at ${sum.name(l)}.",
-            "This one needs a longer chain than a hint can walk through, so here's the answer for ${sum.name(l)}: it's $d.",
+            message("teacher.cipher.fallback.1", "sum_name_l_" to (sum.name(l))),
+            message("teacher.cipher.fallback.2", "sum_name_l_" to (sum.name(l)), "d" to (d)),
         )
     }
 
@@ -291,30 +305,40 @@ internal object CipherTeacher {
             ?: wrong.first()
         val d = s.digits[l]
         val x = sum.name(l)
-        val clear = "Select $x and tap $d again to clear it."
-        fun step(why: String, cited: Set<Int>) = Step(MISTAKE, l, EMPTY, sum.tilesOf(l), cited, "Check $x = $d.", "$why $clear")
+        val clear = message("teacher.cipher.mistake.1", "x" to (x), "d" to (d))
+        fun step(why: CharSequence, cited: Set<Int>) = Step(MISTAKE, l, EMPTY, sum.tilesOf(l), cited, message("teacher.cipher.step.1", "x" to (x), "d" to (d)), message("teacher.cipher.step.extra.1", "why" to (why), "clear" to (clear)))
         val twin = s.digits.indices.firstOrNull { it != l && s.digits[it] == d }
-        if (twin != null) return step("$x and ${sum.name(twin)} can't both be $d: each letter has its own digit.", sum.tilesOf(twin))
-        if (d == 0 && sum.leading and (1 shl l) != 0) return step("$x starts a word, so it can't be 0.", emptySet())
+        if (twin != null) return step(message("teacher.cipher.mistake.2", "x" to (x), "sum_name_twin_" to (sum.name(twin)), "d" to (d)), sum.tilesOf(twin))
+        if (d == 0 && sum.leading and (1 shl l) != 0) return step(message("teacher.cipher.mistake.3", "x" to (x)), emptySet())
         val c = conflicts.column
         if (c != null && l in sum.columnLetters[c]) {
-            return step("With these digits the ${sum.columnName(c)} doesn't add up.", sum.columnTiles(c))
+            return step(message("teacher.cipher.mistake.4", "sum_columnName_c_" to (columnNameMessage(sum, c))), sum.columnTiles(c))
         }
-        return step("No way to finish the sum keeps $x = $d.", emptySet())
+        return step(message("teacher.cipher.mistake.5", "x" to (x), "d" to (d)), emptySet())
     }
+
+    private val placeKeys = listOf(
+        "teacher.cipher.place.units", "teacher.cipher.place.tens", "teacher.cipher.place.hundreds",
+        "teacher.cipher.place.thousands", "teacher.cipher.place.ten_thousands", "teacher.cipher.place.hundred_thousands",
+    )
+
+    internal fun placeMessage(column: Int): Message = message(placeKeys[column])
+
+    private fun columnNameMessage(sum: CipherSum, column: Int): Message =
+        message("teacher.cipher.column_name", "place" to placeMessage(column))
 
     /** A letter as the player sees it: its digit once placed. */
     private fun term(sum: CipherSum, digits: List<Int>, l: Int) = if (digits[l] != EMPTY) digits[l].toString() else sum.name(l)
 
     /** Column [c] as a sum in words: "E + 1 + carry ends in O". [carry] is the carry into it when known. */
-    private fun columnText(sum: CipherSum, digits: List<Int>, c: Int, carry: Int?): String {
+    private fun columnText(sum: CipherSum, digits: List<Int>, c: Int, carry: Int?): Message {
         val parts = sum.columnAddends[c].map { term(sum, digits, it) } + when {
             c == 0 || carry == 0 -> emptyList()
-            carry != null -> listOf("$carry carried")
-            else -> listOf("carry")
+            carry != null -> listOf(message("teacher.cipher.column_text.1", "carry" to (carry)))
+            else -> listOf(message("teacher.cipher.column_text.2"))
         }
         val t = term(sum, digits, sum.columnTotal[c])
-        return if (sum.columnAddends[c].isEmpty()) "the carry into it is $t" else "${parts.joinToString(" + ")} ends in $t"
+        return if (sum.columnAddends[c].isEmpty()) message("teacher.cipher.column_text.3", "t" to (t)) else message("teacher.cipher.column_text.4", "parts_joinToString_" to (parts.map { it.asMessage() }.joinedMessages(" + ")), "t" to (t))
     }
 
     /**
@@ -346,47 +370,43 @@ internal object CipherTeacher {
         return when (hit.technique) {
             LEADING -> Step(
                 LEADING, l, d, sum.tilesOf(l), sum.columnTiles(c - 1),
-                "Look at the first letter of the total.",
-                "The total's extra first letter, $x, is the carry out of the ${sum.columnName(c - 1)}. Two digits and a carry " +
-                    "make at most 19, so $x is 1.",
+                message("teacher.cipher.step.2"),
+                message("teacher.cipher.step.3", "x" to (x), "sum_columnName_c_1_" to (columnNameMessage(sum, c - 1))),
             )
             COLUMN -> column(sum, digits, l, d, c, working)
             ONLY_LETTER -> Step(
                 ONLY_LETTER, l, d, sum.tilesOf(l), emptySet(),
-                if (d == 0) "Which letter can be 0?" else "One letter is left.",
-                if (d == 0) "Ten letters share all ten digits, so one of them is 0. Every other open letter starts a word, so only $x can be 0."
-                else "Ten letters share all ten digits, and $d is the only digit no letter has, so $x is $d.",
+                if (d == 0) message("teacher.cipher.step.4") else message("teacher.cipher.step.5"),
+                if (d == 0) message("teacher.cipher.step.6", "x" to (x))
+                else message("teacher.cipher.step.7", "d" to (d), "x" to (x)),
             )
             PAIR -> {
                 val tiles = sum.columnTiles(c) + sum.columnTiles(c + 1)
                 val carry = sum.knownCarry(digits, c)
-                val next = if (sum.columnAddends[c + 1].isEmpty()) "it must carry ${term(sum, digits, sum.columnTotal[c + 1])} into the ${sum.columnName(c + 1)}"
-                else "in the ${sum.columnName(c + 1)} ${columnText(sum, digits, c + 1, null)}"
-                var text = "Take the ${sum.place(c)} and ${sum.place(c + 1)} columns together: ${columnText(sum, digits, c, carry)}, and $next. " +
-                    "Only $x = $d fits both."
+                val next = if (sum.columnAddends[c + 1].isEmpty()) message("teacher.cipher.step.8", "value1" to (term(sum, digits, sum.columnTotal[c + 1])), "sum_columnName_c_1_" to (columnNameMessage(sum, c + 1)))
+                else message("teacher.cipher.step.9", "sum_columnName_c_1_" to (columnNameMessage(sum, c + 1)), "value2" to (columnText(sum, digits, c + 1, null)))
+                var text = message("teacher.cipher.step.10", "sum_place_c_" to (placeMessage(c)), "sum_place_c_1_" to (placeMessage(c + 1)), "value3" to (columnText(sum, digits, c, carry)), "next" to (next), "x" to (x), "d" to (d))
                 if (text.length > MAX_EXPLANATION) {
-                    text = "Take the ${sum.place(c)} and ${sum.place(c + 1)} columns together, through the carry between them: only $x = $d lets both add up."
+                    text = message("teacher.cipher.step.11", "sum_place_c_" to (placeMessage(c)), "sum_place_c_1_" to (placeMessage(c + 1)), "x" to (x), "d" to (d))
                 }
-                val nudge = "Look at the ${sum.place(c)} and ${sum.place(c + 1)} columns together."
-                working?.let { Step(PAIR, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.text) } ?: Step(PAIR, l, d, tiles, tiles, nudge, text, shown = false)
+                val nudge = message("teacher.cipher.step.12", "sum_place_c_" to (placeMessage(c)), "sum_place_c_1_" to (placeMessage(c + 1)))
+                working?.let { Step(PAIR, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.textMessage) } ?: Step(PAIR, l, d, tiles, tiles, nudge, text, shown = false)
             }
             CHAIN -> {
                 val cols = (0 until sum.width).filter { l in sum.columnLetters[it] }
-                val nudge = "Follow the carries through every column."
-                working?.let { Step(CHAIN, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.text) } ?: Step(
+                val nudge = message("teacher.cipher.step.13")
+                working?.let { Step(CHAIN, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.textMessage) } ?: Step(
                     CHAIN, l, d, sum.tilesOf(l), cols.flatMap { sum.columnTiles(it) }.toSet(), nudge,
-                    "Work every column through together, passing each carry on and giving no two letters the same digit. " +
-                        "Once each column has ruled out what it can, $x can only be $d.",
+                    message("teacher.cipher.step.14", "x" to (x), "d" to (d)),
                     shown = false,
                 )
             }
             else -> {
                 val tiles = sum.columnTiles(c) + sum.columnTiles(c + 1)
-                val nudge = "Try the choices in the ${sum.place(c)} and ${sum.place(c + 1)} columns."
-                working?.let { Step(WHAT_IF, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.text) } ?: Step(
+                val nudge = message("teacher.cipher.step.15", "sum_place_c_" to (placeMessage(c)), "sum_place_c_1_" to (placeMessage(c + 1)))
+                working?.let { Step(WHAT_IF, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.textMessage) } ?: Step(
                     WHAT_IF, l, d, tiles, tiles, nudge,
-                    "Try every choice for the ${sum.place(c)} and ${sum.place(c + 1)} columns at once, keeping what the other columns " +
-                        "rule out: only the ones with $x = $d make both add up.",
+                    message("teacher.cipher.step.16", "sum_place_c_" to (placeMessage(c)), "sum_place_c_1_" to (placeMessage(c + 1)), "x" to (x), "d" to (d)),
                     shown = false,
                 )
             }
@@ -403,16 +423,16 @@ internal object CipherTeacher {
         val adds = sum.columnAddends[c]
         val t = sum.columnTotal[c]
         val others = sum.columnLetters[c].filter { it != l }
-        val nudge = "Look at the ${sum.columnName(c)}."
+        val nudge = message("teacher.cipher.column.1", "sum_columnName_c_" to (columnNameMessage(sum, c)))
         // Everything else in the column is known: plain arithmetic.
         if (carry != null && others.all { digits[it] != EMPTY } && adds.count { it == l } <= 1) {
             val explanation = if (l == t && l !in adds) {
                 val s = adds.sumOf { digits[it] } + carry
-                val parts = adds.map { digits[it].toString() } + if (carry > 0) listOf("$carry carried") else emptyList()
-                if (adds.isEmpty()) "The carry into the ${sum.columnName(c)} is $carry, so $x is $d."
-                else "In the ${sum.columnName(c)}, ${parts.joinToString(" + ")} makes $s, so $x is $d."
+                val parts = adds.map { digits[it].toString() } + if (carry > 0) listOf(message("teacher.cipher.column.2", "carry" to (carry))) else emptyList()
+                if (adds.isEmpty()) message("teacher.cipher.column.3", "sum_columnName_c_" to (columnNameMessage(sum, c)), "carry" to (carry), "x" to (x), "d" to (d))
+                else message("teacher.cipher.column.4", "sum_columnName_c_" to (columnNameMessage(sum, c)), "parts_joinToString_" to (parts.map { it.asMessage() }.joinedMessages(" + ")), "s" to (s), "x" to (x), "d" to (d))
             } else {
-                "In the ${sum.columnName(c)}, ${columnText(sum, digits.toMutableList().also { it[l] = EMPTY }, c, carry)}, so $x is $d."
+                message("teacher.cipher.column.5", "sum_columnName_c_" to (columnNameMessage(sum, c)), "value2" to (columnText(sum, digits.toMutableList().also { it[l] = EMPTY }, c, carry)), "x" to (x), "d" to (d))
             }
             return Step(COLUMN, l, d, tiles, tiles, nudge, explanation)
         }
@@ -421,22 +441,21 @@ internal object CipherTeacher {
         if (l != t && t in adds && adds.size == 2 && adds.count { it == l } == 1 && (d == 0 || d == 9)) {
             val other = 9 - d
             val why = when {
-                carry != null -> "With $carry carried, $x is $d."
-                other == 0 && sum.leading and (1 shl l) != 0 -> "$x starts a word, so it isn't 0: $x is 9."
+                carry != null -> message("teacher.cipher.column.6", "carry" to (carry), "x" to (x), "d" to (d))
+                other == 0 && sum.leading and (1 shl l) != 0 -> message("teacher.cipher.column.7", "x" to (x))
                 digits.indexOf(other).let { it >= 0 && it != l } ->
-                    "${sum.name(digits.indexOf(other))} already has $other, so $x is $d."
-                else -> "Of the two, only $d fits the carries on either side."
+                    message("teacher.cipher.column.8", "value1" to (sum.name(digits.indexOf(other))), "other" to (other), "x" to (x), "d" to (d))
+                else -> message("teacher.cipher.column.9", "d" to (d))
             }
             return Step(
                 COLUMN, l, d, tiles, tiles, nudge,
-                "In the ${sum.columnName(c)}, ${columnText(sum, digits, c, carry)}, so $x + carry is 0 or 10: " +
-                    "$x is 0 (nothing carried) or 9 (1 carried). $why",
+                message("teacher.cipher.column.10", "sum_columnName_c_" to (columnNameMessage(sum, c)), "value2" to (columnText(sum, digits, c, carry)), "x" to (x), "why" to (why)),
             )
         }
-        working?.let { return Step(COLUMN, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.text) }
+        working?.let { return Step(COLUMN, l, d, sum.tilesOf(l), cited(sum, it), nudge, it.textMessage) }
         return Step(
             COLUMN, l, d, tiles, tiles, nudge,
-            "In the ${sum.columnName(c)}, ${columnText(sum, digits, c, carry)}. Of the digits still free, only $x = $d makes that work.",
+            message("teacher.cipher.column.11", "sum_columnName_c_" to (columnNameMessage(sum, c)), "value2" to (columnText(sum, digits, c, carry)), "x" to (x), "d" to (d)),
             shown = false,
         )
     }

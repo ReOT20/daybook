@@ -1,6 +1,8 @@
 package com.joebywan.daybook.ui.teach
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.ui.CappedFontScale
+
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ScrollState
@@ -15,6 +17,7 @@ import kotlinx.coroutines.withContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -272,10 +275,10 @@ fun WatchHint(session: HintSession, puzzle: PuzzleType, state: PuzzleState, onRe
 fun HintSession.buttonLabel(): String = when {
     // Mosaic's hardest hint took ~1.2 s on the emulator; a button that said nothing for that long
     // would read as a missed tap.
-    thinking -> tr("Thinking...", "Думаю...")
-    !active || stage == HintStage.CONFIRMED -> tr("Hint", "Подсказка")
-    stage == HintStage.NUDGE -> tr("Why?", "Почему?")
-    else -> tr("Show me", "Показать ход")
+    thinking -> text("ui.hints.thinking")
+    !active || stage == HintStage.CONFIRMED -> text("ui.hints.hint")
+    stage == HintStage.NUDGE -> text("ui.hints.why")
+    else -> text("ui.hints.show_me")
 }
 
 /**
@@ -330,9 +333,9 @@ fun HintPanel(
             .padding(start = 14.dp, end = 6.dp, top = 10.dp, bottom = 0.dp),
     ) {
         val text = when (session.stage) {
-            HintStage.NUDGE -> d.nudge
-            HintStage.EXPLAIN -> d.explanation
-            HintStage.CONFIRMED -> if (d.mistake) tr("Fixed.", "Исправлено.") else tr("That's it.", "Верно.")
+            HintStage.NUDGE -> d.nudgeMessage.resolve()
+            HintStage.EXPLAIN -> d.explanationMessage.resolve()
+            HintStage.CONFIRMED -> if (d.mistake) text("ui.hints.fixed") else text("ui.hints.that_s_it")
         }
         // Scrolls rather than clipping, for the rare explanation past five lines; the slot never
         // grows. A new text starts at the top again.
@@ -354,17 +357,21 @@ fun HintPanel(
                 )
             }
         }
-        Row(
-            Modifier.fillMaxWidth().height(38.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LocalHintAction.current(d, session.stage)
-            if (session.stage != HintStage.CONFIRMED) {
-                TextButton(onClick = { session.clear() }) {
-                    Text(tr("Close", "Закрыть"), color = scheme.onSurfaceVariant)
+        CappedFontScale {
+            Row(
+                Modifier.fillMaxWidth().height(38.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LocalHintAction.current(d, session.stage)
+                if (session.stage != HintStage.CONFIRMED) {
+                    TextButton(onClick = { session.clear() }, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text(text("ui.share_preview.close"), color = scheme.onSurfaceVariant)
+                    }
+                    TextButton(onClick = onNext, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                        Text(session.buttonLabel(), color = BoardHues.textOn(ink, fade))
+                    }
                 }
-                TextButton(onClick = onNext) { Text(session.buttonLabel(), color = BoardHues.textOn(ink, fade)) }
             }
         }
     }

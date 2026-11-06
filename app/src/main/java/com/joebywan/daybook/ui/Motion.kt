@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -32,9 +33,9 @@ enum class MotionChoice {
     OFF;
 
     val label: String get() = when (this) {
-        DEVICE -> tr("System", "Система")
-        ON -> tr("On", "Вкл.")
-        OFF -> tr("Off", "Выкл.")
+        DEVICE -> text("ui.motion.system")
+        ON -> text("ui.motion.on")
+        OFF -> text("ui.motion.off")
     }
 
     /** Whether motion is reduced, given what the [device] asks for. */

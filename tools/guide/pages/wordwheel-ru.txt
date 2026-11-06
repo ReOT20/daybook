@@ -1,0 +1,73 @@
+# Word Wheel · RU
+> Russian words from a circle of letters
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Swipe across the wheel's letters to spell a word, and lift to try it. Or tap the letters in turn and press Enter.
+
+On a keyboard, type Russian letters from the wheel, Backspace deletes, Enter tries the word, and Escape clears it.
+
+A word the grid holds fills its slot. Any other real word from the wheel is a bonus word: it is counted and shown, but never needed. Tap the bonus line to see them all, А to Я.
+
+A word that won't do is refused with a note saying why, and costs nothing. Shuffle moves the letters round the wheel and changes nothing else. There are no lives, and no way to lose.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. A hint gives a word as a crossword-style clue, and only "Show me" types it.
+
+## Rules
+
+- Fill every slot in the grid with a word spelled from the wheel.
+- A word uses each letter on the wheel at most once.
+- No word is shorter than the grid's shortest slot.
+
+## What changes per tier
+
+- Standard: Five-letter wheel, 4 to 6 words.
+- Hard: Six-letter wheel, 6 to 8 words.
+- Expert: Seven-letter wheel, 8 to 11 words. The grid also has a six-letter word, besides the one that uses the whole wheel.
+
+## Techniques
+
+These are the steps the hints teach. On each board, the tinted squares are the slot, rings mark what the reasoning leans on, the filled squares are the word, and the bottom row is the wheel.
+
+### clue | A word from its clue
+
+Often several words fit every open slot, and only knowing the word will settle it. The hint then picks the slot the fewest words fit and gives its clue. It reads the board's own word to do that, and says so.
+
+### pinned | A slot only one word fits
+
+A slot's length, the letters already in it and the wheel can leave only one well-known word. A slot as long as the wheel is a good place to begin.
+
+~~~board
+. _ _ _ _ _
+. _ _ . _ _
+. . . . . _
+_ _ _ . _ _
+_ _ _ . . .
+_ _ _ _ _ _
+Л Ш Н У А _
+content-language: ru
+focus: r3c1 r3c2 r3c3 r3c4 r3c5
+answer: r3c1=Ш r3c2=А r3c3=Л r3c4=У r3c5=Н
+caption: ШАЛУН is the only five-letter word on the printed-word list that this wheel can spell, so it fills the whole-wheel slot.
+~~~
+
+### crossing | The word a crossing slot leaves
+
+When several words fit a slot, try each against the slots that cross it. A word that leaves a crossing slot with nothing to hold can't be the one.
+
+~~~board
+_ . . . . .
+_ . _ _ . _
+_ . _ . . .
+_ . _ _ _ _
+. . . _ _ _
+_ _ _ _ _ _
+Л К В А И _
+content-language: ru
+focus: r1c2 r1c3 r1c4 r1c5 r1c6
+cite: r1c5 r2c5 r3c5
+answer: r1c2=В r1c3=А r1c4=Л r1c5=И r1c6=К
+caption: ВАЛИК and ВИЛКА fit the five squares. ВИЛКА would start the ringed three-letter crossing with К, which leaves it no word from this wheel. That forces ВАЛИК.
+~~~

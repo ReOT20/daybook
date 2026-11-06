@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Chess
 import com.joebywan.daybook.puzzles.ChessState
 import com.joebywan.daybook.puzzles.ChessRules
@@ -32,12 +33,9 @@ private object ChessDrill : Drill by chessMoves {
 val ChessTraining: Course = Course(
     puzzle = Chess,
     explanations = linkedMapOf(
-        ChessTeacher.MATE_IN_ONE to "One move ends it. Look at the king's squares: a check it can't escape by moving, " +
-            "by capturing the checker or by blocking is mate.",
-        ChessTeacher.FORCING_KEY to "With moves to spare, look at checks first: a check leaves the defence few replies. " +
-            "Find the one after which every reply still allows mate.",
-        ChessTeacher.QUIET_KEY to "Sometimes no check works and the key is a quiet move: it takes the king's last " +
-            "squares or sets up a threat the defence can't meet. Every reply must still allow mate.",
+        ChessTeacher.MATE_IN_ONE to message("training.chess_mate_in_one"),
+        ChessTeacher.FORCING_KEY to message("training.chess_forcing_key"),
+        ChessTeacher.QUIET_KEY to message("training.chess_quiet_key"),
     ),
     // Standard (mate in two) reaches the first two on every board. A quiet key: 3 of 60 Hard boards, 18 of 60 Expert;
     // Expert finds a board in a mean of 54 ms against Hard's 20 seeds a board, so Expert.

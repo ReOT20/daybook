@@ -1,5 +1,15 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.words.WordContent
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.bit
 import com.joebywan.daybook.core.has
 import com.joebywan.daybook.core.listed
@@ -44,11 +54,8 @@ internal object CodewordTeacher {
 
     val TECHNIQUES = listOf(ONE_WORD, RUN_AGREES, CROSSING, ALL_WORDS, FALLBACK)
 
-    private const val ALL = (1 shl 26) - 1
-
-
     /** The board's runs, as squares and as number indices (number - 1), and which runs each number is in. */
-    internal class Shape(val size: Int, val numbers: List<Int>, val k: Int) {
+    internal class Shape(val size: Int, val numbers: List<Int>, val k: Int, val contentLanguage: String = "en") {
         val squares: List<IntArray> = CodewordLogic.runs(size, numbers)
         val runs: List<IntArray> = squares.map { run -> IntArray(run.size) { numbers[run[it]] - 1 } }
         val shapes: IntArray = IntArray(runs.size) { CodewordWords.shape(runs[it]) }
@@ -63,9 +70,9 @@ internal object CodewordTeacher {
         constructor(shape: Shape, letters: List<Int>) : this(shape, IntArray(shape.k), Array(shape.runs.size) { IntArray(0) }) {
             var placed = 0
             for (l in letters) if (l != EMPTY) placed = placed or bit(l)
-            for (n in 0 until shape.k) cand[n] = if (letters[n] != EMPTY) bit(letters[n]) else ALL and placed.inv()
+            for (n in 0 until shape.k) cand[n] = if (letters[n] != EMPTY) bit(letters[n]) else WordContent.alphabet(shape.contentLanguage).let { if (it.length == 32) -1 else (1 shl it.length) - 1 } and placed.inv()
             for (r in shape.runs.indices) {
-                val list = CodewordWords.of(shape.runs[r].size)
+                val list = CodewordWords.of(shape.runs[r].size, shape.contentLanguage)
                 words[r] = list.letters.indices.filter { list.shapes[it] == shape.shapes[r] }.toIntArray()
                 filter(r)
             }
@@ -76,7 +83,7 @@ internal object CodewordTeacher {
         /** Drops from run [r] every word some letter of which its number can no longer take. */
         private fun filter(r: Int) {
             val run = shape.runs[r]
-            val list = CodewordWords.of(run.size)
+            val list = CodewordWords.of(run.size, shape.contentLanguage)
             words[r] = words[r].filter { w -> val ls = list.letters[w]; run.indices.all { has(cand[run[it]], ls[it]) } }.toIntArray()
             if (words[r].isEmpty()) consistent = false
         }
@@ -85,7 +92,7 @@ internal object CodewordTeacher {
         fun support(r: Int, n: Int): Int {
             val run = shape.runs[r]
             val at = run.indexOf(n)
-            val list = CodewordWords.of(run.size)
+            val list = CodewordWords.of(run.size, shape.contentLanguage)
             var m = 0
             for (w in words[r]) m = m or bit(list.letters[w][at])
             return m
@@ -151,7 +158,7 @@ internal object CodewordTeacher {
         val base = Sight(shape, letters)
         if (!base.consistent) return emptyList()
         val hits = mutableListOf<Hit>()
-        val lettersOf = { r: Int -> CodewordWords.of(shape.runs[r].size).letters }
+        val lettersOf = { r: Int -> CodewordWords.of(shape.runs[r].size, shape.contentLanguage).letters }
         // 1. A run only one word fits.
         for (r in shape.runs.indices) {
             if (base.words[r].size != 1) continue
@@ -187,8 +194,8 @@ internal object CodewordTeacher {
     }
 
     /** The ladder's steps from [letters] to the answer, or null when it gets stuck or ends somewhere wrong. */
-    fun walk(size: Int, numbers: List<Int>, letters: List<Int>, upTo: Int = TECHNIQUES.indexOf(ALL_WORDS)): List<Hit>? {
-        val shape = Shape(size, numbers, letters.size)
+    fun walk(size: Int, numbers: List<Int>, letters: List<Int>, upTo: Int = TECHNIQUES.indexOf(ALL_WORDS), contentLanguage: String = "en"): List<Hit>? {
+        val shape = Shape(size, numbers, letters.size, contentLanguage)
         val now = letters.toMutableList()
         val steps = mutableListOf<Hit>()
         while (now.any { it == EMPTY }) {
@@ -196,11 +203,11 @@ internal object CodewordTeacher {
             now[hit.number] = hit.letter
             steps += hit
         }
-        return if (CodewordLogic.isSolved(size, numbers, now)) steps else null
+        return if (CodewordLogic.isSolved(size, numbers, now, contentLanguage)) steps else null
     }
 
     /** Whether the ladder alone finishes the board from [letters]: what the generator asks of every board. */
-    fun solvesByLogic(size: Int, numbers: List<Int>, letters: List<Int>): Boolean = walk(size, numbers, letters) != null
+    fun solvesByLogic(size: Int, numbers: List<Int>, letters: List<Int>, contentLanguage: String = "en"): Boolean = walk(size, numbers, letters, contentLanguage = contentLanguage) != null
 
     // ---- the whole hint: mistakes, then reasoning, then the honest fallback ------------------------
 
@@ -214,55 +221,60 @@ internal object CodewordTeacher {
         val letter: Int,
         val focus: Set<Int>,
         val cited: Set<Int>,
-        val nudge: String,
-        val explanation: String,
-    )
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) {
+
+        val nudgeMessage: Message = nudge.asMessage()
+        val explanationMessage: Message = explanation.asMessage()
+        val nudge: String get() = nudgeMessage.english
+        val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: CodewordState): Step? {
         if (s.solved) return null
         mistake(s)?.let { return it }
-        return deduce(s.size, s.numbers, s.letters) ?: fallback(s)
+        return deduce(s.size, s.numbers, s.letters, s.contentLanguage) ?: fallback(s)
     }
-
 
     /** Run [r] as the player reads it: placed letters as letters, open squares as their numbers. */
     private fun read(shape: Shape, letters: List<Int>, r: Int): String =
-        shape.runs[r].joinToString(" ") { n -> if (letters[n] != EMPTY) up(letters[n]) else "${n + 1}" }
+        shape.runs[r].joinToString(" ") { n -> if (letters[n] != EMPTY) up(letters[n], shape.contentLanguage) else "${n + 1}" }
 
-    private fun word(shape: Shape, r: Int, w: Int) = CodewordWords.of(shape.runs[r].size).words[w].uppercase()
+    private fun word(shape: Shape, r: Int, w: Int) = CodewordWords.of(shape.runs[r].size, shape.contentLanguage).words[w].uppercase()
 
-    private fun letterList(m: Int): String = listed((0 until 26).filter { has(m, it) }.map { up(it) }, and = "or")
+    private fun letterList(m: Int, contentLanguage: String): Message = listedMessage(WordContent.alphabet(contentLanguage).indices.filter { has(m, it) }.map { up(it, contentLanguage) }, and = "or")
 
     private fun fallback(s: CodewordState): Step? {
         val n = s.letters.indices.firstOrNull { s.letters[it] == EMPTY } ?: return null
         val l = s.solution[n]
-        val shape = Shape(s.size, s.numbers, s.letters.size)
-        return Step(FALLBACK, n, l, shape.squaresOf(n), emptySet(), "This one takes a longer chain. Look at ${n + 1}.", "This one needs a longer chain than a hint can walk through, so here's the answer for ${n + 1}: it's ${up(l)}.")
+        val shape = Shape(s.size, s.numbers, s.letters.size, s.contentLanguage)
+        return Step(FALLBACK, n, l, shape.squaresOf(n), emptySet(), message("teacher.codeword.fallback.1", "n_1" to (n + 1)), message("teacher.codeword.fallback.2", "n_1" to (n + 1), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage))))
     }
 
     private fun mistake(s: CodewordState): Step? {
         val wrong = s.letters.indices.filter { it + 1 !in s.given && s.letters[it] != EMPTY && s.letters[it] != s.solution[it] }
         if (wrong.isEmpty()) return null
-        val shape = Shape(s.size, s.numbers, s.letters.size)
-        val conflicts = CodewordLogic.conflicts(s.size, s.numbers, s.letters)
+        val shape = Shape(s.size, s.numbers, s.letters.size, s.contentLanguage)
+        val conflicts = CodewordLogic.conflicts(s.size, s.numbers, s.letters, s.contentLanguage)
         val deadRuns = conflicts.runs.sorted()
         val n = wrong.firstOrNull { it + 1 in conflicts.numbers }
             ?: wrong.firstOrNull { w -> deadRuns.any { w in shape.runs[it] } }
             ?: wrong.first()
         val l = s.letters[n]
         val x = n + 1
-        val clear = "Select $x and tap ${up(l)} again to clear it."
-        fun step(why: String, cited: Set<Int>) = Step(MISTAKE, n, EMPTY, shape.squaresOf(n), cited, "Check $x = ${up(l)}.", "$why $clear")
+        val clear = message("teacher.codeword.mistake.1", "x" to (x), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage)))
+        fun step(why: CharSequence, cited: Set<Int>) = Step(MISTAKE, n, EMPTY, shape.squaresOf(n), cited, message("teacher.codeword.step.1", "x" to (x), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage))), message("teacher.codeword.step.extra.1", "why" to (why), "clear" to (clear)))
         val twin = s.letters.indices.firstOrNull { it != n && s.letters[it] == l }
-        if (twin != null) return step("$x and ${twin + 1} can't both be ${up(l)}: each number has its own letter.", shape.squaresOf(twin))
+        if (twin != null) return step(message("teacher.codeword.mistake.2", "x" to (x), "twin_1" to (twin + 1), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage))), shape.squaresOf(twin))
         val dead = deadRuns.firstOrNull { n in shape.runs[it] }
-        if (dead != null) return step("With $x as ${up(l)}, no word in the list fits ${read(shape, s.letters, dead)}.", shape.squares[dead].toSet())
-        return step("No way to finish the grid keeps $x as ${up(l)}.", emptySet())
+        if (dead != null) return step(message("teacher.codeword.mistake.3", "x" to (x), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage)), "value3" to (read(shape, s.letters, dead))), shape.squares[dead].toSet())
+        return step(message("teacher.codeword.mistake.4", "x" to (x), "up_l_s_contentLanguage_" to (up(l, s.contentLanguage))), emptySet())
     }
 
     /** The step to hint: the first placement of the first technique that finds one. */
-    fun deduce(size: Int, numbers: List<Int>, letters: List<Int>): Step? {
-        val shape = Shape(size, numbers, letters.size)
+    fun deduce(size: Int, numbers: List<Int>, letters: List<Int>, contentLanguage: String = "en"): Step? {
+        val shape = Shape(size, numbers, letters.size, contentLanguage)
         val hit = findSteps(shape, letters).firstOrNull() ?: return null
         return step(shape, letters, hit)
     }
@@ -270,34 +282,33 @@ internal object CodewordTeacher {
     private fun step(shape: Shape, letters: List<Int>, hit: Hit): Step {
         val n = hit.number
         val x = n + 1
-        val l = up(hit.letter)
+        val l = up(hit.letter, shape.contentLanguage)
         val r = hit.run
         val mine = shape.squaresOf(n)
         val runSquares = if (r >= 0) shape.squares[r].toSet() else emptySet()
-        fun fit(text: String) = if (text.length <= MAX_EXPLANATION) text else null
+        fun fit(text: Message) = if (text.length <= MAX_EXPLANATION) text else null
         return when (hit.technique) {
             ONE_WORD -> Step(
-                ONE_WORD, n, hit.letter, runSquares, runSquares, "One word fits the glowing word.",
-                "Only ${word(shape, r, hit.words[0])} fits ${read(shape, letters, r)}, so $x is $l.",
+                ONE_WORD, n, hit.letter, runSquares, runSquares, message("teacher.codeword.step.2"),
+                message("teacher.codeword.step.3", "value1" to (word(shape, r, hit.words[0])), "read_shape_letters_r_" to (read(shape, letters, r)), "x" to (x), "l" to (l)),
             )
             RUN_AGREES -> {
                 val ws = hit.words.map { word(shape, r, it) }
-                val text = fit("${listed(ws)} all fit ${read(shape, letters, r)}, and every one has $l for $x.")
-                    ?: "${ws.size} words fit ${read(shape, letters, r)} (${ws.take(3).joinToString(", ")}, ...), and every one has $l for $x."
-                Step(RUN_AGREES, n, hit.letter, runSquares, runSquares, "Look at the words that fit the glowing word.", text)
+                val text = fit(message("teacher.codeword.step.4", "listed_ws_" to (listedMessage(ws)), "read_shape_letters_r_" to (read(shape, letters, r)), "l" to (l), "x" to (x)))
+                    ?: message("teacher.codeword.step.5", "ws_size" to (ws.size), "read_shape_letters_r_" to (read(shape, letters, r)), "ws_take_3_joinToString_" to (ws.take(3).joinToString(", ")), "l" to (l), "x" to (x))
+                Step(RUN_AGREES, n, hit.letter, runSquares, runSquares, message("teacher.codeword.step.6"), text)
             }
             CROSSING -> {
                 val sight = Sight(shape, letters)
-                val parts = shape.runsOf[n].map { "${read(shape, letters, it)} (${letterList(sight.support(it, n))})" }
+                val parts = shape.runsOf[n].map { message("teacher.codeword.step.extra.2", "read_shape_letters_it_" to (read(shape, letters, it)), "value2" to (letterList(sight.support(it, n), shape.contentLanguage))) }
                 val cited = shape.runsOf[n].flatMap { shape.squares[it].toList() }.toSet()
-                val text = fit("$x is in ${listed(parts)}. Only $l fits them all, so $x is $l.")
-                    ?: "$x is in ${parts.size} words, and each allows only some letters for it. Only $l fits them all, so $x is $l."
-                Step(CROSSING, n, hit.letter, mine, cited, "Look at every word $x is in.", text)
+                val text = fit(message("teacher.codeword.step.7", "x" to (x), "listed_parts_" to (listedMessage(parts)), "l" to (l)))
+                    ?: message("teacher.codeword.step.8", "x" to (x), "parts_size" to (parts.size), "l" to (l))
+                Step(CROSSING, n, hit.letter, mine, cited, message("teacher.codeword.step.9", "x" to (x)), text)
             }
             else -> Step(
-                ALL_WORDS, n, hit.letter, mine, shape.runsOf[n].flatMap { shape.squares[it].toList() }.toSet(), "Work the words through together.",
-                "Work every word through together: each rules out letters for its numbers, and a letter pinned to one number " +
-                    "is taken from the rest. That leaves $x only $l.",
+                ALL_WORDS, n, hit.letter, mine, shape.runsOf[n].flatMap { shape.squares[it].toList() }.toSet(), message("teacher.codeword.step.10"),
+                message("teacher.codeword.step.11", "x" to (x), "l" to (l)),
             )
         }
     }

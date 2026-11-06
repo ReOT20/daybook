@@ -1,0 +1,5 @@
+{
+  "puzzle.mini_ru.tier.1": "5×5; crossings supply most letters",
+  "puzzle.mini_ru.tier.2": "6×6; more letters come from clues",
+  "puzzle.mini_ru.tier.3": "7×7; clues supply the largest share of letters"
+}

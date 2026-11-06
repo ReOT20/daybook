@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.theme
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -14,9 +15,9 @@ enum class Appearance {
     DARK;
 
     val label: String get() = when (this) {
-        SYSTEM -> tr("System", "Система")
-        LIGHT -> tr("Light", "Светлая")
-        DARK -> tr("Dark", "Тёмная")
+        SYSTEM -> text("ui.motion.system")
+        LIGHT -> text("ui.theme.light")
+        DARK -> text("ui.theme.dark")
     }
 }
 

@@ -1,8 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.listed
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.numberWord
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.numberWordMessage
 
 /**
  * Shikaku, reasoned the way a person reasons it, one named step at a time.
@@ -60,9 +63,15 @@ internal object ShikakuTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     // ---- the board as the player sees it --------------------------------------------------------
 
@@ -150,28 +159,28 @@ internal object ShikakuTeacher {
         val cells = wrong.cells(sight.w).toSet()
         val clue = cells.first { s.clues[it] != null }
         val n = s.clues[clue]!!
-        fun step(explanation: String, cited: Set<Int>) = Step(
+        fun step(explanation: Message, cited: Set<Int>) = Step(
             technique = MISTAKE,
             remove = wrong,
             focus = cells,
             cited = cited,
             targets = cells,
-            nudge = "Check this rectangle.",
-            explanation = "$explanation Tap it to remove it.",
+            nudge = message("teacher.shikaku.step.1"),
+            explanation = message("teacher.shikaku.step.2", "explanation" to (explanation)),
         )
         if (wrong.area != n) {
-            return step("This rectangle has ${numberWord(wrong.area)} squares, but its number is $n.", setOf(clue))
+            return step(message("teacher.shikaku.mistake.1", "numberWord_wrong_area_" to (numberWordMessage(wrong.area)), "n" to (n)), setOf(clue))
         }
         return when (val dead = stuck(sight)) {
             is NoRoom -> step(
-                "With this rectangle here, the marked ${s.clues[dead.clue]} has no room left for a rectangle of its own.",
+                message("teacher.shikaku.mistake.2", "s_clues_dead_clue_" to (s.clues[dead.clue])),
                 setOf(dead.clue),
             )
             is Uncovered -> step(
-                "With this rectangle here, no number can reach the marked square, and every square needs one.",
+                message("teacher.shikaku.mistake.3"),
                 setOf(dead.cell),
             )
-            null -> step("This rectangle isn't part of the answer, so look again once it's gone.", emptySet())
+            null -> step(message("teacher.shikaku.mistake.4"), emptySet())
         }
     }
 
@@ -194,9 +203,8 @@ internal object ShikakuTeacher {
             focus = setOf(clue),
             cited = setOf(clue),
             targets = block.cells(sight.w).toSet(),
-            nudge = "This one takes a longer chain. Look at the glowing $n.",
-            explanation = "This needs a longer chain than a hint can walk through, so here is the " +
-                "$n's rectangle from the answer.",
+            nudge = message("teacher.shikaku.fallback.1", "n" to (n)),
+            explanation = message("teacher.shikaku.fallback.2", "n" to (n)),
         )
     }
 
@@ -257,15 +265,14 @@ internal object ShikakuTeacher {
             if (others.isNotEmpty()) numbers += others.first() else if (!s.free(b)) drawn = true
         }
         val reasons = buildList {
-            if (offGrid) add("run off the grid")
-            if (numbers.isNotEmpty()) add("take in another number")
-            if (drawn) add("overlap a rectangle already drawn")
+            if (offGrid) add(message("teacher.shikaku.only_fits_at.1"))
+            if (numbers.isNotEmpty()) add(message("teacher.shikaku.only_fits_at.2"))
+            if (drawn) add(message("teacher.shikaku.only_fits_at.3"))
         }
         val explanation = if (reasons.isEmpty()) {
-            "This $n needs ${numberWord(n)} squares, and there is only one way to lay them out here."
+            message("teacher.shikaku.only_fits_at.4", "n" to (n), "numberWord_n_" to (numberWordMessage(n)))
         } else {
-            "This $n needs ${numberWord(n)} squares. Any other rectangle would ${listed(reasons, "or")}, " +
-                "so only this one fits."
+            message("teacher.shikaku.only_fits_at.5", "n" to (n), "numberWord_n_" to (numberWordMessage(n)), "listed_reasons_or_" to (listedMessage(reasons, message("teacher.shikaku.only_fits_at.extra.1"))))
         }
         return Step(
             technique = ONLY_FITS,
@@ -273,7 +280,7 @@ internal object ShikakuTeacher {
             focus = setOf(clue),
             cited = setOf(clue) + numbers,
             targets = block.cells(s.w).toSet(),
-            nudge = "Look at the glowing $n.",
+            nudge = message("teacher.shikaku.only_fits_at.6", "n" to (n)),
             explanation = explanation,
         )
     }
@@ -293,9 +300,8 @@ internal object ShikakuTeacher {
                 focus = setOf(cell),
                 cited = setOf(clue, cell),
                 targets = covering[0].cells(s.w).toSet(),
-                nudge = "Which number can reach the glowing square?",
-                explanation = "Only the $n can reach the marked square, and every square belongs to " +
-                    "some rectangle. Just one of the $n's rectangles covers it, so that is the one.",
+                nudge = message("teacher.shikaku.only_reaches.1"),
+                explanation = message("teacher.shikaku.only_reaches.2", "n" to (n)),
             ).let { if (out == null) return it else out += it }
         }
         return null
@@ -315,18 +321,17 @@ internal object ShikakuTeacher {
                 if (after.size != 1) continue
                 val na = s.clues[a]!!
                 val nb = s.clues[b]!!
-                val these = if (common.size == 1) "the marked square" else "the marked squares"
+                val these = if (common.size == 1) message("teacher.shikaku.common_cells.1") else message("teacher.shikaku.common_cells.2")
                 // Two 6s on one board would read as one; the second is "the other".
-                val other = if (na == nb) "the other $nb" else "the $nb"
+                val other = if (na == nb) message("teacher.shikaku.common_cells.3", "nb" to (nb)) else message("teacher.shikaku.common_cells.4", "nb" to (nb))
                 Step(
                     technique = COMMON_CELLS,
                     place = after[0],
                     focus = setOf(a) + common,
                     cited = setOf(a, b) + common,
                     targets = after[0].cells(s.w).toSet(),
-                    nudge = "Where must the glowing $na go?",
-                    explanation = "Every rectangle this $na can make covers $these, so $other can't use " +
-                        "${if (common.size == 1) "it" else "them"}. That leaves $other just one rectangle that fits.",
+                    nudge = message("teacher.shikaku.common_cells.5", "na" to (na)),
+                    explanation = message("teacher.shikaku.common_cells.6", "na" to (na), "these" to (these), "other" to (other), "value4" to (if (common.size == 1) message("teacher.shikaku.common_cells.extra.1") else message("teacher.shikaku.common_cells.extra.2"))),
                 ).let { if (out == null) return it else out += it }
             }
         }
@@ -345,15 +350,15 @@ internal object ShikakuTeacher {
             val witnesses = deaths.filterNotNull()
             val phrases = witnesses.map { d ->
                 when (d) {
-                    is NoRoom -> "leave the marked ${s.clues[d.clue]} no room"
-                    is Uncovered -> "leave a marked square no number can reach"
+                    is NoRoom -> message("teacher.shikaku.what_if.1", "s_clues_d_clue_" to (s.clues[d.clue]))
+                    is Uncovered -> message("teacher.shikaku.what_if.2")
                 }
-            }.distinct()
+            }.distinctBy { it.english }
             if (phrases.size > MAX_WHAT_IF_REASONS) continue
             val which = when (witnesses.size) {
-                1 -> "its other rectangle"
-                2 -> "either of its other rectangles"
-                else -> "any of its other ${numberWord(witnesses.size)} rectangles"
+                1 -> message("teacher.shikaku.what_if.3")
+                2 -> message("teacher.shikaku.what_if.4")
+                else -> message("teacher.shikaku.what_if.5", "value1" to (numberWordMessage(witnesses.size)))
             }
             val cited = witnesses.map { d ->
                 when (d) {
@@ -367,9 +372,8 @@ internal object ShikakuTeacher {
                 focus = setOf(a),
                 cited = cited + a,
                 targets = keep.cells(s.w).toSet(),
-                nudge = "What if the glowing $n went another way?",
-                explanation = "Suppose the $n took $which. That would ${listed(phrases, "or")}. " +
-                    "So the $n takes this rectangle.",
+                nudge = message("teacher.shikaku.what_if.6", "n" to (n)),
+                explanation = message("teacher.shikaku.what_if.7", "n" to (n), "which" to (which), "listed_phrases_or_" to (listedMessage(phrases, message("teacher.shikaku.what_if.extra.1")))),
             ).let { if (out == null) return it else out += it }
         }
         return null

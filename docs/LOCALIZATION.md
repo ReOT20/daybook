@@ -1,36 +1,86 @@
-# Russian localization
+# Languages and Russian word puzzles
 
-This first pass localizes the app shell: home, navigation, settings, archive, calendars, statistics,
-play/hint/walkthrough/training controls, finish/share text and reminders. Puzzle names, rules, clues,
-teaching explanations, walkthrough frames, technique and achievement content, and word-game corpora
-remain English. Settings says so in Russian. The remaining work is in `docs/TODO.md`.
+Implementation and final acceptance are tracked in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
+The shared catalogs cover interface text, game names, rules, hints, walkthroughs, techniques, training,
+achievements, sharing and reminders. Display language and puzzle vocabulary are separate choices.
 
-## Text and identity
+## Language selection
 
-`core/i18n/Text.kt` selects Russian for a `ru` language tag, including regional variants, and English
-otherwise. The platform seam reads Android's device locale or the browser's language. There is no new
-preference or saved field; restart/reload after changing the system language. A language picker and live
-switching are outside this first pass.
+Settings offers System default, English and Русский. Android 13+ uses `LocaleManager`, the same setting
+shown in Android's per-app language screen; its supported list is generated in `res/xml/locale_config.xml`.
+Older Android keeps the choice in `daybook_language` preferences and applies it before an Activity or
+reminder receiver starts. The choice migrates to the system API after an OS upgrade. Recreating an
+Activity retains the existing navigation and saved-board mechanisms.
 
-`tr(english, russian)` keeps complete bilingual messages at their call sites. Preserve the English
-argument exactly when extracting existing text. `russianPlural` returns the noun form, without the count;
-11–14 take the plural even where 1–4 otherwise would not. Translate whole sentences rather than joining
-English grammatical fragments. Labels are presentation getters, never stored enum names.
+The web persists its choice in `daybook_launch.language`, or follows `navigator.language` for System
+default. Changing it recomposes the current app, updates the document language, and keeps navigation
+and progress. Regional tags first match an exact catalog, then their base language; unsupported tags
+use English. Neither platform sends a language choice to a server.
 
-Language must not enter generators, seed hashing, registry order, vocabulary indexes, serialized state,
-route or preference keys. English word lists remain unchanged. A Russian word board needs a separate
-content-language identity before new corpora can be introduced. English-only content should not interpolate
-Russian display labels.
+## Catalog contract
 
-Fixed headers, archive calendar/list slots and compact statistics cards use the existing
-`CappedFontScale` limit. Archive tier headings use short Russian labels and fit within their columns;
-statistics rows wrap whole labels
-and share links, and the share preview's body scrolls at large text sizes. Explanatory body text
-in settings and puzzle rules keeps the player's font scale.
+`translations/languages.json` is the supported-language list. Each `translations/<tag>/*.json` file is a
+domain of message keys; domain filenames are organizational, not a runtime API. Every language must
+have exactly the English key set and the same named arguments. Translate complete messages, including
+their grammar, rather than concatenate translated English fragments.
 
-Android keeps `DateTimeFormatter` and its existing locale behavior, with the locale included in the cache
-key. The web's supported patterns are tested in `CalendarText.kt`; `MMMM` uses Russian date forms
-(`5 ноября`), while `LLLL` is a standalone month (`ноябрь 2026`). Weekday captions stay Monday first.
+```kotlin
+text("count.hints", "count" to hints) // Resolve at the display boundary.
+message("count.hints", "count" to hints) // Keep a descriptor while reasoning or composing prose.
+```
+
+Plural entries are maps of CLDR cardinal categories (`one`, `few`, `many`, `other`, as needed by the
+language); `count` must be an integer. The generator uses pinned Babel/Unicode CLDR data for integer
+plural rules and Gregorian calendar names. Android keeps its native `DateTimeFormatter`, including the
+locale in its cache key. Web date patterns distinguish date forms (`5 ноября`) from standalone months
+(`ноябрь 2026`); weekday captions stay Monday first.
+
+`Message.english`, length, indexing and `toString()` remain canonical English. Teachers use text length
+and distinct reasons in generation gates: never resolve the display locale inside those decisions.
+Forward `nudgeMessage`/`explanationMessage`, preserve nested descriptors, and call `.resolve()` at the UI.
+If canonical prose is a deduplication key, use `.distinctBy { it.english }`, not descriptor identity.
+Persisted celebrations use the small `SavedText` catalog recipe; old payload defaults remain readable.
+User words, board answers, identifiers and fixture literals are data, not translation keys.
+
+### Adding a language
+
+1. Add its BCP-47 tag and native name to `translations/languages.json`.
+2. Translate the complete English catalog into `translations/<tag>/`, retaining keys and arguments.
+   Provide that language's CLDR plural forms for every plural message.
+3. Run `python -m pip install -r tools/i18n/requirements.txt`, then `python tools/i18n/build.py`.
+   Commit the generated Kotlin catalogs/calendar/plural metadata and Android locale list.
+4. Run `python -m unittest discover -s tools/i18n -p 'test_*.py'` and
+   `python tools/i18n/build.py --check`. Missing keys/forms/arguments, duplicate keys, unknown literal
+   call-site keys, stale generated files and missing bundled glyphs fail the checks. The generator test
+   exercises ten languages with different plural systems without changing runtime source.
+5. Supply offline font coverage for any new script and render the actual UI, including hints and large
+   text. The version verifier is documented in [VERIFY_VERSION.md](VERIFY_VERSION.md).
+
+Do not edit generated catalogs or reintroduce bilingual `tr()` call sites or Russian-specific grammar
+helpers. Catalog generation is build-time Python; the Android/web app has no Babel runtime dependency.
+
+## Content identity and continuity
+
+English word lists, original puzzle IDs, seeds, old board pins and saved-game fixtures stay unchanged.
+Each Russian word game has its own permanent ID: `words-ru`, `wordwheel-ru`, `mini-ru`, `codeword-ru`,
+`hexwords-ru`, `dwindle-ru`, `cipher-ru`. Its saved state explicitly contains `contentLanguage = "ru"`;
+old saves omit the new field and default to English. Switching the interface never changes a board's
+words, alphabet, answer, daily identity or record. Existing level pools and deals retain their frozen
+prefixes; new IDs are appended. Today's three adds the Russian editions from 2026-11-06; earlier dates
+keep their original three and earned achievements. Each catalog schedule has its own no-repeat cycle.
+
+The frozen corpus, provenance, licenses, vocabulary screening and reproducible build commands are in
+[tools/words/ru/README.md](../tools/words/ru/README.md). Guesses use a broad dictionary, while answers
+and clued grid words use separate reviewed lists. Input normalizes Ё to Е; prose keeps proper spelling.
+Mini, Codeword and Cipher ship separately proved frozen tables. Native block layouts are calibrated for
+Russian vocabulary while retaining the original uniqueness and teaching gates. Russian Mini uses the
+same 5×5 / 6×6 / 7×7 sizes and clue-share bands; it does not claim to have the English alternate-clue set.
+
+The linked external player-guide prose remains English, with native Russian word diagrams for the new
+games. In-app rules, walkthroughs and hints are translated. The guide buttons identify English prose.
+
+Fixed chrome uses the existing `CappedFontScale` policy. Explanatory body text retains the player's
+font scale; archive/statistics layouts and share previews keep their established scrolling behavior.
 
 ## Fonts
 
@@ -59,12 +109,13 @@ subset = run_path("tools/subset-font.py")["subset"]
 source = "/path/to/NotoSans[wght].ttf"  # version and checksum above
 chars = list(range(0x20, 0x7f)) + list(range(0xa0, 0x100))
 chars += list(range(0x410, 0x450)) + [0x401, 0x451]
+chars += [0x3a9, 0x3c9, 0x3b2]  # Greek letters in attributed Russian word clues.
 chars += [0x2013, 0x2014, 0x2018, 0x2019, 0x201c, 0x201d, 0x201e, 0x2022,
           0x2026, 0x2032, 0x2033, 0x2039, 0x203a, 0x2212]
 with TemporaryDirectory() as tmp:
     for name, weight in [("regular", 400), ("medium", 500), ("semibold", 600), ("bold", 700)]:
         static = Path(tmp) / f"noto_sans_{name}.ttf"
-        instantiateVariableFont(TTFont(source), {"wght": weight}, updateFontNames=True).save(static)
+        instantiateVariableFont(TTFont(source, recalcTimestamp=False), {"wght": weight}, updateFontNames=True).save(static)
         web = Path("web/src/wasmJsMain/composeResources/font") / f"noto_sans_cyrillic_{name}.ttf"
         subset(str(static), str(web), chars)
         copyfile(web, Path("app/src/main/res/font") / web.name)

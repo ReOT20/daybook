@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Nonogram
 import com.joebywan.daybook.puzzles.NonogramLogic
 import com.joebywan.daybook.puzzles.NonogramState
@@ -12,14 +13,10 @@ import com.joebywan.daybook.puzzles.NonogramTeacher
 val NonogramTraining: Course = Course(
     puzzle = Nonogram,
     explanations = linkedMapOf(
-        NonogramTeacher.FULL to "When a line's clues and the gaps between them take its whole width, there is nowhere " +
-            "to slide: fill every run and cross the gaps. Here the crosses count: use the Cross pen.",
-        NonogramTeacher.FINISHED to "When a line already shows every run its clue asks for, none of its other squares " +
-            "can be filled: cross them out.",
-        NonogramTeacher.OVERLAP to "Push a line's clues as far one way as they go, then as far the other. Squares a run " +
-            "covers both times are filled, wherever it ends up.",
-        NonogramTeacher.LINE to "With some squares of a line already marked, every way its clues can still fit may " +
-            "agree on a square. Fill it or cross it, whichever they all say. Here the crosses count: use the Cross pen.",
+        NonogramTeacher.FULL to message("training.nonogram_full"),
+        NonogramTeacher.FINISHED to message("training.nonogram_finished"),
+        NonogramTeacher.OVERLAP to message("training.nonogram_overlap"),
+        NonogramTeacher.LINE to message("training.nonogram_line"),
     ),
     // Standard boards reach all four (TRAINING_SPEC.md, Measured).
     tierFor = { Difficulty.STANDARD },
@@ -28,7 +25,7 @@ val NonogramTraining: Course = Course(
     drill = MoveDrill(
         view = { (it as NonogramState).cells.toList() },
         // A player who never crosses fills a step's squares and is left at "k of n" with no idea why (a player's report).
-        keepGoing = "Keep going: crosses count here, so cross the squares the step rules out.",
+        keepGoing = message("training.nonogram_keep_going"),
         next = { s ->
             (s as NonogramState).let { g ->
                 NonogramTeacher.deduce(g.width, g.height, NonogramLogic.rowClues(g), NonogramLogic.colClues(g), g.cells)

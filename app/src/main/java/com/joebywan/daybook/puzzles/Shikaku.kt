@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -97,14 +100,14 @@ data class ShikakuState(
 object Shikaku : PuzzleType {
 
     override val id = "shikaku"
-    override val displayName = "Shikaku"
-    override val tagline = "Cut the grid into numbered rectangles"
+    override val displayName get() = text("puzzle.shikaku.name")
+    override val tagline get() = text("puzzle.shikaku.tagline")
     override val accent = 0xFF8D813D
-    override val rules = listOf(
-        "Divide the whole grid into rectangles.",
-        "Every rectangle must contain exactly one number.",
-        "That number is the rectangle's area in squares.",
-        "Drag from one corner to another to draw a rectangle. Tap a rectangle to remove it.",
+    override val rules get() = listOf(
+        text("puzzle.shikaku.rule.1"),
+        text("puzzle.shikaku.rule.2"),
+        text("puzzle.shikaku.rule.3"),
+        text("puzzle.shikaku.rule.4"),
     )
 
     /**
@@ -392,58 +395,53 @@ object Shikaku : PuzzleType {
         listOf(
             TutorialFrame(
                 state = tutorialBoard(*TUTORIAL_SOLUTION.toTypedArray()),
-                caption = "Split the grid into rectangles. Each holds exactly one number, and that number " +
-                    "is its area: this 6 covers six squares.",
+                caption = message("puzzle.shikaku.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = cellsOf(top)),
             ),
             TutorialFrame(
                 state = tutorialBoard(),
-                caption = "This 6 needs six squares, and any other shape would run off the grid or take " +
-                    "in another number. Drag from one corner to the opposite corner to draw it.",
+                caption = message("puzzle.shikaku.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = cellsOf(top), soft = setOf(1, 13)),
                 accepts = only(top),
-                retry = "Drag from one glowing corner to the opposite one.",
-                done = "Drawn.",
+                retry = message("puzzle.shikaku.tutorial.2.retry"),
+                done = message("puzzle.shikaku.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top),
-                caption = "Draw the 4 down the glowing squares: the right size, but then no number can reach the " +
-                    "corner, and every square needs one. Then tap the 4 to remove it.",
+                caption = message("puzzle.shikaku.tutorial.3.caption"),
                 glow = { s ->
                     if (wrong.stage(s) < 0) BoardHighlight(strong = cellsOf(TUTORIAL_WRONG_FOUR))
                     else BoardHighlight(strong = cellsOf(TUTORIAL_WRONG_FOUR), soft = setOf(0), warning = true)
                 },
                 steps = wrong.steps,
-                retry = "Drag along the glowing squares, then tap the rectangle once.",
-                done = "Removed. A tap takes any rectangle away.",
+                retry = message("puzzle.shikaku.tutorial.3.retry"),
+                done = message("puzzle.shikaku.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top),
-                caption = "Only the 4 can reach the glowing corner, and just one of its rectangles covers it. " +
-                    "Draw it. Then only one rectangle of the 3 reaches the square below: draw that too.",
+                caption = message("puzzle.shikaku.tutorial.4.caption"),
                 // The 4 first: until it is down, the 3 has two rectangles over the square.
                 glow = { s ->
                     if (pair.stage(s) < 0) BoardHighlight(strong = setOf(0), soft = setOf(1))
                     else BoardHighlight(strong = setOf(10), soft = setOf(15))
                 },
                 steps = pair.steps,
-                retry = "Draw the rectangle over the glowing square.",
-                done = "Drawn: a square only one number reaches is that number's.",
+                retry = message("puzzle.shikaku.tutorial.4.retry"),
+                done = message("puzzle.shikaku.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top, four, three),
-                caption = "Every rectangle this 6 can make covers the square below it, so the other 6 " +
-                    "can't use that square. That leaves the other 6 one rectangle. Draw it.",
+                caption = message("puzzle.shikaku.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(13, 18), soft = setOf(22)),
                 accepts = only(top, four, three, low),
-                retry = "Draw the bottom 6's rectangle, clear of the glowing squares.",
-                done = "Drawn.",
+                retry = message("puzzle.shikaku.tutorial.5.retry"),
+                done = message("puzzle.shikaku.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top, four, three, low),
-                caption = "Your turn: finish the grid. Stuck? Hint shows you why.",
+                caption = message("puzzle.shikaku.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.shikaku.tutorial.6.done"),
             ),
         )
     }

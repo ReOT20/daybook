@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.stats
 
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,7 +33,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.Training
-import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.data.PuzzleTechniques
 import com.joebywan.daybook.platform.BackButton
 import com.joebywan.daybook.platform.rememberOpenUrl
@@ -58,9 +59,9 @@ fun TechniquesScreen(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             BackButton(onBack)
             Column(Modifier.weight(1f).padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 8.dp)) {
-                Text(tr("Techniques", "Приёмы"), style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+                Text(text("ui.stats_screen.techniques"), style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
                 Text(
-                    tr("Techniques you've been shown in hints", "Приёмы, показанные в подсказках"),
+                    text("ui.techniques_screen.techniques_you_ve_been_shown_in"),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                 )
@@ -85,7 +86,7 @@ fun TechniquesScreen(
                     p.techniques.forEach { t ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             // The tick's room is kept either way, so the names line up.
-                            if (t.met) Icon(Icons.Default.Check, tr("Shown", "Показано"), tint = scheme.primary, modifier = Modifier.size(18.dp))
+                            if (t.met) Icon(Icons.Default.Check, text("ui.techniques_screen.shown"), tint = scheme.primary, modifier = Modifier.size(18.dp))
                             else Spacer(Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
@@ -98,8 +99,8 @@ fun TechniquesScreen(
                         // Under the name, not beside it: two links beside a long name squeeze it to a word a line.
                         // 16dp + a link's own 10dp padding starts them under the name.
                         Row(Modifier.padding(start = 16.dp)) {
-                            TechniqueLink(tr("Guide", "Руководство")) { openUrl(guideUrl(p.puzzleId, t.id)) }
-                            if (t.id in trained) TechniqueLink(tr("Practise", "Тренироваться")) { onPractise(p.puzzleId, t.id) }
+                            TechniqueLink(text("ui.techniques_screen.guide")) { openUrl(guideUrl(p.puzzleId, t.id)) }
+                            if (t.id in trained) TechniqueLink(text("ui.techniques_screen.practise")) { onPractise(p.puzzleId, t.id) }
                         }
                     }
                 }

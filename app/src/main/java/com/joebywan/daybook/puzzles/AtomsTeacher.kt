@@ -1,9 +1,14 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.listed
-import com.joebywan.daybook.core.numberWord
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.numberWordMessage
 
 /**
  * Atoms, reasoned the way a person reasons it, one named step at a time.
@@ -78,9 +83,15 @@ internal object AtomsTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     // ---- the board as the player sees it --------------------------------------------------------
 
@@ -209,36 +220,36 @@ internal object AtomsTeacher {
         // otherwise be what makes this one look wrong.
         val counts = s.counts.indices.map { if (it == wrong) s.counts[it] else minOf(s.counts[it], s.solution[it]) }
         val sight = sightOf(s.atoms, s.pairs, counts)
-        val howToClear = if (s.counts[wrong] == 2) "Tap it once to clear it." else "Tap it twice to clear it."
+        val howToClear = if (s.counts[wrong] == 2) message("teacher.atoms.mistake.1") else message("teacher.atoms.mistake.2")
         val line = pairCell(n, wrong)
-        fun step(explanation: String, cited: Set<Int>) = Step(
+        fun step(explanation: Message, cited: Set<Int>) = Step(
             technique = MISTAKE,
             clear = listOf(wrong),
             focus = setOf(line),
             cited = cited,
             targets = setOf(line),
-            nudge = "Check this bond.",
-            explanation = "$explanation $howToClear",
+            nudge = message("teacher.atoms.step.1"),
+            explanation = message("teacher.atoms.step.extra.1", "explanation" to (explanation), "howToClear" to (howToClear)),
         )
 
         for (end in listOf(pr.a, pr.b)) {
             if (sight.need(end) < 0) {
-                return step("The ${s.atoms[end].bonds} it joins now has more bonds than its number.", setOf(end))
+                return step(message("teacher.atoms.mistake.3", "s_atoms_end_bonds" to (s.atoms[end].bonds)), setOf(end))
             }
         }
         val group = sight.component(pr.a)
         if (group.size < n && group.all { sight.need(it) == 0 }) {
             val what = if (group.size == 2) {
-                "This bond finishes both of its atoms and closes the pair off"
+                message("teacher.atoms.mistake.4")
             } else {
-                "This bond finishes every atom in this group and closes it off"
+                message("teacher.atoms.mistake.5")
             }
-            return step("$what from the rest of the molecule.", group.toSet())
+            return step(message("teacher.atoms.mistake.6", "what" to (what)), group.toSet())
         }
         propagate(sight)?.let { chain ->
-            return step("With this bond, ${chain.phrase(sight, lead = false)}.", chain.cited(sight))
+            return step(message("teacher.atoms.mistake.7", "value1" to (chain.phrase(sight, lead = false))), chain.cited(sight))
         }
-        return step("This bond isn't part of the answer, so look again once it's gone.", emptySet())
+        return step(message("teacher.atoms.mistake.8"), emptySet())
     }
 
     /**
@@ -261,9 +272,8 @@ internal object AtomsTeacher {
             focus = setOf(atom),
             cited = setOf(pr.a, pr.b),
             targets = setOf(pairCell(n, target)),
-            nudge = "This one takes a longer chain. Look at the glowing ${s.atoms[atom].bonds}.",
-            explanation = "This one needs a longer chain than a hint can walk through, " +
-                "so here's a line that holds a bond.",
+            nudge = message("teacher.atoms.fallback.1", "s_atoms_atom_bonds" to (s.atoms[atom].bonds)),
+            explanation = message("teacher.atoms.fallback.2"),
         )
     }
 
@@ -405,101 +415,99 @@ internal object AtomsTeacher {
             }
         }
         val shut = when {
-            shutOut.size + shutDouble.size > 1 -> "close a group off"
-            pairOnly -> "finish both and cut them off"
-            else -> "finish that group and cut it off"
+            shutOut.size + shutDouble.size > 1 -> message("teacher.atoms.explain_atom.1")
+            pairOnly -> message("teacher.atoms.explain_atom.2")
+            else -> message("teacher.atoms.explain_atom.3")
         }
         // Neighbours by number and place ("to the 2 above"), or, when that runs past the panel, by
         // direction alone ("above").
-        fun reasonsFor(short: Boolean): List<String> {
-            fun who(b: Int) = "the ${s.atoms[b].bonds} ${where(s.atoms[a], s.atoms[b])}"
-            fun listed(bs: List<Int>, and: String = "and") =
-                if (short) listed(bs.map { way(s.atoms[a], s.atoms[it]) }, and) else "to " + listed(bs.map(::who), and)
+        fun reasonsFor(short: Boolean): List<Message> {
+            fun who(b: Int) = message("teacher.atoms.who.1", "s_atoms_b_bonds" to (s.atoms[b].bonds), "value2" to (where(s.atoms[a], s.atoms[b])))
+            fun listedMessage(bs: List<Int>, and: Message = message("teacher.atoms.listed.1")) =
+                if (short) listedMessage(bs.map { way(s.atoms[a], s.atoms[it]) }, and) else message("teacher.atoms.listed.2", "value1" to (listedMessage(bs.map(::who), and)))
             return buildList {
                 if (crossedTo.isNotEmpty()) {
-                    add(if (short) "a bond crosses the line ${listed(crossedTo)}" else "a bond crosses the way ${listed(crossedTo)}")
+                    add(if (short) message("teacher.atoms.reasons_for.1", "listed_crossedTo_" to (listedMessage(crossedTo))) else message("teacher.atoms.reasons_for.2", "listed_crossedTo_" to (listedMessage(crossedTo))))
                 }
                 when (shutOut.size) {
                     0 -> Unit
-                    1 -> add("a bond ${listed(shutOut)} would $shut, so that's out")
-                    else -> add("a bond ${listed(shutOut, "or")} would $shut, so those are out")
+                    1 -> add(message("teacher.atoms.reasons_for.3", "listed_shutOut_" to (listedMessage(shutOut)), "shut" to (shut)))
+                    else -> add(message("teacher.atoms.reasons_for.4", "listed_shutOut_or_" to (listedMessage(shutOut, message("teacher.atoms.reasons_for.extra.1"))), "shut" to (shut)))
                 }
                 when (shutDouble.size) {
                     0 -> Unit
-                    1 -> add("a double ${listed(shutDouble)} would $shut, so one at most")
-                    else -> add("a double ${listed(shutDouble, "or")} would $shut, so one each at most")
+                    1 -> add(message("teacher.atoms.reasons_for.5", "listed_shutDouble_" to (listedMessage(shutDouble)), "shut" to (shut)))
+                    else -> add(message("teacher.atoms.reasons_for.6", "listed_shutDouble_or_" to (listedMessage(shutDouble, message("teacher.atoms.reasons_for.extra.2"))), "shut" to (shut)))
                 }
             }
         }
         val reasons = reasonsFor(short = false)
-        fun prefixOf(r: List<String>) = if (r.isEmpty()) "" else r.joinToString("; ").cap() + ". "
+        fun prefixOf(r: List<Message>) = if (r.isEmpty()) literalMessage("") else r.joinedMessages("; ").cap() + ". "
         var prefix = prefixOf(reasons)
 
-        val needWords = if (s.degree(a) == 0) "needs ${bondsWord(f.need)}" else "still needs ${bondsWord(f.need)}"
-        fun bodyFor(prefix: String) = when (f.rule) {
+        val needWords = if (s.degree(a) == 0) message("teacher.atoms.explain_atom.4", "bondsWord_f_need_" to (bondsWord(f.need))) else message("teacher.atoms.explain_atom.5", "bondsWord_f_need_" to (bondsWord(f.need)))
+        fun bodyFor(prefix: Message) = when (f.rule) {
             ONE_NEIGHBOUR -> {
                 val p = f.raise.keys.first()
                 val b = s.other(p, a)
                 val others = lines.filter { it != p }
                 val otherWhy = if (others.isEmpty()) "" else {
                     val full = others.filter { s.cap(it, BASIC) == 0 }.map { s.other(it, a) }
-                    if (full.isNotEmpty() && reasons.isEmpty()) " (the others are full)" else ""
+                    if (full.isNotEmpty() && reasons.isEmpty()) message("teacher.atoms.body_for.1") else ""
                 }
                 val goes = when {
-                    f.need == 1 && s.degree(a) > 0 -> "its last bond goes there"
-                    f.need == 1 -> "its bond goes there"
-                    s.degree(a) > 0 -> "its remaining ${numberWord(f.need, upTo = 8)} go there"
-                    else -> "${if (f.need == 2) "both" else "all"} its bonds go there"
+                    f.need == 1 && s.degree(a) > 0 -> message("teacher.atoms.body_for.2")
+                    f.need == 1 -> message("teacher.atoms.body_for.3")
+                    s.degree(a) > 0 -> message("teacher.atoms.body_for.4", "value1" to (numberWordMessage(f.need, upTo = 8)))
+                    else -> message("teacher.atoms.body_for.5", "value1" to (if (f.need == 2) message("teacher.atoms.body_for.extra.1") else message("teacher.atoms.body_for.extra.2")))
                 }
                 if (reasons.isEmpty()) {
-                    "This $x has only one neighbour it can still bond with, the ${s.atoms[b].bonds} " +
-                        "${where(s.atoms[a], s.atoms[b])}$otherWhy, so $goes."
+                    message("teacher.atoms.body_for.6", "x" to (x), "s_atoms_b_bonds" to (s.atoms[b].bonds), "value3" to (where(s.atoms[a], s.atoms[b])), "otherWhy" to (otherWhy), "goes" to (goes))
                 } else {
-                    "That leaves one neighbour, the ${s.atoms[b].bonds} ${where(s.atoms[a], s.atoms[b])}, so $goes."
+                    message("teacher.atoms.body_for.7", "s_atoms_b_bonds" to (s.atoms[b].bonds), "value2" to (where(s.atoms[a], s.atoms[b])), "goes" to (goes))
                 }
             }
             ALL_FORCED -> {
                 val parts = f.raise.entries.sortedBy { it.key }.map { (p, to) ->
-                    "${numberWord(to - s.lo[p], upTo = 8)} ${way(s.atoms[a], s.atoms[s.other(p, a)])}"
+                    message("teacher.atoms.body_for.extra.3", "value1" to (numberWordMessage(to - s.lo[p], upTo = 8)), "value2" to (way(s.atoms[a], s.atoms[s.other(p, a)])))
                 }
-                val lead = "This $x $needWords and its neighbours can take just that"
-                val full = "$lead, so all are used: ${listed(parts)}."
+                val lead = message("teacher.atoms.body_for.8", "x" to (x), "needWords" to (needWords))
+                val full = message("teacher.atoms.body_for.9", "lead" to (lead), "listed_parts_" to (listedMessage(parts)))
                 // The reason above can already have used most of the panel; "so all are used" goes first.
-                if (prefix.length + full.length <= MAX_EXPLANATION) full else "$lead: ${listed(parts)}."
+                if (prefix.length + full.length <= MAX_EXPLANATION) full else message("teacher.atoms.body_for.extra.4", "lead" to (lead), "listedMessage_parts_" to (listedMessage(parts)))
             }
             else -> {
                 val spare = f.room - f.need
                 val targets = f.raise.entries.sortedBy { it.key }
                 val each = targets.size == lines.count { s.cap(it, level) > 0 } && targets.all { it.value - s.lo[it.key] == 1 }
                 val tail = if (each && targets.size > 1) {
-                    "Leave out any neighbour and the rest fall short, so each gets at least one bond."
+                    message("teacher.atoms.body_for.10")
                 } else {
                     // Lines alike in room and in what they are owed read as one sentence.
-                    targets.groupBy { (p, to) -> s.cap(p, level) to (to - s.lo[p]) }.entries.joinToString(" ") { (key, group) ->
+                    targets.groupBy { (p, to) -> s.cap(p, level) to (to - s.lo[p]) }.entries.map { (key, group) ->
                         val (room, owed) = key
                         val names = group.map { (p, _) ->
                             val b = s.other(p, a)
-                            "the ${s.atoms[b].bonds} ${where(s.atoms[a], s.atoms[b])}"
+                            message("teacher.atoms.body_for.11", "s_atoms_b_bonds" to (s.atoms[b].bonds), "value2" to (where(s.atoms[a], s.atoms[b])))
                         }
                         if (names.size == 1) {
-                            "${names[0].cap()} can take ${numberWord(room, upTo = 8)}, so it gets at least ${numberWord(owed, upTo = 8)}."
+                            message("teacher.atoms.body_for.12", "names_0_cap_" to (names[0].cap()), "numberWord_room_upTo_8_" to (numberWordMessage(room, upTo = 8)), "numberWord_owed_upTo_8_" to (numberWordMessage(owed, upTo = 8)))
                         } else {
-                            "${listed(names).cap()} can each take ${numberWord(room, upTo = 8)}, so each gets at least ${numberWord(owed, upTo = 8)}."
+                            message("teacher.atoms.body_for.13", "listed_names_cap_" to (listedMessage(names).cap()), "numberWord_room_upTo_8_" to (numberWordMessage(room, upTo = 8)), "numberWord_owed_upTo_8_" to (numberWordMessage(owed, upTo = 8)))
                         }
-                    }
+                    }.joinedMessages(" ")
                 }
                 val usable = lines.filter { s.cap(it, level) > 0 }
                 if (reasons.isNotEmpty() && usable.size == 2 && targets.size == 1) {
                     // Two neighbours, one just capped by the reason above: the other must make up the rest.
                     val (p, to) = targets[0]
                     val b = s.other(p, a)
-                    "This $x $needWords, so the ${s.atoms[b].bonds} ${where(s.atoms[a], s.atoms[b])} gets at least " +
-                        "${numberWord(to - s.lo[p], upTo = 8)}."
+                    message("teacher.atoms.body_for.14", "x" to (x), "needWords" to (needWords), "s_atoms_b_bonds" to (s.atoms[b].bonds), "value4" to (where(s.atoms[a], s.atoms[b])), "value5" to (numberWordMessage(to - s.lo[p], upTo = 8)))
                 } else {
                     // Likewise "so one is spare": the arithmetic still stands without it.
-                    val lead = "This $x $needWords and its neighbours can take ${numberWord(f.room, upTo = 8)}"
-                    val withSpare = "$lead, so ${if (spare == 1) "one is" else "${numberWord(spare, upTo = 8)} are"} spare. $tail"
-                    if (prefix.length + withSpare.length <= MAX_EXPLANATION) withSpare else "$lead. $tail"
+                    val lead = message("teacher.atoms.body_for.15", "x" to (x), "needWords" to (needWords), "value3" to (numberWordMessage(f.room, upTo = 8)))
+                    val withSpare = message("teacher.atoms.body_for.16", "lead" to (lead), "value2" to (if (spare == 1) message("teacher.atoms.body_for.extra.5") else message("teacher.atoms.body_for.extra.6", "value1" to (numberWordMessage(spare, upTo = 8)))), "tail" to (tail))
+                    if (prefix.length + withSpare.length <= MAX_EXPLANATION) withSpare else message("teacher.atoms.body_for.extra.7", "lead" to (lead), "tail" to (tail))
                 }
             }
         }
@@ -515,7 +523,7 @@ internal object AtomsTeacher {
             focus = setOf(a),
             cited = setOf(a) + lines.map { s.other(it, a) } + lines.map { pairCell(n, it) } + citedExtra,
             targets = targets,
-            nudge = "Look at the glowing $x.",
+            nudge = message("teacher.atoms.explain_atom.6", "x" to (x)),
             explanation = prefix + body,
         )
     }
@@ -537,10 +545,8 @@ internal object AtomsTeacher {
                 focus = group.toSet(),
                 cited = group.toSet() + to,
                 targets = setOf(pairCell(s.n, p)),
-                nudge = "Look at the glowing group.",
-                explanation = "These atoms are bonded to each other but not yet to the rest, and every " +
-                    "atom must join one molecule. The only way out is from the ${s.atoms[from].bonds} to " +
-                    "the ${s.atoms[to].bonds} ${where(s.atoms[from], s.atoms[to])}, so that line needs a bond.",
+                nudge = message("teacher.atoms.only_way_out.1"),
+                explanation = message("teacher.atoms.only_way_out.2", "s_atoms_from_bonds" to (s.atoms[from].bonds), "s_atoms_to_bonds" to (s.atoms[to].bonds), "value3" to (where(s.atoms[from], s.atoms[to]))),
             )
         }
         return null
@@ -565,22 +571,22 @@ internal object AtomsTeacher {
         }
 
         /** "the 3 must bond below, and then the 2 couldn't reach its number". */
-        fun phrase(s: Sight, lead: Boolean): String {
+        fun phrase(s: Sight, lead: Boolean): Message {
             val steps = forced.map { f ->
                 val a = s.atoms[f.atom]
                 val where = f.raise.keys.sorted().map { way(a, s.atoms[s.other(it, f.atom)]) }
-                "the ${a.bonds} must bond ${listed(where)}"
+                message("teacher.atoms.phrase.1", "a_bonds" to (a.bonds), "listed_where_" to (listedMessage(where)))
             }
             val end = when (dead) {
-                is Short -> "the ${s.atoms[dead.atom].bonds} couldn't reach its number"
+                is Short -> message("teacher.atoms.phrase.2", "s_atoms_dead_atom_bonds" to (s.atoms[dead.atom].bonds))
                 is Closed -> if (dead.group.size == 2) {
-                    "two atoms would be closed off from the rest"
+                    message("teacher.atoms.phrase.3")
                 } else {
-                    "a group would be closed off from the rest"
+                    message("teacher.atoms.phrase.4")
                 }
             }
             val all = steps + end
-            val text = listed(all, "and then", oxford = true)
+            val text = listedMessage(all, message("teacher.atoms.phrase.5"), oxford = true)
             return if (lead) text.cap() else text
         }
     }
@@ -622,32 +628,33 @@ internal object AtomsTeacher {
         val a = s.atoms[pr.a]
         val b = s.atoms[pr.b]
         val line = pairCell(s.n, p)
-        val suppose = if (s.lo[p] == 0) "weren't bonded" else "got no more bonds"
-        val need = if (s.lo[p] == 0) "a bond" else "another bond"
+        val suppose = if (s.lo[p] == 0) message("teacher.atoms.what_if.1") else message("teacher.atoms.what_if.2")
+        val need = if (s.lo[p] == 0) message("teacher.atoms.what_if.3") else message("teacher.atoms.what_if.4")
         return Step(
             technique = WHAT_IF,
             raise = mapOf(p to s.lo[p] + 1),
             focus = setOf(pr.a, pr.b, line),
             cited = chain.cited(s) + pr.a + pr.b,
             targets = setOf(line),
-            nudge = "What if these two ${if (s.lo[p] == 0) "stayed apart" else "got no more bonds"}?",
-            explanation = "Suppose this ${a.bonds} and ${b.bonds} $suppose. Then " +
-                "${chain.phrase(s, lead = false)}. So they need $need.",
+            nudge = message("teacher.atoms.what_if.5", "value1" to (if (s.lo[p] == 0) message("teacher.atoms.what_if.extra.1") else message("teacher.atoms.what_if.extra.2"))),
+            explanation = message("teacher.atoms.what_if.6", "a_bonds" to (a.bonds), "b_bonds" to (b.bonds), "suppose" to (suppose), "value4" to (chain.phrase(s, lead = false)), "need" to (need)),
         )
     }
 
     // ---- words -----------------------------------------------------------------------------------
 
     /** Where [to] sits, seen from [from]: "to the right", "above". */
-    private fun where(from: Atom, to: Atom): String = way(from, to).let { if (it == "right" || it == "left") "to the $it" else it }
+    private fun where(from: Atom, to: Atom): Message = way(from, to).let { if (it.english == "right" || it.english == "left") message("teacher.atoms.where.1", "it" to (it)) else it }
 
     /** The same, as one word for lists: "left", "above". */
-    private fun way(from: Atom, to: Atom): String = when {
-        to.row == from.row && to.col > from.col -> "right"
-        to.row == from.row -> "left"
-        to.row < from.row -> "above"
-        else -> "below"
+    private fun way(from: Atom, to: Atom): Message = when {
+        to.row == from.row && to.col > from.col -> message("teacher.atoms.way.1")
+        to.row == from.row -> message("teacher.atoms.way.2")
+        to.row < from.row -> message("teacher.atoms.way.3")
+        else -> message("teacher.atoms.way.4")
     }
 
-    private fun bondsWord(k: Int) = if (k == 1) "one bond" else "${numberWord(k, upTo = 8)} bonds"
+    private fun bondsWord(k: Int) = message(
+        "teacher.atoms.count.bond", "count" to k, "number" to numberWordMessage(k, upTo = 8),
+    )
 }

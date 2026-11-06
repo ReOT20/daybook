@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,6 +53,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.core.TutorialFrame
 import com.joebywan.daybook.core.boardKeys
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.highlightGrid
 import com.joebywan.daybook.ui.BoardGlyph
 import com.joebywan.daybook.ui.MoveFeel
@@ -75,19 +79,19 @@ import kotlin.math.hypot
 object Dwindle : PuzzleType {
 
     override val id = "dwindle"
-    override val displayName = "Dwindle"
-    override val tagline = "Find every word, and watch the letters go"
+    override val displayName get() = text("puzzle.dwindle.name")
+    override val tagline get() = text("puzzle.dwindle.tagline")
     override val accent = 0xFFA55C09
-    override val rules = listOf(
-        "Spell words by swiping through touching tiles, across or up and down (never diagonally), or tap them in turn and press Enter.",
-        "A word has three letters or more and uses a tile at most once. Tiles never fall or move.",
-        "The dashes show the goal words' lengths. Find them all to finish.",
-        "Each tile's number is how many goal words still run through it. At zero it vanishes.",
-        "Each goal word has only one way on the board, and no order can leave you stuck. Other real words are bonus words: they use nothing up.",
+    override val rules get() = listOf(
+        text("puzzle.dwindle.rule.1"),
+        text("puzzle.dwindle.rule.2"),
+        text("puzzle.dwindle.rule.3"),
+        text("puzzle.dwindle.rule.4"),
+        text("puzzle.dwindle.rule.5"),
     )
 
-    override val keyboardHelp = listOf(
-        "Type a word from the tiles, Backspace deletes, Enter tries the word, Escape clears it.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.dwindle.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -135,38 +139,38 @@ object Dwindle : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "The dashes are the words to find. Each tile's number is how many of them still run through it.",
+                caption = message("puzzle.dwindle.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = s0.goals.indices.map { DwindleTeacher.DASH + it }.toSet(), soft = s0.letters.indices.toSet()),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "Swipe through touching tiles to spell a word, across or up and down. Swipe C, H, E, F, then let go.",
+                caption = message("puzzle.dwindle.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = tiles(1)),
                 accepts = only(listOf("chef"), emptyList()),
-                retry = "Swipe through the glowing tiles in order: C, H, E, F.",
-                done = "CHEF fills its dashes, and each of its tiles' numbers drops by one.",
+                retry = message("puzzle.dwindle.tutorial.2.retry"),
+                done = message("puzzle.dwindle.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "A real word off the list is a bonus word: counted, never needed, and it uses nothing up. Spell EAT.",
+                caption = message("puzzle.dwindle.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(4, 3, 6)),
                 accepts = only(listOf("chef"), listOf("eat")),
-                retry = "Swipe through the glowing tiles in order: E, A, T.",
-                done = "EAT is a bonus word. The numbers did not change.",
+                retry = message("puzzle.dwindle.tutorial.3.retry"),
+                done = message("puzzle.dwindle.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = s2,
-                caption = "A has one use left. This time tap C, A and T in turn, then press Enter.",
+                caption = message("puzzle.dwindle.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = tiles(4)),
                 accepts = only(listOf("chef", "cat"), listOf("eat")),
-                retry = "Tap the glowing tiles in order: C, A, T. Then press Enter.",
-                done = "CAT. A is used up, so it vanishes.",
+                retry = message("puzzle.dwindle.tutorial.4.retry"),
+                done = message("puzzle.dwindle.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = s3,
-                caption = "Your turn: find the last words. Stuck? Hint gives you a clue.",
+                caption = message("puzzle.dwindle.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. Every tile has gone.",
+                done = message("puzzle.dwindle.tutorial.5.done"),
             ),
         )
     }
@@ -308,21 +312,30 @@ object Dwindle : PuzzleType {
                     onState(now.enter(word))
                 }
                 DwindleEntry.Bonus -> {
-                    say("Bonus word: ${word.uppercase()}", false)
+                    say(text("puzzle.dwindle.board.bonus_notice", "word" to (word.uppercase())), false)
                     onState(now.enter(word))
                 }
-                DwindleEntry.Found -> say("${word.uppercase()} is already found", true)
-                DwindleEntry.NotAWord -> say("${word.uppercase()} is not in the word list", true)
-                DwindleEntry.TooShort -> say("Words have three letters or more", true)
-                DwindleEntry.NotOnTiles -> say("The tiles cannot spell ${word.uppercase()}", true)
+                DwindleEntry.Found -> say(text("puzzle.dwindle.board.already_found", "word" to (word.uppercase())), true)
+                DwindleEntry.NotAWord -> say(text("puzzle.dwindle.board.not_word", "word" to (word.uppercase())), true)
+                DwindleEntry.TooShort -> say(text("puzzle.dwindle.board.too_short"), true)
+                DwindleEntry.NotOnTiles -> say(text("puzzle.dwindle.board.cannot_spell", "word" to (word.uppercase())), true)
             }
         }
 
         BoxWithConstraints(
             Modifier
                 .fillMaxSize()
-                .boardKeys(playable) { key, _, repeat ->
-                    val action = wordWheelKeyAction(key) ?: return@boardKeys false
+                .boardKeys(playable, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                    val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                    if (letter != null && letter in WordContent.alphabet(s.contentLanguage)) {
+                        if (!repeat) {
+                            val word = picked.map { latest.letters[it] }.joinToString("") + letter
+                            DwindleLogic.liveWay(latest, word)?.let { picked = it }
+                        }
+                        true
+                    } else false
+                } else null) { key, _, repeat ->
+                    val action = wordWheelKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                     if (!repeat) when (action) {
                         is WheelKeyAction.Letter -> {
                             val word = picked.map { latest.letters[it] }.joinToString("") + action.letter
@@ -342,8 +355,8 @@ object Dwindle : PuzzleType {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     notice ?: buildString {
-                        append("${s.found.size} of ${s.goals.size} words")
-                        if (s.bonus.isNotEmpty()) append(" · ${s.bonus.size} bonus")
+                        append(text("puzzle.dwindle.board.progress", "found" to (s.found.size), "total" to (s.goals.size)))
+                        if (s.bonus.isNotEmpty()) append(text("puzzle.dwindle.board.bonus_count", "count" to (s.bonus.size)))
                     },
                     style = MaterialTheme.typography.labelLarge,
                     color = if (notice != null && noticeIsError) scheme.error else scheme.onSurfaceVariant,

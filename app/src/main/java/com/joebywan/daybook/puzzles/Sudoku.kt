@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -121,21 +124,20 @@ private val NO_NOTES: List<Int> = List(81) { 0 }
 object Sudoku : PuzzleType {
 
     override val id = "sudoku"
-    override val displayName = "Sudoku"
-    override val tagline = "One to nine, once per row, column and box"
+    override val displayName get() = text("puzzle.sudoku.name")
+    override val tagline get() = text("puzzle.sudoku.tagline")
     override val accent = 0xFF6F7DF7
-    override val rules = listOf(
-        "Fill every square with a digit from 1 to 9.",
-        "No digit may repeat within a row, a column or a 3x3 box.",
-        "Tap a square, then tap a digit. Tap the digit again to clear it.",
-        "Or pick the digit first: with no square selected, tap a digit, then every square it goes in. Tap the selected square to let go of it, and the digit again to finish.",
-        "Tap the pencil to take notes: while it is lit, a digit is pencilled small in the square " +
-            "instead of placed. Placing a digit clears it from the notes of the squares it sees.",
-        "Clashing digits are shown in red as you go.",
+    override val rules get() = listOf(
+        text("puzzle.sudoku.rule.1"),
+        text("puzzle.sudoku.rule.2"),
+        text("puzzle.sudoku.rule.3"),
+        text("puzzle.sudoku.rule.4"),
+        text("puzzle.sudoku.rule.5"),
+        text("puzzle.sudoku.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, 1-9 place a digit (or a note in pencil mode), Backspace clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.sudoku.keyboard.1"),
     )
 
     /** The 20 cells that share a row, column or box with [index]. Precomputed once. */
@@ -436,27 +438,24 @@ object Sudoku : PuzzleType {
         listOf(
             TutorialFrame(
                 state = start,
-                caption = "Fill every row, column and 3x3 box with the digits 1 to 9, each once. " +
-                    "The bold digits are given.",
+                caption = message("puzzle.sudoku.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = row1),
             ),
             TutorialFrame(
                 state = start,
-                caption = "Row 1 has one empty square left, and it holds every digit but 6. Tap the square, " +
-                    "then 6 below.",
+                caption = message("puzzle.sudoku.tutorial.2.caption"),
                 // The square glows until it is selected, then the 6.
                 glow = { s ->
                     val strong = if (place.stage(s) < 0) TUTORIAL_FIRST else SudokuTeacher.pad(6)
                     BoardHighlight(strong = setOf(strong), soft = row1)
                 },
                 steps = place.steps,
-                retry = "Tap the glowing square in row 1, then the 6.",
-                done = "Row 1 is complete.",
+                retry = message("puzzle.sudoku.tutorial.2.retry"),
+                done = message("puzzle.sudoku.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_FIRST),
-                caption = "A digit that breaks a rule turns red. Put a 9 in the glowing square: it shares a " +
-                    "column and a box with a 9. Then tap 9 again to clear it.",
+                caption = message("puzzle.sudoku.tutorial.3.caption"),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(TUTORIAL_WRONG), soft = clashes)
@@ -465,13 +464,12 @@ object Sudoku : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap the glowing square, then the 9, then the 9 again.",
-                done = "Cleared. Tapping the digit again takes it out.",
+                retry = message("puzzle.sudoku.tutorial.3.retry"),
+                done = message("puzzle.sudoku.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG),
-                caption = "Not sure of a digit? Tap the pencil, then a digit, to jot it small in the square " +
-                    "instead of placing it. Pencil a 5 here.",
+                caption = message("puzzle.sudoku.tutorial.4.caption"),
                 highlight = BoardHighlight(
                     strong = setOf(TUTORIAL_WRONG, SudokuTeacher.NOTES_KEY, SudokuTeacher.pad(TUTORIAL_NOTED)),
                 ),
@@ -479,15 +477,14 @@ object Sudoku : PuzzleType {
                     next is SudokuState && next.cells == done.cells &&
                         next.notes == tutorialBoard(placed, noted = mapOf(TUTORIAL_WRONG to TUTORIAL_NOTED)).notes
                 },
-                retry = "Tap the glowing pencil, then the 5.",
-                done = "Penciled. Tap the pencil again to go back to placing digits.",
+                retry = message("puzzle.sudoku.tutorial.4.retry"),
+                done = message("puzzle.sudoku.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG, noted = mapOf(TUTORIAL_WRONG to TUTORIAL_NOTED)),
-                caption = "Your turn: finish the board. Stuck? Hint shows you why. Placing a digit " +
-                    "clears the square's notes.",
+                caption = message("puzzle.sudoku.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.sudoku.tutorial.5.done"),
             ),
         )
     }

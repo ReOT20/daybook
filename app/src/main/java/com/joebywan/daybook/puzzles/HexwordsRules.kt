@@ -1,6 +1,7 @@
 package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Difficulty
+import com.joebywan.daybook.core.words.RussianWords
 import com.joebywan.daybook.core.Rng
 import kotlinx.serialization.Serializable
 
@@ -16,6 +17,7 @@ data class HexwordsState(
     val target: Int,
     val taken: List<HexTake> = emptyList(),
     override val moves: Int = 0,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
     val score: Int get() = taken.sumOf { HexLogic.points(it.word.length) }
     val left: Int get() = maxOf(0, target - score)
@@ -166,15 +168,17 @@ internal object HexLogic {
 
     /** Every way to trace a word of [words] on the hexes of [free], in list order. */
     fun roads(letters: String, nb: Array<IntArray>, free: Long, words: List<String>): List<HexRoad> {
-        val bag = IntArray(26)
-        for (i in letters.indices) if (free shr i and 1L == 1L) bag[letters[i] - 'a']++
+        val origin = if (letters.firstOrNull() in 'а'..'я') 'а' else 'a'
+        val bag = IntArray(if (origin == 'а') 32 else 26)
+        for (i in letters.indices) if (free shr i and 1L == 1L) bag[letters[i] - origin]++
         val out = ArrayList<HexRoad>()
-        val need = IntArray(26)
+        val need = IntArray(bag.size)
         val path = IntArray(MAX_WORD)
         for (word in words) {
+            if (word.any { it - origin !in bag.indices }) continue
             var fits = true
-            for (c in word) if (++need[c - 'a'] > bag[c - 'a']) fits = false
-            for (c in word) need[c - 'a'] = 0
+            for (c in word) if (++need[c - origin] > bag[c - origin]) fits = false
+            for (c in word) need[c - origin] = 0
             if (!fits) continue
             fun trace(k: Int, at: Int, used: Long) {
                 path[k] = at
@@ -195,15 +199,20 @@ internal object HexLogic {
     val gridWords: List<String> by lazy { (MIN_WORD..MAX_WORD).flatMap { WheelWords.grid(it) } }
     val acceptedWords: List<String> by lazy { gridWords + WordWheelWords.BONUS.filter { it.length in MIN_WORD..MAX_WORD } }
 
+    private val russianGridWords: List<String> by lazy { (MIN_WORD..MAX_WORD).flatMap { RussianWords.grid(it) } }
+    private val russianAcceptedWords: List<String> by lazy { (MIN_WORD..MAX_WORD).flatMap { RussianWords.guesses(it) } }
+    fun gridWords(contentLanguage: String): List<String> = if (contentLanguage == "ru") russianGridWords else gridWords
+    fun acceptedWords(contentLanguage: String): List<String> = if (contentLanguage == "ru") russianAcceptedWords else acceptedWords
+
     /** Proved that no accepted words can make up the points still needed. A search out of budget proves nothing, so it says false. */
     fun targetLost(s: HexwordsState): Boolean {
         if (s.solved) return false
         val free = s.free
-        val roads = roads(s.letters, neighbours(s.rows), free, acceptedWords)
+        val roads = roads(s.letters, neighbours(s.rows), free, acceptedWords(s.contentLanguage))
         return HexSearch(roads, s.letters.length, HexwordsTeacher.BUDGET).reach(free, s.left) == HexReach.No
     }
 
-    fun isWord(word: String): Boolean = word.length in MIN_WORD..MAX_WORD && WheelWords.isWord(word)
+    fun isWord(word: String, contentLanguage: String = "en"): Boolean = word.length in MIN_WORD..MAX_WORD && WheelWords.isWord(word, contentLanguage)
 
     /** A tier: the block's rows, the longest planted word, and which simple player the target sets out to beat. */
     class Spec(val rows: List<Int>, val longest: Int, val difficulty: Difficulty)
@@ -236,17 +245,17 @@ internal object HexLogic {
      * says [HexReach.Yes]: common words alone reach the target. A target it cannot reach, or a search out of budget, is
      * another draw.
      */
-    fun generateVerified(seed: Long, difficulty: Difficulty): HexwordsState? {
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): HexwordsState? {
         val spec = specFor(difficulty)
         val nb = neighbours(spec.rows)
         val n = spec.rows.sum()
         val all = (1L shl n) - 1
         for (attempt in 0 until ATTEMPTS) {
             val rng = Rng(seed + attempt)
-            val (letters, _) = plant(spec.rows, nb, spec.longest, rng) ?: continue
-            val roads = roads(letters, nb, all, gridWords)
+            val (letters, _) = plant(spec.rows, nb, spec.longest, rng, contentLanguage) ?: continue
+            val roads = roads(letters, nb, all, gridWords(contentLanguage))
             val target = targetFor(roads, all, difficulty, rng)
-            if (HexSearch(roads, n, BUDGET).reach(all, target) is HexReach.Yes) return HexwordsState(spec.rows, letters, target)
+            if (HexSearch(roads, n, BUDGET).reach(all, target) is HexReach.Yes) return HexwordsState(spec.rows, letters, target, contentLanguage = contentLanguage)
         }
         return null
     }
@@ -254,8 +263,8 @@ internal object HexLogic {
     const val LAST_RESORT_SEED = 1L
 
     /** The board for the day nothing was proved (a year per tier never reaches it, `FallbackTest`). */
-    fun lastResort(difficulty: Difficulty): HexwordsState =
-        generateVerified(LAST_RESORT_SEED, difficulty) ?: error("the fixed last-resort seed no longer proves a board")
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): HexwordsState =
+        generateVerified(LAST_RESORT_SEED, difficulty, contentLanguage) ?: error("the fixed last-resort seed no longer proves a board")
 
     /** A greedy player: the biggest word left, ties by [rng] (or list order), until nothing is left. */
     fun greedy(roads: List<HexRoad>, free0: Long, rng: Rng? = null): Int {
@@ -296,7 +305,7 @@ internal object HexLogic {
     }
 
     /** Words of three to seven letters laid end to end over every hex; null when the walk boxes itself in. */
-    fun plant(rows: List<Int>, nb: Array<IntArray>, longest: Int, rng: Rng): Pair<String, List<IntArray>>? {
+    fun plant(rows: List<Int>, nb: Array<IntArray>, longest: Int, rng: Rng, contentLanguage: String = "en"): Pair<String, List<IntArray>>? {
         val n = rows.sum()
         val letters = CharArray(n) { ' ' }
         val paths = ArrayList<IntArray>()
@@ -318,7 +327,7 @@ internal object HexLogic {
                 free = free xor (1L shl h)
             }
             if (path.size < MIN_WORD) return null
-            val list = WheelWords.grid(path.size)
+            val list = WheelWords.grid(path.size, contentLanguage)
             val word = list[rng.nextInt(list.size)]
             // The walk hugs the edges, so half run backwards or a top row would read straight off as a word.
             val forwards = rng.nextInt(2) == 0

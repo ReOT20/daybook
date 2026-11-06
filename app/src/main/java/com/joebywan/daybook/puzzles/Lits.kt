@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -122,21 +125,20 @@ data class LitsState(
 object Lits : PuzzleType {
 
     override val id = "lits"
-    override val displayName = "LITS"
-    override val tagline = "One tetromino in every region"
+    override val displayName get() = text("puzzle.lits.name")
+    override val tagline get() = text("puzzle.lits.tagline")
     override val accent = 0xFF7A9052
-    override val rules = listOf(
-        "Shade exactly four squares in every region, forming an L, I, T or S tetromino.",
-        "A 2x2 square of shading is never allowed.",
-        "Two tetrominoes of the same letter may not touch edge to edge, even across regions.",
-        "Tap a square to shade or clear it, or drag across several to do the same to each.",
-        "A finished tetromino takes its letter's colour and carries the letter, so two blocks " +
-            "touching in one colour are the rule being broken.",
-        "Squares that can no longer be shaded are crossed off for you.",
+    override val rules get() = listOf(
+        text("puzzle.lits.rule.1"),
+        text("puzzle.lits.rule.2"),
+        text("puzzle.lits.rule.3"),
+        text("puzzle.lits.rule.4"),
+        text("puzzle.lits.rule.5"),
+        text("puzzle.lits.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Space shades; Shift+arrow carries the shading along.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.lits.keyboard.1"),
     )
 
     /**
@@ -1177,61 +1179,55 @@ object Lits : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Shade four squares in every region so they make an L, I, T or S. The " +
-                    "thick lines are the walls. Here's a finished board; the glowing T is one region's.",
+                caption = message("puzzle.lits.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = leftT, soft = setOf(11, 21)),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Two tetrominoes of the same letter may not touch along an edge, even across " +
-                    "a wall. These two L's meet only at a corner, which is allowed.",
+                caption = message("puzzle.lits.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = top + TUTORIAL_MIDDLE),
             ),
             TutorialFrame(
                 state = tutorialBoard(emptySet()),
-                caption = "The top region has exactly four squares, so its tetromino is the whole " +
-                    "region. Drag through all four glowing squares to shade them.",
+                caption = message("puzzle.lits.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = top),
                 accepts = exactly(top),
-                retry = "Drag through all four glowing squares in one go.",
-                done = "Shaded. A finished shape wears its letter.",
+                retry = message("puzzle.lits.tutorial.3.retry"),
+                done = message("puzzle.lits.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top),
-                caption = "Shading never fills a 2x2 square. Tap the glowing square to shade it: with the L " +
-                    "it fills a 2x2. Then tap it again to clear it.",
+                caption = message("puzzle.lits.tutorial.4.caption"),
                 // The board draws no red for a 2x2, so the glow turns red when the square is shaded.
                 glow = { s ->
                     if (block.stage(s) == 0) BoardHighlight(strong = setOf(2, 3, 7, 8), warning = true)
                     else BoardHighlight(strong = setOf(7), soft = setOf(2, 3, 8))
                 },
                 steps = block.steps,
-                retry = "Tap the glowing square, then tap it again.",
-                done = "Cleared. A drag that starts on a shaded square clears too.",
+                retry = message("puzzle.lits.tutorial.4.retry"),
+                done = message("puzzle.lits.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(top),
-                caption = "Squares that can't be shaded any more are crossed off for you. The middle " +
-                    "region has exactly four squares left, so drag through them.",
+                caption = message("puzzle.lits.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = TUTORIAL_MIDDLE, soft = setOf(0, 5, 6, 7)),
                 accepts = exactly(middle),
-                retry = "Drag through the four glowing squares in one go.",
-                done = "Another L, touching the first only at a corner.",
+                retry = message("puzzle.lits.tutorial.5.retry"),
+                done = message("puzzle.lits.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(middle),
-                caption = "On the left, the crossed squares would make an L touching the middle L, or " +
-                    "fill a 2x2 with it. What's left is a T. Tap its bump to shade it.",
+                caption = message("puzzle.lits.tutorial.6.caption"),
                 highlight = BoardHighlight(strong = setOf(TUTORIAL_BUMP), soft = setOf(10, 11, 15, 20, 21)),
                 accepts = exactly(bumped),
-                retry = "Tap the glowing square once.",
-                done = "That's the T's bump.",
+                retry = message("puzzle.lits.tutorial.6.retry"),
+                done = message("puzzle.lits.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(bumped),
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.lits.tutorial.7.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.lits.tutorial.7.done"),
             ),
         )
     }

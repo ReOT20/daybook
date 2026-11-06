@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -68,16 +71,16 @@ import kotlin.math.sqrt
 object Pointers : PuzzleType {
 
     override val id = "pointers"
-    override val displayName = "Arrows"
-    override val tagline = "Clear every arrow, without a bump"
+    override val displayName get() = text("puzzle.pointers.name")
+    override val tagline get() = text("puzzle.pointers.tagline")
     override val accent = 0xFFB96BCB
-    override val rules = listOf(
-        "Tap an arrow and it slides off the board the way its head points, if nothing is in its way to the edge.",
-        "If another arrow is in the way, it bumps and you lose a life. Lose all three and the board is lost: try it again from the start.",
-        "Clear every arrow to win. Taking one away only ever opens the way for others, so look before you tap.",
+    override val rules get() = listOf(
+        text("puzzle.pointers.rule.1"),
+        text("puzzle.pointers.rule.2"),
+        text("puzzle.pointers.rule.3"),
     )
 
-    override val keyboardHelp = listOf("Arrow keys move between arrows; Enter or Space taps the outlined one.")
+    override val keyboardHelp get() = listOf(text("puzzle.pointers.keyboard.1"))
 
     /**
      * No hints, on purpose (the owner's call). Every arrow whose way is clear can be seen to be free, and taking it
@@ -126,28 +129,28 @@ object Pointers : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Every arrow slides off the board the way its head points, but only if nothing is in its way to the edge.",
+                caption = message("puzzle.pointers.tutorial.1.caption"),
                 highlight = BoardHighlight(soft = TUTORIAL_ARROWS.indices.toSet()),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "The top arrow points left, and nothing lies between its head and the edge. Tap it.",
+                caption = message("puzzle.pointers.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(TOP)),
                 accepts = { it is PointersState && it.removed == listOf(TOP) && it.bumps.isEmpty() },
-                retry = "Tap the glowing arrow along the top.",
-                done = "Gone. A clear way out means it can always go.",
+                retry = message("puzzle.pointers.tutorial.2.retry"),
+                done = message("puzzle.pointers.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "The arrow below points right, into the long one down the side. Tap it anyway, to see.",
+                caption = message("puzzle.pointers.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(ROW), soft = setOf(SIDE)),
                 accepts = { it is PointersState && it.removed == listOf(TOP) && it.bumps == listOf(ROW) },
-                retry = "Tap the glowing arrow in the second row.",
-                done = "Bump. That cost a life: lose all three and the board is lost.",
+                retry = message("puzzle.pointers.tutorial.3.retry"),
+                done = message("puzzle.pointers.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = s2,
-                caption = "Clear what is in the way first: tap the side arrow, whose way down is clear, then the second-row arrow again.",
+                caption = message("puzzle.pointers.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(SIDE)),
                 steps = { next ->
                     when ((next as? PointersState)?.takeIf { it.bumps == listOf(ROW) }?.removed) {
@@ -157,14 +160,14 @@ object Pointers : PuzzleType {
                     }
                 },
                 glow = { now -> BoardHighlight(strong = setOf(if (SIDE in (now as PointersState).removed) ROW else SIDE)) },
-                retry = "Tap the glowing arrow.",
-                done = "Taking an arrow away only ever opens the way for others.",
+                retry = message("puzzle.pointers.tutorial.4.retry"),
+                done = message("puzzle.pointers.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = s4,
-                caption = "Your turn: clear the last two. Which one is in the other's way?",
+                caption = message("puzzle.pointers.tutorial.5.caption"),
                 freePlay = true,
-                done = "Cleared. That's all there is to it.",
+                done = message("puzzle.pointers.tutorial.5.done"),
             ),
         )
     }
@@ -444,13 +447,13 @@ object Pointers : PuzzleType {
                 Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
                     if (s.failed) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Out of lives", style = MaterialTheme.typography.bodyMedium, color = scheme.error, maxLines = 1)
-                            FilledTonalButton(onClick = { if (interactive) onState(s.retry()) }) { Text("Try again", maxLines = 1) }
+                            Text(text("puzzle.pointers.board.lost"), style = MaterialTheme.typography.bodyMedium, color = scheme.error, maxLines = 1)
+                            FilledTonalButton(onClick = { if (interactive) onState(s.retry()) }) { Text(text("puzzle.pointers.board.retry"), maxLines = 1) }
                         }
                     } else {
                         val left = s.arrows.size - s.removed.size
                         Text(
-                            if (s.solved) "All clear" else "$left arrow${if (left == 1) "" else "s"} left",
+                            if (s.solved) text("puzzle.pointers.board.clear") else text("puzzle.pointers.board.remaining", "count" to (left)),
                             style = MaterialTheme.typography.labelLarge,
                             color = scheme.onSurfaceVariant,
                             maxLines = 1,

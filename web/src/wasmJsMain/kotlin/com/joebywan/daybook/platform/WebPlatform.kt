@@ -1,9 +1,9 @@
 package com.joebywan.daybook.platform
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.core.i18n.calendarDate
-import com.joebywan.daybook.core.i18n.tr
-import com.joebywan.daybook.core.i18n.russianPlural
-import com.joebywan.daybook.core.i18n.isRussianLanguage
+import com.joebywan.daybook.core.i18n.catalogLanguage
 
 import com.joebywan.daybook.ui.card
 import com.joebywan.daybook.ui.CardText
@@ -96,7 +96,23 @@ private fun localDateCode(): Int =
 fun currentDate(): LocalDate =
     dateOverride ?: localDateCode().let { LocalDate(it / 10000, it / 100 % 100, it % 100) }
 
-fun platformLanguage(): String = js("navigator.language || 'en'")
+private const val LANGUAGE_KEY = "language"
+private var appLanguage by mutableStateOf(WebStores.get(KeyValueStore.LAUNCH).read(LANGUAGE_KEY)?.takeIf { it.isNotEmpty() })
+
+private fun navigatorLanguage(): String = js("navigator.language || 'en'")
+
+fun platformLanguage(): String = appLanguage ?: navigatorLanguage()
+
+@Composable
+fun rememberAppLanguage(): Pair<String?, (String?) -> Unit> {
+    val select: (String?) -> Unit = remember {
+        { tag ->
+            WebStores.get(KeyValueStore.LAUNCH).write(LANGUAGE_KEY, tag.orEmpty())
+            appLanguage = tag
+        }
+    }
+    return appLanguage to select
+}
 
 /**
  * The few `DateTimeFormatter` patterns the screens use. A browser has no JVM locale
@@ -176,7 +192,7 @@ fun BackButton(onBack: () -> Unit) {
         Modifier.padding(start = 6.dp).size(48.dp).clip(CircleShape).clickable(onClick = onBack),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, tr("Back", "Назад"), tint = scheme.onSurfaceVariant)
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, text("ui.tutorial_runner.back"), tint = scheme.onSurfaceVariant)
     }
 }
 
@@ -208,20 +224,17 @@ fun BackupControls() {
     // A backup picked and read, waiting for the player to say it may replace what is here.
     var pending by remember { mutableStateOf<Backup.Pending?>(null) }
     pending?.let { p ->
-        fun solves(n: Int) = tr(if (n == 1) "1 solve" else "$n solves", "$n ${russianPlural(n, "решение", "решения", "решений")}")
+        fun solves(n: Int) = text("count.solves", "count" to (n))
         AlertDialog(
             onDismissRequest = { pending = null },
-            title = { Text(tr("Replace your progress?", "Заменить ваш прогресс?")) },
+            title = { Text(text("ui.web_platform.replace_your_progress")) },
             text = {
                 Text(
-                    tr("This browser has ${solves(p.solvesHere)}; the backup has ${solves(p.solvesInBackup)}. " +
-                        "Importing replaces everything here with the backup.",
-                        "В этом браузере: ${solves(p.solvesHere)}; в копии: ${solves(p.solvesInBackup)}. " +
-                            "Импорт полностью заменит текущий прогресс данными из копии."),
+                    text("ui.web_platform.this_browser_has_the_backup_has", "solves_p_solvesHere_" to (solves(p.solvesHere)), "solves_p_solvesInBackup_" to (solves(p.solvesInBackup))),
                 )
             },
-            confirmButton = { TextButton(onClick = { pending = null; message = Backup.restore(p) }) { Text(tr("Replace", "Заменить")) } },
-            dismissButton = { TextButton(onClick = { pending = null; message = tr("Nothing imported.", "Ничего не импортировано.") }) { Text(tr("Cancel", "Отмена")) } },
+            confirmButton = { TextButton(onClick = { pending = null; message = Backup.restore(p) }) { Text(text("ui.web_platform.replace")) } },
+            dismissButton = { TextButton(onClick = { pending = null; message = text("ui.web_platform.nothing_imported") }) { Text(text("ui.web_platform.cancel")) } },
         )
     }
     Column(
@@ -231,13 +244,13 @@ fun BackupControls() {
             .card(scheme.surface)
             .padding(14.dp),
     ) {
-        CardText(tr("Backup", "Резервная копия"), tr("Progress lives in this browser only. Keep a copy, or move it to another device.", "Прогресс хранится только в этом браузере. Сохраните копию или перенесите её на другое устройство."))
+        CardText(text("ui.web_platform.backup"), text("ui.web_platform.progress_lives_in_this_browser_only"))
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            BackupButton(tr("Export", "Экспорт"), Modifier.weight(1f)) {
+            BackupButton(text("ui.web_platform.export"), Modifier.weight(1f)) {
                 message = Backup.export()
             }
-            BackupButton(tr("Import", "Импорт"), Modifier.weight(1f)) {
+            BackupButton(text("ui.web_platform.import"), Modifier.weight(1f)) {
                 Backup.import(onError = { message = it }, onReady = { pending = it })
             }
         }
@@ -282,11 +295,8 @@ fun GetTheAppCard() {
     ) {
         if (device == 'a') {
             CardText(
-                tr("Get the Android app", "Приложение для Android"),
-                tr("The same daily puzzles, installed. It asks for no permissions at all, not even the internet, " +
-                    "so there is no tracking and nothing to sign up for. No ads, free, works offline.",
-                    "Те же ежедневные головоломки в приложении. Никаких разрешений, даже на интернет, " +
-                        "слежки и регистрации. Бесплатно, без рекламы, работает без сети."),
+                text("ui.web_platform.get_the_android_app"),
+                text("ui.web_platform.the_same_daily_puzzles_installed_it"),
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -295,13 +305,8 @@ fun GetTheAppCard() {
             }
         } else {
             CardText(
-                tr("Add Daybook to your Home Screen", "Добавить Daybook на экран «Домой»"),
-                tr("Tap Share, then Add to Home Screen. It opens full screen like an app and works offline, and " +
-                    "your progress is safer: Safari can clear a website's data after a week unused, " +
-                    "but not a Home Screen app's.",
-                    "Нажмите «Поделиться», затем «На экран „Домой“». Игра откроется на весь экран и будет работать без сети. " +
-                        "Так прогресс сохранится надёжнее: Safari может удалить данные сайта после недели без посещений, " +
-                        "но данные приложения с экрана «Домой» остаются."),
+                text("ui.web_platform.add_daybook_to_your_home_screen"),
+                text("ui.web_platform.tap_share_then_add_to_home"),
             )
         }
     }
@@ -379,10 +384,7 @@ fun readyBoard(puzzle: PuzzleType, seed: Long, difficulty: Difficulty): PuzzleSt
 const val GENERATION_ANIMATES: Boolean = false
 
 /** Settings text under the Sound switch: what else keeps the chime quiet on this platform. */
-val SOLVE_SOUND_NOTE: String get() = tr(
-    "A browser cannot see your phone's silent switch, so turn this off if you want it quiet.",
-    "Браузер не определяет беззвучный режим телефона. Отключите звук здесь, если нужна тишина.",
-)
+val SOLVE_SOUND_NOTE: String get() = text("ui.web_platform.a_browser_cannot_see_your_phone")
 
 /** How long the home grid is up before the first board is made, so an early tap is not kept waiting. */
 private const val PREPARE_AFTER_MS = 400L
@@ -404,7 +406,7 @@ suspend fun prepareBoards(day: LocalDate, difficulty: Difficulty) {
 
 // ---- Fonts ------------------------------------------------------------------------------------
 //
-// A browser lends wasm none of its fonts, so the only one available is the one Compose ships. Seven
+// A browser lends wasm none of its fonts, so the only one available is the one Compose ships. Eleven
 // are bundled (web/src/wasmJsMain/composeResources/font): Fredoka at 400/500/600/700, the same
 // family Android bundles, and as fallbacks for glyphs Fredoka lacks the arrows from Noto Sans
 // Symbols, ✓ ✕ from Noto Sans Symbols 2 and ↻ from Noto Sans Math. All are cut down to the
@@ -415,7 +417,7 @@ suspend fun prepareBoards(day: LocalDate, difficulty: Difficulty) {
 /** [base] in the bundled Fredoka; [WithSymbolFonts] supplies what Skia falls back to for a glyph it lacks. */
 @Composable
 fun platformTypography(base: Typography): Typography {
-    val family = if (isRussianLanguage(platformLanguage())) FontFamily(
+    val family = if (catalogLanguage(platformLanguage()) != "en") FontFamily(
         Font(Res.font.noto_sans_cyrillic_regular, FontWeight.Normal),
         Font(Res.font.noto_sans_cyrillic_medium, FontWeight.Medium),
         Font(Res.font.noto_sans_cyrillic_semibold, FontWeight.SemiBold),
@@ -438,16 +440,18 @@ fun platformTypography(base: Typography): Typography {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun WithSymbolFonts(content: @Composable () -> Unit) {
-    val fonts = (listOf(
+    val language = platformLanguage()
+    SideEffect { setDocumentLanguage(language) }
+    val fonts = listOf(
         preloadFont(Res.font.noto_sans_symbols_arrows),
         preloadFont(Res.font.noto_sans_symbols2),
         preloadFont(Res.font.noto_sans_math),
-    ) + if (isRussianLanguage(platformLanguage())) listOf(
+        // Load both UI alphabets before composition so changing language never removes the app's state.
         preloadFont(Res.font.noto_sans_cyrillic_regular),
         preloadFont(Res.font.noto_sans_cyrillic_medium),
         preloadFont(Res.font.noto_sans_cyrillic_semibold),
         preloadFont(Res.font.noto_sans_cyrillic_bold),
-    ) else emptyList()).map { it.value }
+    ).map { it.value }
     val resolver = LocalFontFamilyResolver.current
     var ready by remember { mutableStateOf(false) }
     // Restarts as each font arrives, preloading whichever have (again: the resolver caches them).
@@ -461,6 +465,8 @@ fun WithSymbolFonts(content: @Composable () -> Unit) {
     }
     if (ready) content()
 }
+
+private fun setDocumentLanguage(language: String): Unit = js("document.documentElement.lang = language")
 
 /** How long [WithSymbolFonts] waits for a font before showing the app without it. */
 private const val SYMBOL_FONTS_WAIT_MS = 2500L
@@ -565,7 +571,7 @@ private fun copyToClipboard(text: String): Unit =
 @Composable
 fun rememberSharer(): (String) -> String? = remember {
     { text ->
-        if (canShare()) { shareNatively(text); null } else { copyToClipboard(text); tr("Copied", "Скопировано") }
+        if (canShare()) { shareNatively(text); null } else { copyToClipboard(text); text("ui.web_platform.copied") }
     }
 }
 
@@ -586,7 +592,7 @@ fun rememberReducedMotion(): Boolean {
 }
 
 /** Settings text under the Vibration switch: what else keeps it still on this platform. */
-val VIBRATION_NOTE: String get() = tr("Only where the browser can vibrate: Chrome on Android can, iPhone and iPad cannot.", "Вибрация доступна в Chrome на Android, но недоступна на iPhone и iPad.")
+val VIBRATION_NOTE: String get() = text("ui.web_platform.only_where_the_browser_can_vibrate")
 
 // `navigator.vibrate` is missing on iOS and may refuse before the first tap; either way nothing happens.
 private fun vibrate(ms: Int): Unit = js("navigator.vibrate && navigator.vibrate(ms)")

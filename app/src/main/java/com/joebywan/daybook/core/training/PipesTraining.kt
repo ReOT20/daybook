@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Pipes
 import com.joebywan.daybook.puzzles.PipesState
 import com.joebywan.daybook.puzzles.PipesTeacher
@@ -51,14 +52,10 @@ private object PipesDrill : Drill {
 val PipesTraining: Course = Course(
     puzzle = Pipes,
     explanations = linkedMapOf(
-        PipesTeacher.BORDER to "No pipe can point off the board. Against the edge a tile often fits one way only: a " +
-            "straight runs along it, a T turns its flat side to it, a bend in a corner has one way. Tap the tile to turn it.",
-        PipesTeacher.SET_NEIGHBOUR to "An opening must meet an opening. A set neighbour settles the side the two tiles " +
-            "share: open if it points in, shut if it doesn't. When the sides that settles leave one way round, turn the tile to it.",
-        PipesTeacher.WHICHEVER_WAY to "A neighbour that isn't set yet can still settle a side: when every way it could " +
-            "turn points into this tile, or none does, the shared side is settled whichever way it ends up.",
-        PipesTeacher.NO_LOOP to "The pipes make no loops. When two tiles are already joined the long way round, they " +
-            "can't also join directly, so the side between them is shut. That can leave a tile only one way round.",
+        PipesTeacher.BORDER to message("training.pipes_border"),
+        PipesTeacher.SET_NEIGHBOUR to message("training.pipes_set_neighbour"),
+        PipesTeacher.WHICHEVER_WAY to message("training.pipes_whichever_way"),
+        PipesTeacher.NO_LOOP to message("training.pipes_no_loop"),
     ),
     // The generator gates no tier by technique, only by size: Standard's small boards reach all four (no loop on 8 of 60).
     tierFor = { Difficulty.STANDARD },

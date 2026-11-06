@@ -1,5 +1,6 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.Rng
 import com.joebywan.daybook.core.Verdict
@@ -71,7 +72,7 @@ internal object MiniLogic {
     fun spelled(grid: String, slot: Slot): String = CharArray(slot.length) { grid[slot.squares[it]] }.concatToString()
 
     /** The clue [word] has in the lists, or null for a word they do not hold. */
-    fun clueOf(word: String): String? = if (WheelWords.isGridWord(word)) WheelWords.clue(word) else null
+    fun clueOf(word: String, contentLanguage: String = "en"): String? = if (WheelWords.isGridWord(word, contentLanguage)) WheelWords.clue(word, contentLanguage) else null
 
     // Probed by word, never iterated, so its order cannot reach a seed.
     private val secondClues: Map<String, String> by lazy {
@@ -79,7 +80,7 @@ internal object MiniLogic {
     }
 
     /** [word]'s second clue (`tools/words/second-clues.txt`), a different angle from its first, or "" for none. */
-    fun secondClueOf(word: String): String = secondClues[word] ?: ""
+    fun secondClueOf(word: String, contentLanguage: String = "en"): String = if (contentLanguage == "en") secondClues[word] ?: "" else ""
 
     // Probed by word, as secondClues.
     private val hardClues: Map<String, String> by lazy {
@@ -87,7 +88,7 @@ internal object MiniLogic {
     }
 
     /** [word]'s less direct main clue (`tools/words/hard-clues.txt`), or "" for a word without one. */
-    fun hardClueOf(word: String): String = hardClues[word] ?: ""
+    fun hardClueOf(word: String, contentLanguage: String = "en"): String = if (contentLanguage == "en") hardClues[word] ?: "" else ""
 
     /** Whether a tier shows a word's hard clue in [slot]: never on Standard, the across words on Hard, every word on Expert. */
     fun takesHardClue(difficulty: Difficulty, slot: Slot): Boolean = when (difficulty) {
@@ -97,11 +98,11 @@ internal object MiniLogic {
     }
 
     /** The rules and nothing else: every slot spells a word its clue is a clue of. [clues] is one per slot, in slot order. */
-    fun isSolved(size: Int, letters: String, clues: List<String>): Boolean {
+    fun isSolved(size: Int, letters: String, clues: List<String>, contentLanguage: String = "en"): Boolean {
         val slots = slots(size, letters)
         return slots.size == clues.size && slots.indices.all {
             val word = spelled(letters, slots[it])
-            clueOf(word) == clues[it] || (WheelWords.isGridWord(word) && hardClueOf(word) == clues[it])
+            clueOf(word, contentLanguage) == clues[it] || (WheelWords.isGridWord(word, contentLanguage) && hardClueOf(word, contentLanguage) == clues[it])
         }
     }
 
@@ -109,16 +110,16 @@ internal object MiniLogic {
      * The slots that break a rule so far: filled in and spelling no word of the list. A fact about the letters alone,
      * never about the stored answer (a real word under another clue is not flagged: that would be reading the answer).
      */
-    fun deadSlots(size: Int, letters: String): Set<Int> {
+    fun deadSlots(size: Int, letters: String, contentLanguage: String = "en"): Set<Int> {
         val slots = slots(size, letters)
         return slots.indices.filter { r ->
             val w = spelled(letters, slots[r])
-            OPEN !in w && !WheelWords.isGridWord(w)
+            OPEN !in w && !WheelWords.isGridWord(w, contentLanguage)
         }.toSet()
     }
 
     /** The slots shown red: [deadSlots], but only once no square is open, so the red never checks a word mid-grid. */
-    fun shownDead(size: Int, letters: String): Set<Int> = if (OPEN in letters) emptySet() else deadSlots(size, letters)
+    fun shownDead(size: Int, letters: String, contentLanguage: String = "en"): Set<Int> = if (OPEN in letters) emptySet() else deadSlots(size, letters, contentLanguage)
 
     // ---- proof -------------------------------------------------------------------------------------
 
@@ -128,7 +129,7 @@ internal object MiniLogic {
      * slot the fewest words fit is branched on. No node budget, so it always ends with the true count. Clues play no part:
      * this proves that the letters given and the crossings alone leave one grid.
      */
-    fun solve(size: Int, letters: String): Verdict<String> {
+    fun solve(size: Int, letters: String, contentLanguage: String = "en"): Verdict<String> {
         val slots = slots(size, letters)
         val grid = letters.toCharArray()
         var found = 0
@@ -141,10 +142,10 @@ internal object MiniLogic {
             for (slot in slots) {
                 val now = CharArray(slot.length) { grid[slot.squares[it]] }.concatToString()
                 if (OPEN !in now) {
-                    if (!WheelWords.isGridWord(now)) return
+                    if (!WheelWords.isGridWord(now, contentLanguage)) return
                     continue
                 }
-                val ws = WheelWords.grid(slot.length).filter { fits(slot, it) }
+                val ws = WheelWords.grid(slot.length, contentLanguage).filter { fits(slot, it) }
                 if (ws.isEmpty()) return
                 if (bestWords == null || ws.size < bestWords.size) { best = slot; bestWords = ws }
             }
@@ -185,7 +186,7 @@ internal object MiniLogic {
         Difficulty.EXPERT -> Spec(7, 40, 100)
     }
 
-    fun entries(difficulty: Difficulty): List<String> = when (difficulty) {
+    fun entries(difficulty: Difficulty, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") RussianMiniGrids.entries(difficulty) else when (difficulty) {
         Difficulty.STANDARD -> MiniGrids.STANDARD
         Difficulty.HARD -> MiniGrids.HARD
         Difficulty.EXPERT -> MiniGrids.EXPERT
@@ -203,42 +204,43 @@ internal object MiniLogic {
      * walk finishes it needing exactly the tier's deepest step ([MiniTeacher.walk]), and the search proves that the letters
      * the walk read from the clues and the crossings leave one grid; else null.
      */
-    fun board(entry: String, difficulty: Difficulty): MiniState? {
+    fun board(entry: String, difficulty: Difficulty, contentLanguage: String = "en"): MiniState? {
         val size = sizeOf(entry)
         val slots = slots(size, entry)
         val words = slots.map { spelled(entry, it) }
         if (words.distinct().size != words.size) return null
-        val clues = words.map { clueOf(it) ?: return null }
-        val walk = MiniTeacher.walk(size, entry) ?: return null
+        val clues = words.map { clueOf(it, contentLanguage) ?: return null }
+        val walk = MiniTeacher.walk(size, entry, contentLanguage = contentLanguage) ?: return null
         val clueLetters = walk.count { it.technique == MiniTeacher.CLUE }
         if (size != specFor(difficulty).size || !specFor(difficulty).accepts(clueLetters, entry.count { it != BLACK })) return null
         val read = CharArray(size * size) { if (entry[it] == BLACK) BLACK else OPEN }
         for (hit in walk) if (hit.technique == MiniTeacher.CLUE) read[hit.square] = hit.letter
-        val proof = solve(size, read.concatToString()) as? Verdict.ExactlyOne ?: return null
+        val proof = solve(size, read.concatToString(), contentLanguage) as? Verdict.ExactlyOne ?: return null
         if (proof.value != entry) return null
         // A word showing its hard clue keeps the plain one for the fallback's "Another way in", so the hints get easier as they go.
-        val hard = words.indices.map { if (takesHardClue(difficulty, slots[it])) hardClueOf(words[it]) else "" }
+        val hard = words.indices.map { if (takesHardClue(difficulty, slots[it])) hardClueOf(words[it], contentLanguage) else "" }
         return MiniState(
             size = size,
+            contentLanguage = contentLanguage,
             answer = entry,
             clues = words.indices.map { hard[it].ifEmpty { clues[it] } },
-            secondClues = words.indices.map { if (hard[it].isEmpty()) secondClueOf(words[it]) else clues[it] },
+            secondClues = words.indices.map { if (hard[it].isEmpty()) secondClueOf(words[it], contentLanguage) else clues[it] },
             letters = read.map { if (it == BLACK) BLACK else OPEN }.joinToString(""),
         )
     }
 
-    fun generate(seed: Long, difficulty: Difficulty): MiniState = generateVerified(seed, difficulty) ?: lastResort(difficulty)
+    fun generate(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): MiniState = generateVerified(seed, difficulty, contentLanguage) ?: lastResort(difficulty, contentLanguage)
 
     /** The board when it was proved, null otherwise (what `FallbackTest` asserts on). Pure in (seed, difficulty): only the list's own order reaches the `Rng`. */
-    fun generateVerified(seed: Long, difficulty: Difficulty): MiniState? {
-        val list = entries(difficulty)
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): MiniState? {
+        val list = entries(difficulty, contentLanguage)
         for (attempt in 0 until ATTEMPTS) {
             val rng = Rng(seed + attempt)
-            board(list[rng.nextInt(list.size)], difficulty)?.let { return it }
+            board(list[rng.nextInt(list.size)], difficulty, contentLanguage)?.let { return it }
         }
         return null
     }
 
     /** A fixed board per tier for a seed nothing proved (none ever has: `FallbackTest`); `MiniRulesTest` proves each. */
-    fun lastResort(difficulty: Difficulty): MiniState = board(entries(difficulty)[0], difficulty)!!
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): MiniState = board(entries(difficulty, contentLanguage)[0], difficulty, contentLanguage)!!
 }

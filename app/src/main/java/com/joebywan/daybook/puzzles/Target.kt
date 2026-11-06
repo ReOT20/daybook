@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -63,18 +66,18 @@ object Target : PuzzleType {
     const val TARGET = 20
 
     override val id = "target"
-    override val displayName = "Target"
-    override val tagline = "Six numbers make the target"
+    override val displayName get() = text("puzzle.target.name")
+    override val tagline get() = text("puzzle.target.tagline")
     override val accent = 0xFFB47699
-    override val rules = listOf(
-        "Reach the target. Pick two numbers and an operator, and the answer replaces them as a new tile.",
-        "Any tile equal to the target wins. Each number is used once, and you need not use them all.",
-        "Answers must be whole numbers from 1 to 9,999: no negatives, fractions or zero. Subtract and divide put the bigger tile first.",
-        "Tap a number, tap + − × ÷, then tap another number. Undo takes a step back.",
+    override val rules get() = listOf(
+        text("puzzle.target.rule.1"),
+        text("puzzle.target.rule.2"),
+        text("puzzle.target.rule.3"),
+        text("puzzle.target.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Type a tile's number, then + - * /, then another tile's number and Enter. Backspace steps back.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.target.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -98,23 +101,22 @@ object Target : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Reach 106 from these six numbers. Combine two with + − × ÷ and the answer is a new tile. " +
-                    "It must be a whole number above zero: no 7 ÷ 2, no 5 − 5.",
+                caption = message("puzzle.target.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(TARGET), soft = (0..3).map { OP0 + it }.toSet()),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "25 × 4 makes 100. Tap 25, tap ×, then tap 4.",
+                caption = message("puzzle.target.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 1, OP0 + TargetOp.Mul.ordinal)),
                 accepts = makes(s1),
-                retry = "Tap the glowing 25, then ×, then 4.",
-                done = "100 is a new tile, and 25 and 4 are used up.",
+                retry = message("puzzle.target.tutorial.2.retry"),
+                done = message("puzzle.target.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "Your turn: make 106 from here. You need not use every number. Stuck? Hint shows you why.",
+                caption = message("puzzle.target.tutorial.3.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.target.tutorial.3.done"),
             ),
         )
     }
@@ -168,7 +170,7 @@ object Target : PuzzleType {
             first != null || e.typed.isNotEmpty() ->
                 listOfNotNull(first?.toString(), e.op?.symbol, e.typed.ifEmpty { null }).joinToString(" ").let { if (e.typed.isEmpty()) "$it …" else it }
             s.log.isNotEmpty() -> s.log.last().text()
-            else -> "Tap a number, then + − × ÷"
+            else -> text("puzzle.target.board.prompt")
         }
     }
 
@@ -225,7 +227,7 @@ object Target : PuzzleType {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Text("TARGET", color = scheme.onSurfaceVariant, fontSize = (u * 0.17f).boardSp(), lineHeight = (u * 0.17f).boardSp() * 1.2f, fontWeight = FontWeight.SemiBold)
+                    Text(text("puzzle.target.board.target"), color = scheme.onSurfaceVariant, fontSize = (u * 0.17f).boardSp(), lineHeight = (u * 0.17f).boardSp() * 1.2f, fontWeight = FontWeight.SemiBold)
                     Text(
                         "${s.target}",
                         color = if (s.solved) scheme.primary else BoardHues.ink(hueB, dark),

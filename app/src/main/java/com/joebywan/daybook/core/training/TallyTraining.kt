@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Tally
 import com.joebywan.daybook.puzzles.TallyLogic
 import com.joebywan.daybook.puzzles.TallyState
@@ -12,18 +13,12 @@ import com.joebywan.daybook.puzzles.TallyTeacher
 val TallyTraining: Course = Course(
     puzzle = Tally,
     explanations = linkedMapOf(
-        TallyTeacher.DONE to "When the circled numbers in a row or column already make its target, nothing else there " +
-            "can stay: remove the rest.",
-        TallyTeacher.TOO_BIG to "Take what a line's circled numbers make from its target: that is all it still needs. " +
-            "A number bigger than that can't stay. Remove it.",
-        TallyTeacher.TOO_MUCH to "Add up what is left in a line and see how far over its target it is. A number bigger " +
-            "than that surplus can't go, or the line would fall short: circle it with Keep.",
-        TallyTeacher.ALL_LEFT to "When what is left in a line adds up to exactly its target, every number there stays: " +
-            "circle them all.",
-        TallyTeacher.WAYS to "List the ways a line can still make its target. A number every way uses stays; one no " +
-            "way uses goes.",
-        TallyTeacher.WHAT_IF to "Suppose a number stays (or goes) and follow the lines it settles. If some line is left " +
-            "with no way to make its target, the number does the opposite.",
+        TallyTeacher.DONE to message("training.tally_done"),
+        TallyTeacher.TOO_BIG to message("training.tally_too_big"),
+        TallyTeacher.TOO_MUCH to message("training.tally_too_much"),
+        TallyTeacher.ALL_LEFT to message("training.tally_all_left"),
+        TallyTeacher.WAYS to message("training.tally_ways"),
+        TallyTeacher.WHAT_IF to message("training.tally_what_if"),
     ),
     // TallyLogic.accepts: Standard needs only the four shortcuts, every Hard board the ways, every Expert a what-if.
     tierFor = tierByIndex({ TallyTraining.techniques }, hard = 4, expert = 5),

@@ -1,15 +1,19 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.answerFallback
 import com.joebywan.daybook.core.lonePlace
 import com.joebywan.daybook.core.bit
 import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.joinedMessages
 import com.joebywan.daybook.core.digitsOf
 import com.joebywan.daybook.core.fullMask
 import com.joebywan.daybook.core.has
-import com.joebywan.daybook.core.lineName
-import com.joebywan.daybook.core.listed
+import com.joebywan.daybook.core.lineNameMessage
+import com.joebywan.daybook.core.listedMessage
 
 /**
  * The Inequality square, reasoned a step at a time.
@@ -290,14 +294,14 @@ internal object InequalityTeacher {
         val wrong = s.cells.indices.firstOrNull { s.cells[it] != 0 && !s.givens[it] && s.cells[it] != s.solution[it] }
             ?: return null
         val d = s.cells[wrong]
-        val clear = "Select it and tap $d again to clear it."
-        fun step(explanation: String, cited: Set<Int>) =
-            PlacementStep(MISTAKE, wrong, 0, setOf(wrong), cited, "Check this $d.", explanation)
+        val clear = message("teacher.inequality.mistake.1", "d" to (d))
+        fun step(explanation: CharSequence, cited: Set<Int>) =
+            PlacementStep(MISTAKE, wrong, 0, setOf(wrong), cited, message("teacher.inequality.step.1", "d" to (d)), explanation)
 
         for (line in lines(n)) {
             if (wrong !in line) continue
             val twin = line.firstOrNull { it != wrong && s.cells[it] == d } ?: continue
-            return step("This $d repeats the $d in ${lineName(n, lines(n).indexOf(line))}. $clear", setOf(twin))
+            return step(message("teacher.inequality.mistake.2", "d" to (d), "value2" to (lineNameMessage(n, lines(n).indexOf(line))), "clear" to (clear)), setOf(twin))
         }
         for ((k, sign) in s.signs.withIndex()) {
             if (wrong != sign.lo && wrong != sign.hi) continue
@@ -306,20 +310,20 @@ internal object InequalityTeacher {
             if (o == 0) continue
             val ok = if (wrong == sign.lo) d < o else d > o
             if (ok) continue
-            val way = if (wrong == sign.lo) "smaller" else "bigger"
-            return step("This $d breaks a sign: it has to be $way than the $o beside it. $clear", setOf(n * n + k, other))
+            val way = if (wrong == sign.lo) message("teacher.inequality.mistake.3") else message("teacher.inequality.mistake.4")
+            return step(message("teacher.inequality.mistake.5", "d" to (d), "way" to (way), "o" to (o), "clear" to (clear)), setOf(n * n + k, other))
         }
-        return step("No valid way to finish the board keeps this $d. $clear", emptySet())
+        return step(message("teacher.inequality.mistake.6", "d" to (d), "clear" to (clear)), emptySet())
     }
 
     // ---- explaining ---------------------------------------------------------------------------------
 
     /** Where [other] sits relative to [x]. */
     private fun where(n: Int, x: Int, other: Int) = when (other - x) {
-        1 -> "on its right"
-        -1 -> "on its left"
-        n -> "below it"
-        else -> "above it"
+        1 -> message("teacher.inequality.where.1")
+        -1 -> message("teacher.inequality.where.2")
+        n -> message("teacher.inequality.where.3")
+        else -> message("teacher.inequality.where.4")
     }
 
     /** Placed cells in [x]'s row and column, one per digit in [digits], as the cited squares. */
@@ -334,19 +338,19 @@ internal object InequalityTeacher {
         val all = lines(n)
         return when (hit.technique) {
             LAST -> {
-                val name = lineName(n, hit.line)
+                val name = lineNameMessage(n, hit.line)
                 PlacementStep(
                     LAST, x, d, all[hit.line].toSet(), all[hit.line].filter { cells[it] != 0 }.toSet(),
-                    "Look at $name.",
-                    "${name.cap()} has every digit but $d, so its last empty square is a $d.",
+                    message("teacher.inequality.deduce.1", "name" to (name)),
+                    message("teacher.inequality.deduce.2", "name_cap_" to (name.cap()), "d" to (d)),
                 )
             }
             ONLY_DIGIT -> {
                 val seen = (1..n).filter { !has(sight.base[x], it) }
                 PlacementStep(
                     ONLY_DIGIT, x, d, setOf(x), holders(n, cells, x, seen),
-                    "Which digits can this square still take?",
-                    "Its row and column already hold ${listed(seen)}, so only $d is left here.",
+                    message("teacher.inequality.deduce.3"),
+                    message("teacher.inequality.deduce.4", "listed_seen_" to (listedMessage(seen)), "d" to (d)),
                 )
             }
             ONLY_PLACE -> {
@@ -355,11 +359,11 @@ internal object InequalityTeacher {
                 val blockers = others.mapNotNull { o ->
                     (0 until n * n).firstOrNull { cells[it] == d && (it / n == o / n || it % n == o % n) }
                 }.toSet()
-                val across = if (hit.line < n) "column" else "row"
+                val across = if (hit.line < n) message("teacher.inequality.deduce.5") else message("teacher.inequality.deduce.6")
                 PlacementStep(
                     ONLY_PLACE, x, d, line.toSet(), blockers,
-                    "Where can the ${d} go in ${lineName(n, hit.line)}?",
-                    "${lineName(n, hit.line).cap()} still needs a $d, and every other empty square in it has a $d in its $across. This one is the only place.",
+                    message("teacher.inequality.deduce.7", "d" to (d), "lineName_n_hit_line_" to (lineNameMessage(n, hit.line))),
+                    message("teacher.inequality.deduce.8", "lineName_n_hit_line_cap_" to (lineNameMessage(n, hit.line).cap()), "d" to (d), "across" to (across)),
                 )
             }
             SIGN_BOUND -> signBound(n, cells, signs, sight, x, d)
@@ -369,8 +373,8 @@ internal object InequalityTeacher {
                 val signsHere = signs.indices.filter { signs[it].lo in line || signs[it].hi in line }.map { n * n + it }
                 PlacementStep(
                     SIGN_PLACE, x, d, line.toSet(), signsHere.toSet(),
-                    "Count the signs along ${lineName(n, hit.line)}.",
-                    "${lineName(n, hit.line).cap()} still needs a $d. With the signs counted, every other square in it is ruled out, so it goes here.",
+                    message("teacher.inequality.deduce.9", "lineName_n_hit_line_" to (lineNameMessage(n, hit.line))),
+                    message("teacher.inequality.deduce.10", "lineName_n_hit_line_cap_" to (lineNameMessage(n, hit.line).cap()), "d" to (d)),
                 )
             }
         }
@@ -378,25 +382,25 @@ internal object InequalityTeacher {
 
     private fun pairStep(n: Int, cells: List<Int>, signs: List<Sign>, hit: Hit): PlacementStep {
         val (a, b) = digitsOf(hit.pairDigits, n)
-        val name = lineName(n, hit.pairLine)
+        val name = lineNameMessage(n, hit.pairLine)
         val cut = if (hit.technique == NAKED_PAIR) {
-            "Two squares of $name can only be $a or $b, so they take both, and no other square there can."
+            message("teacher.inequality.pair_step.1", "name" to (name), "a" to (a), "b" to (b))
         } else {
-            "${name.cap()} needs a $a and a $b, which fit only the same two squares, so those hold nothing else."
+            message("teacher.inequality.pair_step.2", "name_cap_" to (name.cap()), "a" to (a), "b" to (b))
         }
-        val again = if (hit.needsSigns) "Counting the signs again, that" else "That"
+        val again = if (hit.needsSigns) message("teacher.inequality.pair_step.3") else message("teacher.inequality.pair_step.4")
         val r = hit.cell / n + 1
         val c = hit.cell % n + 1
         val close = when {
-            hit.line < 0 -> "$again leaves the glowing square only ${hit.digit}."
-            hit.line < n -> "$again leaves the glowing square as the only place for the ${hit.digit} in row $r."
-            else -> "$again leaves the glowing square as the only place for the ${hit.digit} in column $c."
+            hit.line < 0 -> message("teacher.inequality.pair_step.5", "again" to (again), "hit_digit" to (hit.digit))
+            hit.line < n -> message("teacher.inequality.pair_step.6", "again" to (again), "hit_digit" to (hit.digit), "r" to (r))
+            else -> message("teacher.inequality.pair_step.7", "again" to (again), "hit_digit" to (hit.digit), "c" to (c))
         }
         val signsNear = if (hit.needsSigns) signs.indices.filter { signs[it].lo == hit.cell || signs[it].hi == hit.cell }.map { n * n + it } else emptyList()
         return PlacementStep(
             hit.technique, hit.cell, hit.digit, setOf(hit.cell) + hit.pair, hit.pair.toSet() + signsNear,
-            if (hit.technique == NAKED_PAIR) "Two squares of $name share the same two digits." else "Where can the $a and the $b go in $name?",
-            "$cut $close",
+            if (hit.technique == NAKED_PAIR) message("teacher.inequality.pair_step.8", "name" to (name)) else message("teacher.inequality.pair_step.9", "a" to (a), "b" to (b), "name" to (name)),
+            message("teacher.inequality.pair_step.extra.1", "cut" to (cut), "close" to (close)),
         )
     }
 
@@ -404,7 +408,7 @@ internal object InequalityTeacher {
         val base = sight.base[x]
         val removed = base and bit(d).inv()
         // The signs at x, each with the digits it alone strikes from base given the neighbour's sight.
-        class Clause(val k: Int, val other: Int, val strikes: Int, val text: String)
+        class Clause(val k: Int, val other: Int, val strikes: Int, val text: Message)
         val clauses = signs.indices.mapNotNull { k ->
             val s = signs[k]
             if (s.lo != x && s.hi != x) return@mapNotNull null
@@ -413,15 +417,15 @@ internal object InequalityTeacher {
             val placed = cells[other] != 0
             val m: Int
             val allowed: Int
-            val text: String
+            val text: Message
             if (s.lo == x) {
                 m = 31 - oc.countLeadingZeroBits()
                 allowed = bit(m) - 1
-                text = if (placed) "smaller than the $m ${where(n, x, other)}" else "smaller than the square ${where(n, x, other)} (at most $m)"
+                text = if (placed) message("teacher.inequality.sign_bound.1", "m" to (m), "where_n_x_other_" to (where(n, x, other))) else message("teacher.inequality.sign_bound.2", "where_n_x_other_" to (where(n, x, other)), "m" to (m))
             } else {
                 m = oc.countTrailingZeroBits()
                 allowed = (bit(m + 1) - 1).inv()
-                text = if (placed) "bigger than the $m ${where(n, x, other)}" else "bigger than the square ${where(n, x, other)} (at least $m)"
+                text = if (placed) message("teacher.inequality.sign_bound.3", "m" to (m), "where_n_x_other_" to (where(n, x, other))) else message("teacher.inequality.sign_bound.4", "where_n_x_other_" to (where(n, x, other)), "m" to (m))
             }
             Clause(k, other, base and allowed.inv(), text)
         }
@@ -435,12 +439,12 @@ internal object InequalityTeacher {
             if ((covered and removed) == removed) break
         }
         val cited = chosen.flatMap { listOf(n * n + it.k, it.other) }.toSet() + holders(n, cells, x, (1..n).filter { !has(base, it) })
-        val clause = chosen.joinToString(" and ") { it.text }
-        var text = "Its row and column leave ${listed(digitsOf(base, n), "or")}, but it has to be $clause. That leaves only $d."
-        if (text.length > MAX_EXPLANATION) text = "The signs leave only $d here: it has to be $clause."
+        val clause = chosen.map { it.text }.joinedMessages(message("teacher.inequality.sign_bound.5"))
+        var text = message("teacher.inequality.sign_bound.6", "value1" to (listedMessage(digitsOf(base, n), message("teacher.inequality.sign_bound.extra.1"))), "clause" to (clause), "d" to (d))
+        if (text.length > MAX_EXPLANATION) text = message("teacher.inequality.sign_bound.7", "d" to (d), "clause" to (clause))
         return PlacementStep(
             SIGN_BOUND, x, d, setOf(x) + chosen.map { n * n + it.k }, cited,
-            "What do the signs next to this square allow?", text,
+            message("teacher.inequality.sign_bound.8"), text,
         )
     }
 }

@@ -1,7 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.numberWord
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
 import com.joebywan.daybook.core.orthogonal
 
 /**
@@ -71,9 +75,15 @@ internal object LitsTeacher {
         val clears: List<Int> = emptyList(),
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = (shades + clears).toSet()
     }
 
@@ -327,40 +337,39 @@ internal object LitsTeacher {
         val region = layout.cellsOf[k]
         val sight = Sight(layout, shaded, BooleanArray(layout.n))
         val have = sight.shadedIn(k)
-        fun step(explanation: String, cited: Collection<Int>) = Step(
+        fun step(explanation: Message, cited: Collection<Int>) = Step(
             technique = MISTAKE,
             clears = listOf(wrong),
             focus = setOf(wrong),
             cited = cited.toSet(),
-            nudge = "Check this square.",
-            explanation = "$explanation Tap it to clear it.",
+            nudge = message("teacher.lits.step.1"),
+            explanation = message("teacher.lits.step.2", "explanation" to (explanation)),
         )
-        if (have.size > 4) return step("This region has more than four squares shaded.", region)
+        if (have.size > 4) return step(message("teacher.lits.explain_mistake.1"), region)
         layout.windowsAt(wrong).firstOrNull { corner -> layout.window(corner).all { shaded[it] } }?.let { corner ->
-            return step("This square completes a 2x2 block of shading, which is never allowed.", layout.window(corner))
+            return step(message("teacher.lits.explain_mistake.2"), layout.window(corner))
         }
         if (sight.geo(k).isEmpty()) {
-            return step("No L, I, T or S in this region covers all of its shaded squares.", region)
+            return step(message("teacher.lits.explain_mistake.3"), region)
         }
         sight.letters[wrong]?.let { piece ->
             val twin = region.flatMap { layout.neighbours(it) }
                 .firstOrNull { layout.of[it] != k && shaded[it] && sight.letters[it] == piece }
             if (twin != null) {
                 val theirs = layout.cellsOf[layout.of[twin]].filter { shaded[it] }
-                return step("This makes ${article(piece)} touching the ${piece.name} next door.", have + theirs)
+                return step(message("teacher.lits.explain_mistake.4", "article_piece_" to (article(piece)), "piece_name" to (piece.name)), have + theirs)
             }
         }
         if (sight.cand(k).isEmpty()) {
             return step(
-                "With this square shaded, every shape left in this region would finish a 2x2 block " +
-                    "or touch a tetromino of its own letter.",
+                message("teacher.lits.explain_mistake.5"),
                 region,
             )
         }
         return when (known) {
-            Blame.RESCUES -> step("With the rest of your shading, this square can't be part of any finished board.", emptyList())
-            Blame.STUCK -> step("Your shading can't all be kept, and this square isn't in the answer.", emptyList())
-            Blame.UNPROVED -> step("This square isn't in the answer this board was made with.", emptyList())
+            Blame.RESCUES -> step(message("teacher.lits.explain_mistake.6"), emptyList())
+            Blame.STUCK -> step(message("teacher.lits.explain_mistake.7"), emptyList())
+            Blame.UNPROVED -> step(message("teacher.lits.explain_mistake.8"), emptyList())
         }
     }
 
@@ -395,21 +404,18 @@ internal object LitsTeacher {
         return when (verdict) {
             Search.NoAnswer -> Step(
                 technique = FALLBACK, shades = listOf(pick), focus = home, cited = emptySet(),
-                nudge = "This one takes a longer chain. Look at the glowing region.",
-                explanation = "This one needs a longer chain than a hint can walk through, so here's " +
-                    "a square every answer shades.",
+                nudge = message("teacher.lits.fallback.1"),
+                explanation = message("teacher.lits.fallback.2"),
             )
             is Search.Found -> Step(
                 technique = FALLBACK, shades = listOf(pick), focus = home, cited = emptySet(),
-                nudge = "From here there's a choice to make. Look at the glowing region.",
-                explanation = "More than one finish is still possible from here, so there's nothing " +
-                    "to work out: this square is shaded in one of them.",
+                nudge = message("teacher.lits.fallback.3"),
+                explanation = message("teacher.lits.fallback.4"),
             )
             Search.Unknown -> Step(
                 technique = FALLBACK, shades = listOf(pick), focus = home, cited = emptySet(),
-                nudge = "This one takes a longer chain. Look at the glowing region.",
-                explanation = "This one needs a longer chain than a hint can walk through, so here's " +
-                    "a square from the answer.",
+                nudge = message("teacher.lits.fallback.5"),
+                explanation = message("teacher.lits.fallback.6"),
             )
         }
     }
@@ -484,9 +490,8 @@ internal object LitsTeacher {
                 shades = todo,
                 focus = cells.toSet(),
                 cited = cells.toSet(),
-                nudge = "Look at the glowing region.",
-                explanation = "This region has exactly four squares, so its tetromino is the whole " +
-                    "region. Shade ${if (todo.size == 4) "all four" else "the rest"}.",
+                nudge = message("teacher.lits.whole_region.1"),
+                explanation = message("teacher.lits.whole_region.2", "value1" to (if (todo.size == 4) message("teacher.lits.whole_region.extra.1") else message("teacher.lits.whole_region.extra.2"))),
             ).let { if (out == null) return it else out += it }
         }
         return null
@@ -499,18 +504,17 @@ internal object LitsTeacher {
             val todo = common(shapes).filter { !s.shaded[it] }
             if (todo.isEmpty()) continue
             val cells = s.layout.cellsOf[k].toSet()
-            val around = if (s.shadedIn(k).isEmpty()) "" else " around its shaded squares"
+            val around = if (s.shadedIn(k).isEmpty()) "" else message("teacher.lits.overlap.1")
             Step(
                 technique = OVERLAP,
                 shades = todo,
                 focus = cells,
                 cited = cells,
-                nudge = "Look at the glowing region.",
+                nudge = message("teacher.lits.overlap.2"),
                 explanation = if (shapes.size == 1) {
-                    "Only one L, I, T or S fits in this region$around, so shade it."
+                    message("teacher.lits.overlap.3", "around" to (around))
                 } else {
-                    "Every L, I, T or S that fits in this region$around covers ${these(todo)}, so " +
-                        "${they(todo)} shaded whichever it is."
+                    message("teacher.lits.overlap.4", "around" to (around), "these_todo_" to (these(todo)), "they_todo_" to (they(todo)))
                 },
             ).let { if (out == null) return it else out += it }
         }
@@ -538,20 +542,19 @@ internal object LitsTeacher {
             val blockDropped = dropped.any { s.fillsBlock(it) }
             val clashing = dropped.filter { s.clashes(it) }.map { it.piece }.distinct().sortedBy { it.ordinal }
             val why = when {
-                clashing.isEmpty() -> "would finish a 2x2 with the shading beside them"
+                clashing.isEmpty() -> message("teacher.lits.filtered.1")
                 !blockDropped && clashing.size == 1 ->
-                    "would make ${article(clashing[0])} touching the ${clashing[0].name} next door"
-                !blockDropped -> "would touch a tetromino of their own letter"
-                else -> "would finish a 2x2 or touch their own letter next door"
+                    message("teacher.lits.filtered.2", "article_clashing_0_" to (article(clashing[0])), "clashing_0_name" to (clashing[0].name))
+                !blockDropped -> message("teacher.lits.filtered.3")
+                else -> message("teacher.lits.filtered.4")
             }
             Step(
                 technique = technique,
                 shades = todo,
                 focus = cells,
                 cited = cells + witnesses,
-                nudge = "Look at the glowing region.",
-                explanation = "Shapes here that $why are out. Every shape left covers ${these(todo)}, " +
-                    "so shade ${them(todo)}.",
+                nudge = message("teacher.lits.filtered.5"),
+                explanation = message("teacher.lits.filtered.6", "why" to (why), "these_todo_" to (these(todo)), "them_todo_" to (them(todo))),
             ).let { if (out == null) return it else out += it }
         }
         return null
@@ -584,21 +587,20 @@ internal object LitsTeacher {
             var why = 0
             for (t in dropped) for (b in s.killers(k, t)) for (u in s.cand(b)) why = why or s.conflict(t, u)
             val reason = when (why) {
-                BLOCK -> "no shape that avoids a 2x2 with them"
-                LETTER -> "no shape that avoids touching their letter"
-                else -> "no legal shape beside them"
+                BLOCK -> message("teacher.lits.neighbour.1")
+                LETTER -> message("teacher.lits.neighbour.2")
+                else -> message("teacher.lits.neighbour.3")
             }
             val cells = s.layout.cellsOf[k].toSet()
             val next = victims.flatMap { s.layout.cellsOf[it] }.toSet()
-            val whose = if (victims.size == 1) "the marked region" else "a marked region"
+            val whose = if (victims.size == 1) message("teacher.lits.neighbour.4") else message("teacher.lits.neighbour.5")
             Step(
                 technique = NEIGHBOUR,
                 shades = todo,
                 focus = cells,
                 cited = cells + next,
-                nudge = "Look at the glowing region, and at what's next to it.",
-                explanation = "Some shapes here would leave $whose $reason. Every shape left " +
-                    "covers ${these(todo)}, so shade ${them(todo)}.",
+                nudge = message("teacher.lits.neighbour.6"),
+                explanation = message("teacher.lits.neighbour.7", "whose" to (whose), "reason" to (reason), "these_todo_" to (these(todo)), "them_todo_" to (them(todo))),
             ).let { if (out == null) return it else out += it }
         }
         return null
@@ -673,33 +675,31 @@ internal object LitsTeacher {
         val emptied = s.layout.cellsOf[chain.emptied]
         val home = s.layout.of[x]
         val steps = chain.forced.mapIndexed { i, (k, cells) ->
-            val count = if (cells.size == 1) "a marked square" else "${numberWord(cells.size, zero = "no", upTo = 4)} marked squares"
+            val count = if (cells.size == 1) message("teacher.lits.what_if_step.1") else message("teacher.lits.what_if_step.2", "value1" to (numberWordMessage(cells.size, zero = message("teacher.lits.what_if_step.extra.1"), upTo = 4)))
             when {
-                i == 0 && k == home -> "its own region would need $count"
-                i == 0 -> "a nearby region would need $count"
-                else -> "then another ${if (cells.size == 1) "one" else numberWord(cells.size, zero = "no", upTo = 4)}"
+                i == 0 && k == home -> message("teacher.lits.what_if_step.3", "count" to (count))
+                i == 0 -> message("teacher.lits.what_if_step.4", "count" to (count))
+                else -> message("teacher.lits.what_if_step.5", "value1" to (if (cells.size == 1) message("teacher.lits.what_if_step.extra.2") else numberWordMessage(cells.size, zero = message("teacher.lits.what_if_step.extra.3"), upTo = 4)))
             }
         }
-        val tail = "the marked region would have no legal shape left"
+        val tail = message("teacher.lits.what_if_step.6")
         return Step(
             technique = WHAT_IF,
             shades = listOf(x),
             focus = setOf(x),
             cited = (chain.forced.flatMap { it.second } + emptied).toSet(),
-            nudge = "What if the glowing square stayed empty?",
-            explanation = "If the glowing square stayed empty, " +
-                (if (steps.isEmpty()) tail else steps.joinToString(", ") + ", leaving the marked region no shape") +
-                ". So shade it.",
+            nudge = message("teacher.lits.what_if_step.7"),
+            explanation = message("teacher.lits.what_if_step.8", "value1" to ((if (steps.isEmpty()) tail else steps.joinedMessages(", ") + message("teacher.lits.what_if_step.extra.4")))),
         )
     }
 
     // ---- words ---------------------------------------------------------------------------------
 
-    private fun article(p: Lits.Piece) = if (p == Lits.Piece.T) "a T" else "an ${p.name}"
+    private fun article(p: Lits.Piece) = if (p == Lits.Piece.T) message("teacher.lits.article.1") else message("teacher.lits.article.2", "p_name" to (p.name))
 
-    private fun these(cells: List<Int>) = if (cells.size == 1) "the glowing square" else "the glowing squares"
+    private fun these(cells: List<Int>) = if (cells.size == 1) message("teacher.lits.these.1") else message("teacher.lits.these.2")
 
-    private fun them(cells: List<Int>) = if (cells.size == 1) "it" else "them"
+    private fun them(cells: List<Int>) = if (cells.size == 1) message("teacher.lits.them.1") else message("teacher.lits.them.2")
 
-    private fun they(cells: List<Int>) = if (cells.size == 1) "it's" else "they're"
+    private fun they(cells: List<Int>) = if (cells.size == 1) message("teacher.lits.they.1") else message("teacher.lits.they.2")
 }

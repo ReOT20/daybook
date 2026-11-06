@@ -1,0 +1,84 @@
+# Hexwords · RU
+> Russian words to reach the target
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Drag through touching hexes to spell a word, or tap them in turn and press Enter.
+
+On a keyboard, type a word that traces on the board. Tab tries another way to trace it, Enter takes it, Backspace deletes, and Escape clears.
+
+The line above the board shows the points to go. A word's letters leave the board and nothing falls into the holes, so the board you study is the board you play. A word may come again from other letters.
+
+Nothing is lost for trying: Undo puts a word back. If the target can no longer be reached, the line says so in red, and you can undo a word or start over.
+
+Stuck? The first tap on Hint says where to look, and the second explains why, with a clue to the word. Only "Show me" spells it.
+
+## Rules
+
+- Reach the target score.
+- A word has three to seven letters, runs through touching hexes, and uses a hex once. Its letters are then gone.
+- Three letters score 3, four 5, five 8, six 12 and seven 17.
+
+## What changes per tier
+
+- Standard: 19 hexes; biggest word first often gets there.
+- Hard: 29 hexes; biggest word first always falls short.
+- Expert: 44 hexes; looking one word ahead falls short too.
+
+## Techniques
+
+These are the steps the hints teach. Each board shows the hexes as staggered squares: a square touches its neighbours along the row, across the gap, and on the diagonals. An empty square is a hex already spent. The filled square is where the hint's word starts.
+
+### biggest | The biggest word that keeps the target
+
+Long words score far more than short ones, so look for the biggest word first. Then ask whether the letters it leaves can still make up the rest.
+
+~~~board
+_ _ Р _ О _ Н _ _
+_ П _ И _ В _ Е _
+Е _ О _ О _ Ш _ Т
+_ Т _ Б _ Ш _ Д _
+_ _ Ь _ О _ У _ _
+content-language: ru
+points-to-go: 15
+focus: r2c2
+answer: r2c2=П
+caption: 15 points to go. ПРИВЕТ starts at the filled tile and scores 12. The letters left can still make the other 3 points.
+~~~
+
+### hold-back | Holding back a costly word
+
+The biggest word can break up the words around it. When it would leave too little, take a smaller word first. This is the game's lesson.
+
+~~~board
+_ _ Ф _ О _ К _ У _ С _ _
+_ Ь _ Р _ П _ У _ А _ Й _
+Т _ Е _ Р _ Р _ Ш _ А _ Б
+_ Е _ М _ И _ О _ Д _ О _
+_ _ Д _ И _ В _ К _ Н _ _
+content-language: ru
+points-to-go: 38
+focus: r5c7
+cite: r2c6 r3c5 r3c7 r3c11 r4c6 r4c8 r4c10
+answer: r5c7=В
+caption: 38 points to go. Spending the ringed seven-letter word would make that target unreachable. A six-letter word starting at the filled tile scores 12 and keeps a proved route open.
+~~~
+
+### rare | A less common word that saves the target
+
+After a few words, the common ones may not be enough any more. Any word in the word list scores, so a less common one can still get you there. If you can't see one, undoing a word gives you more choice.
+
+~~~board
+_ _ Г _ К _ Т _ С _ У _ _
+_ Е _ И _ Ь _ У _ Т _ К _
+Б _ . _ Л _ . _ . _ Р _ В
+_ О _ . _ . _ О _ Я _ О _
+_ _ Р _ Г _ Б _ Ы _ Р _ _
+content-language: ru
+points-to-go: 29
+focus: r3c13
+answer: r3c13=В
+caption: 29 points to go. The printed-word list can no longer reach them. ВКУСУ, an ordinary inflected form accepted by the broader dictionary, starts at the filled tile and keeps the target reachable.
+~~~

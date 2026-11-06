@@ -33,6 +33,13 @@ import com.joebywan.daybook.puzzles.WhosWho
 import com.joebywan.daybook.puzzles.Hexwords
 import com.joebywan.daybook.puzzles.Dwindle
 import com.joebywan.daybook.puzzles.WordWheel
+import com.joebywan.daybook.puzzles.RussianLexicon
+import com.joebywan.daybook.puzzles.RussianWordWheel
+import com.joebywan.daybook.puzzles.RussianMini
+import com.joebywan.daybook.puzzles.RussianCodeword
+import com.joebywan.daybook.puzzles.RussianHexwords
+import com.joebywan.daybook.puzzles.RussianDwindle
+import com.joebywan.daybook.puzzles.RussianCipher
 
 /**
  * The one place the app learns which puzzles exist.
@@ -76,6 +83,13 @@ object PuzzleRegistry {
         Mini,
         Hexwords,
         Dwindle,
+        RussianLexicon,
+        RussianWordWheel,
+        RussianMini,
+        RussianCodeword,
+        RussianHexwords,
+        RussianDwindle,
+        RussianCipher,
     )
 
     fun byId(id: String): PuzzleType? = all.firstOrNull { it.id == id }

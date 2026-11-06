@@ -1,0 +1,26 @@
+RUSSIAN WORD CONTENT — revision 1
+
+Russian Wiktionary contributors: https://ru.wiktionary.org/
+Frozen source dump: 2026-11-01; Wiktextract extraction: 2026-11-02 via https://kaikki.org/ruwiktionary/
+Dictionary definitions/vocabulary and adaptations are licensed CC BY-SA 4.0:
+https://creativecommons.org/licenses/by-sa/4.0/
+See CC-BY-SA-4.0.txt, SOURCE.json and CLUE-SOURCES.tsv for the complete license, frozen source
+identifiers and the source page/history of each attributed clue. Changes: selection, filtering,
+shortening definitions, removing labels/stress/parentheses, canonical Ё→Е and original clue overrides.
+Original clue overrides: Daybook contributors, distributed as part of the same CC BY-SA 4.0 data.
+No endorsement by Wikimedia, Wiktionary or any contributor is implied.
+
+Russian Hunspell dictionary, copyright 1997–2008 Alexander I. Lebedev.
+Source: LibreOffice/dictionaries commit 30dd499a102c930b6386d9b0b44ed13e9d4cf8d2.
+Full notice: LICENSE-HUNSPELL.txt. Modified subset, not the original dictionary: only lower-case
+3–7-letter entries/forms are retained, with Ё→Е canonicalization and deduplication/screening.
+No endorsement by the original author is implied.
+
+Familiarity screening: wordfreq 3.1.1, copyright 2022 Robyn Speer; frequency data CC BY-SA 4.0.
+Wordfreq software itself is not bundled. See WORDFREQ-README.md for all source acknowledgements
+and bibliographic citations, and LICENSE-WORDFREQ-CODE.txt for the upstream code notice.
+Credits include Google Books Ngram Viewer, University of Leeds Centre for Translation Studies,
+Wikipedia, ParaCrawl, OpenSubtitles, and SUBTLEX authors Marc Brysbaert, Boris New, Emmanuel
+Keuleers, and collaborators. SUBTLEX is freely available data; see the full upstream citations.
+
+These notices apply to separately licensed word data. Application code retains its repository license.

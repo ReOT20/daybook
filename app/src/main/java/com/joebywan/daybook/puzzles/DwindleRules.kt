@@ -27,6 +27,7 @@ data class DwindleState(
     override val moves: Int = 0,
     /** Whether diagonal tiles touch: only a save from the first build, whose goals may run diagonally (hence the default). */
     val diagonal: Boolean = true,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
     /** The rule: every goal word is found (which leaves every tile vanished; `DwindleRulesTest` holds the two together). */
@@ -157,7 +158,7 @@ internal object DwindleLogic {
         if (word in s.found || word in s.bonus) return DwindleEntry.Found
         if (liveWay(s, word) == null) return DwindleEntry.NotOnTiles
         if (s.goals.any { it.word == word }) return DwindleEntry.Goal
-        return if (WheelWords.isWord(word)) DwindleEntry.Bonus else DwindleEntry.NotAWord
+        return if (WheelWords.isWord(word, s.contentLanguage)) DwindleEntry.Bonus else DwindleEntry.NotAWord
     }
 
     /** The path after the finger reaches tile [i]: a live neighbour of the last tile joins, the tile before it backs out. */
@@ -190,11 +191,11 @@ internal object DwindleLogic {
             v is Verdict.ExactlyOne && v.value == goal.cells
         }
 
-    fun generateVerified(seed: Long, difficulty: Difficulty): DwindleState? {
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): DwindleState? {
         val spec = specFor(difficulty)
         val proved = ArrayList<DwindleState>(KEEP)
         for (attempt in 0 until ATTEMPTS) {
-            val board = build(spec, Rng(seed + attempt)) ?: continue
+            val board = build(spec, Rng(seed + attempt), contentLanguage) ?: continue
             if (accepts(board, spec)) proved += board
             if (proved.size == KEEP) break
         }
@@ -205,17 +206,17 @@ internal object DwindleLogic {
     fun commonBonus(s: DwindleState): Int {
         val goals = s.goals.map { it.word }
         return (MIN_LENGTH..7).sumOf { n ->
-            WheelWords.grid(n).count { it !in goals && WheelWords.spellable(it, s.letters) && liveWay(s, it) != null }
+            WheelWords.grid(n, s.contentLanguage).count { it !in goals && WheelWords.spellable(it, s.letters, s.contentLanguage) && liveWay(s, it) != null }
         }
     }
 
     fun accepts(s: DwindleState, spec: Spec): Boolean =
         s.goals.size in spec.minWords..spec.maxWords && sharedShare(s) >= spec.minShared && proved(s)
 
-    fun build(spec: Spec, rng: Rng): DwindleState? {
+    fun build(spec: Spec, rng: Rng, contentLanguage: String = "en"): DwindleState? {
         val size = spec.width * spec.height
         val grid = CharArray(size) { EMPTY }
-        val pool = rng.shuffled((MIN_LENGTH..spec.maxLength).flatMap { WheelWords.grid(it) })
+        val pool = rng.shuffled((MIN_LENGTH..spec.maxLength).flatMap { WheelWords.grid(it, contentLanguage) })
         val placed = ArrayList<DwindleGoal>()
         var cursor = 0
         while (grid.any { it == EMPTY }) {
@@ -239,10 +240,10 @@ internal object DwindleLogic {
             }
             if (!found || placed.size > spec.maxWords) return null
         }
-        share(grid.concatToString(), spec, pool, placed, rng.nextInt(spec.minWords, spec.maxWords))
+        share(grid.concatToString(), spec, pool, placed, rng.nextInt(spec.minWords, spec.maxWords), contentLanguage)
         // A goal's place in the list says nothing about when it was laid: longest first, ties shuffled.
         val goals = rng.shuffled(placed).sortedByDescending { it.word.length }
-        return DwindleState(spec.width, spec.height, grid.concatToString(), goals, diagonal = false)
+        return DwindleState(spec.width, spec.height, grid.concatToString(), goals, diagonal = false, contentLanguage = contentLanguage)
     }
 
     /** The word's way stays the only one on the letters so far (an empty square matches nothing here). */
@@ -289,12 +290,12 @@ internal object DwindleLogic {
     }
 
     /** Adds words the full grid already holds, one way each, until [target], those over the least-used tiles first. */
-    private fun share(letters: String, spec: Spec, pool: List<String>, placed: MutableList<DwindleGoal>, target: Int) {
+    private fun share(letters: String, spec: Spec, pool: List<String>, placed: MutableList<DwindleGoal>, target: Int, contentLanguage: String) {
         val uses = IntArray(letters.length)
         for (g in placed) for (c in g.cells) uses[c]++
         val options = ArrayList<DwindleGoal>()
         for (word in pool) {
-            if (placed.any { it.word == word } || !WheelWords.spellable(word, letters)) continue
+            if (placed.any { it.word == word } || !WheelWords.spellable(word, letters, contentLanguage)) continue
             val v = ways(letters, spec.width, spec.height, word)
             if (v is Verdict.ExactlyOne) options += DwindleGoal(word, v.value)
         }
@@ -312,6 +313,6 @@ internal object DwindleLogic {
     const val LAST_RESORT_SEED = 1L
 
     /** The board for the day nothing was proved (a year per tier never reaches it, `FallbackTest`). */
-    fun lastResort(difficulty: Difficulty): DwindleState =
-        generateVerified(LAST_RESORT_SEED, difficulty) ?: error("the fixed last-resort seed no longer proves a board")
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): DwindleState =
+        generateVerified(LAST_RESORT_SEED, difficulty, contentLanguage) ?: error("the fixed last-resort seed no longer proves a board")
 }

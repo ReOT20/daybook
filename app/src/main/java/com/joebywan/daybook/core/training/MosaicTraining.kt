@@ -1,5 +1,7 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.text
 import com.joebywan.daybook.puzzles.Mosaic
 import com.joebywan.daybook.puzzles.MosaicState
 import com.joebywan.daybook.puzzles.MosaicTeacher
@@ -15,13 +17,9 @@ import com.joebywan.daybook.puzzles.PuzzleState
 val MosaicTraining: Course = Course(
     puzzle = Mosaic,
     explanations = linkedMapOf(
-        MosaicTeacher.COUNT to "Count the colours on the board against the fills left. A fill wipes out a colour only " +
-            "by covering its last patch, so with one fill fewer than colours, every fill must: pour into a colour " +
-            "that's down to one patch.",
-        MosaicTeacher.BIGGEST to "Look for the fill that swallows the most neighbouring areas at once: an area " +
-            "touching several patches of one colour, poured that colour. It isn't always safe, but here it is.",
-        MosaicTeacher.CENTRE to "When no fill swallows much, grow from the middle: find the area with every other " +
-            "area fewest steps away, and pour into it the colour that joins the most neighbours and stays in the limit.",
+        MosaicTeacher.COUNT to message("training.mosaic_count"),
+        MosaicTeacher.BIGGEST to message("training.mosaic_biggest"),
+        MosaicTeacher.CENTRE to message("training.mosaic_centre"),
     ),
     // Standard boards reach all three (counting and the biggest swallow on 60 of 60, the centre on 5), and the smallest
     // boards are the clearest to learn on: a tier is board size and palette here, not depth of reasoning.
@@ -67,8 +65,7 @@ object MosaicDrill : Drill {
 
     // ponytail: asked only after judge played on, so a keeping fill outside the technique is searched twice (one keeps).
     override fun aside(p: Course.Practice, after: PuzzleState): String? =
-        if (outcome(p, after) == Outcome.ASIDE) "That fill works, it keeps you in the limit. This practice is " +
-            "after a different technique, so try it on another board." else null
+        if (outcome(p, after) == Outcome.ASIDE) text("training.mosaic_aside") else null
 
     // The fill the player made, explained as an instance of the technique: the step's own, or the same reasoning about theirs.
     override fun made(p: Course.Practice, after: PuzzleState): TeachStep {

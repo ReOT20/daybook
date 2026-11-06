@@ -1,6 +1,8 @@
 package com.joebywan.daybook.ui.tutorial
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.ui.CappedFontScale
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.foundation.background
@@ -51,6 +53,8 @@ import com.joebywan.daybook.core.HighlightBounds
 import com.joebywan.daybook.core.LocalHighlightBounds
 import com.joebywan.daybook.core.LocalBoardHighlight
 import com.joebywan.daybook.core.PuzzleType
+import com.joebywan.daybook.platform.platformLanguage
+import com.joebywan.daybook.core.TutorialFrame
 import com.joebywan.daybook.core.TutorialStep
 import com.joebywan.daybook.ui.play.RulesDialog
 import com.joebywan.daybook.ui.teach.HintPopover
@@ -90,6 +94,11 @@ internal const val TUTORIAL_HOLD_MS = 1000L
  */
 fun autoWalkthrough(played: Boolean, seen: Boolean, level: Boolean, savedMoves: Int): Boolean =
     !played && !seen && !level && savedMoves == 0
+
+/** New state stores the completed frame's index; string-only state from an older version stays readable. */
+internal fun tutorialCarriedText(frames: List<TutorialFrame>, saved: String?): String? = saved?.let {
+    frames.getOrNull(it.toIntOrNull() ?: -1)?.done ?: it
+}
 
 /**
  * Plays [puzzle]'s [PuzzleType.tutorial] on its own real board.
@@ -152,7 +161,7 @@ fun TutorialRunner(
     if (status == Status.DONE && judge != null && !last) {
         LaunchedEffect(index) {
             delay(TUTORIAL_HOLD_MS)
-            carried = frame.done
+            carried = index.toString()
             index++
         }
     }
@@ -192,11 +201,14 @@ fun TutorialRunner(
         modifier.fillMaxSize().background(scheme.background).onGloballyPositioned { overlayOrigin = it.positionInWindow() },
     ) {
     // The slot under the board: the tallest frame's caption plus the feedback it can show (its own retry and done lines,
-    // the last frame's done line carried in), at most [MaxCaptionSlot]. Measured over every frame, so the slot, and the
+    // the last frame's done line carried in), within the short-window budget or [MaxCaptionSlot]. Measured over every frame, so the slot, and the
     // board above it, is one size for the whole walkthrough; each frame's feedback keeps its own fixed line count, so a
     // line appearing never moves the caption.
+    val captionMax = if (short) maxOf(120.dp, with(density) {
+        captionStyle.lineHeight.toDp() + feedbackStyle.lineHeight.toDp() * 2
+    }) else MaxCaptionSlot
     val textWidth = with(density) { (maxWidth - 36.dp).roundToPx() }.coerceAtLeast(1)
-    val (slotHeight, feedbackLines) = remember(puzzle.id, textWidth, captionStyle, feedbackStyle, density) {
+    val (slotHeight, feedbackLines) = remember(puzzle.id, platformLanguage(), textWidth, captionStyle, feedbackStyle, captionMax, density) {
         val c = Constraints(maxWidth = textWidth)
         fun lines(text: String) = measurer.measure(text, feedbackStyle, maxLines = 2, constraints = c).lineCount
         val perFrame = frames.mapIndexed { i, f ->
@@ -209,29 +221,24 @@ fun TutorialRunner(
             val n = perFrame[i]
             caption + if (n == 0) 0 else measurer.measure("\n".repeat(n - 1) + "\u2713 M", feedbackStyle, constraints = c).size.height
         }
-        with(density) { minOf(tallest.toDp(), MaxCaptionSlot) } to perFrame
+        with(density) { minOf(tallest.toDp(), captionMax) } to perFrame
     }
     Column(Modifier.fillMaxSize().onGloballyPositioned { contentTop = it.positionInWindow().y }) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 18.dp, end = 4.dp, top = 8.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    tr("How to play ${puzzle.displayName}", "Как играть в ${puzzle.displayName}"),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = scheme.onBackground,
-                )
-                Text(
-                    tr("${index + 1} of ${frames.size}", "${index + 1} из ${frames.size}"),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = scheme.onSurfaceVariant,
-                )
+        CappedFontScale {
+            Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 4.dp, top = 8.dp, bottom = 6.dp)) {
+                Text(puzzle.displayName, style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text("ui.tutorial_runner.of", "index_1" to (index + 1), "frames_size" to (frames.size)),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = scheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = { showRules = true }) { Text(text("ui.tutorial_runner.rules"), color = scheme.onSurfaceVariant) }
+                    // Skip keeps the same size and place throughout the walkthrough.
+                    TextButton(onClick = onClose) { Text(if (last) text("ui.share_preview.close") else text("ui.tutorial_runner.skip"), color = scheme.onSurfaceVariant) }
+                }
             }
-            TextButton(onClick = { showRules = true }) { Text(tr("Rules", "Правила"), color = scheme.onSurfaceVariant) }
-            // Skip is always there, and always the same size and place, so leaving never has to be
-            // hunted for.
-            TextButton(onClick = onClose) { Text(if (last) tr("Close", "Закрыть") else tr("Skip", "Пропустить"), color = scheme.onSurfaceVariant) }
         }
 
         Box(
@@ -239,30 +246,32 @@ fun TutorialRunner(
             contentAlignment = Alignment.Center,
         ) {
             CompositionLocalProvider(LocalBoardHighlight provides highlight, LocalHighlightBounds provides highlightBounds) {
-                puzzle.Board(
-                    state = board,
-                    onState = { next ->
-                        when {
-                            frame.freePlay -> board = next
-                            judge == null || status == Status.DONE -> Unit
-                            else -> when (judge(next)) {
-                                TutorialStep.DONE -> {
-                                    board = next
-                                    moved = Status.DONE
-                                    // The done line shows at once; the chime says the move landed.
-                                    chime()
+                CappedFontScale {
+                    puzzle.Board(
+                        state = board,
+                        onState = { next ->
+                            when {
+                                frame.freePlay -> board = next
+                                judge == null || status == Status.DONE -> Unit
+                                else -> when (judge(next)) {
+                                    TutorialStep.DONE -> {
+                                        board = next
+                                        moved = Status.DONE
+                                        // The done line shows at once; the chime says the move landed.
+                                        chime()
+                                    }
+                                    TutorialStep.PROGRESS -> {
+                                        board = next
+                                        moved = Status.WAITING
+                                    }
+                                    // Not applied: the progress so far stays on the board.
+                                    TutorialStep.REJECT -> moved = Status.RETRY
                                 }
-                                TutorialStep.PROGRESS -> {
-                                    board = next
-                                    moved = Status.WAITING
-                                }
-                                // Not applied: the progress so far stays on the board.
-                                TutorialStep.REJECT -> moved = Status.RETRY
                             }
-                        }
-                    },
-                    interactive = interactive,
-                )
+                        },
+                        interactive = interactive,
+                    )
+                }
             }
         }
 
@@ -284,7 +293,7 @@ fun TutorialRunner(
                 val feedback = when {
                     status == Status.RETRY -> frame.retry
                     status == Status.DONE -> frame.done
-                    carried != null -> "\u2713 $carried"
+                    carried != null -> "\u2713 ${tutorialCarriedText(frames, carried)}"
                     else -> ""
                 }
                 if (feedbackLines[index] > 0) Text(
@@ -299,35 +308,37 @@ fun TutorialRunner(
         }
 
         // On a short window (a phone browser with its toolbars showing) the padding gives way, as the play screen's does.
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = if (short) 8.dp else 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            OutlinedButton(
-                onClick = {
-                    carried = null
-                    index--
-                },
-                enabled = index > 0,
-                modifier = Modifier.weight(1f),
-            ) { Text(tr("Back", "Назад")) }
-            // Only where a hint can answer: Snap's teaching is its walkthrough, with no hints.
-            if (frame.freePlay && !board.solved && puzzle.offersHints) {
+        CappedFontScale {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = if (short) 8.dp else 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 OutlinedButton(
-                    onClick = ::onHint,
+                    onClick = {
+                        carried = null
+                        index--
+                    },
+                    enabled = index > 0,
                     modifier = Modifier.weight(1f),
-                ) { Text(hints.buttonLabel()) }
+                ) { Text(text("ui.tutorial_runner.back")) }
+                // Only where a hint can answer: Snap's teaching is its walkthrough, with no hints.
+                if (frame.freePlay && !board.solved && puzzle.offersHints) {
+                    OutlinedButton(
+                        onClick = ::onHint,
+                        modifier = Modifier.weight(1f),
+                    ) { Text(hints.buttonLabel()) }
+                }
+                // Invisible rather than gone on a move frame, so the row keeps its shape and Back its place.
+                Button(
+                    onClick = {
+                        carried = null
+                        if (last) onClose() else index++
+                    },
+                    enabled = showNext && canAdvance,
+                    colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = BoardHues.onFill(accent)),
+                    modifier = Modifier.weight(1f).alpha(if (showNext) 1f else 0f),
+                ) { Text(if (last) text("ui.levels_screen.play") else text("ui.tutorial_runner.next")) }
             }
-            // Invisible rather than gone on a move frame, so the row keeps its shape and Back its place.
-            Button(
-                onClick = {
-                    carried = null
-                    if (last) onClose() else index++
-                },
-                enabled = showNext && canAdvance,
-                colors = ButtonDefaults.buttonColors(containerColor = accent, contentColor = BoardHues.onFill(accent)),
-                modifier = Modifier.weight(1f).alpha(if (showNext) 1f else 0f),
-            ) { Text(if (last) tr("Play", "Играть") else tr("Next", "Далее")) }
         }
     }
 
@@ -347,5 +358,5 @@ fun TutorialRunner(
     }
     }
 
-    if (showRules) RulesDialog(tr("${puzzle.displayName} in short", "Кратко о ${puzzle.displayName}"), puzzle) { showRules = false }
+    if (showRules) RulesDialog(text("ui.tutorial_runner.in_short", "puzzle_displayName" to (puzzle.displayName)), puzzle) { showRules = false }
 }

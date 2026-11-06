@@ -15,8 +15,8 @@ bring several hues. This is the shared set to bring them from, derived from the 
 
 1. **Structure** is always `MaterialTheme.colorScheme`: board background, grid lines, given digits, text, `error`,
    hint glow. Never a hex literal, so light and dark both work.
-2. **Identity** is the puzzle's `accent` (home tile, selection, walkthrough buttons, the finish card). One per puzzle, one
-   colour for both schemes, chosen as a set (see **Accents** below): every raw accent reaches 3:1 on the surface and
+2. **Identity** is the puzzle's `accent` (home tile, selection, walkthrough buttons, the finish card). One per mechanics family,
+   shared by its content editions, and one colour for both schemes, chosen as a set (see **Accents** below): every raw accent reaches 3:1 on the surface and
    background of both schemes, no accent reads as the error red or the success green, and the closest pair is as far
    apart as the method could make it (`AccentSpacingTest`, `ContrastTest`). Text in an accent goes through `textOn`, or
    `onTint` on the accent's own tint.
@@ -58,6 +58,12 @@ Pearls' pale olive (`C7C785`) and Codeword's aqua (`65E7E7`) were 1.7:1 and 1.4:
 Who), tritanopia 3.01 (Cage Sudoku/Word Wheel). `AccentSpacingTest` pins 5.7 and 2.85. Several pairs are still near
 alike to a colour-blind eye: no 31 colours in one luminance band can be told apart by colour alone, which is why every
 tile also carries the name and a motif.
+
+**Content editions.** The seven Russian word editions (`words-ru`, `wordwheel-ru`, `mini-ru`, `codeword-ru`, `hexwords-ru`,
+`dwindle-ru`, `cipher-ru`) reuse the exact accent of their registered mechanics family, identified by `puzzleFamilyId`.
+They add no palette entries. `AccentSpacingTest` compares one representative per family, retaining all 33 original
+family colours and the same distance floors, and separately checks every edition's registration, family and exact accent equality.
+Names and native word motifs identify each edition on the home grid.
 
 **Where each threshold applies** (`ContrastTest` covers every accent in both schemes):
 

@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.home
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.ArcadeBoard
 import com.joebywan.daybook.ui.theme.BoardHues
@@ -64,7 +65,7 @@ fun solvedCount(progress: LevelProgress, level: Int): Int {
 fun levelNote(progress: LevelProgress, level: Int): String {
     val summary = Levels.summary(progress.plan(level))
     val previous = level - 1
-    return if (previous in progress.done && progress.solved(level).isEmpty()) tr("Level $previous done  ·  $summary", "Уровень $previous пройден  ·  $summary") else summary
+    return if (previous in progress.done && progress.solved(level).isEmpty()) text("ui.levels_screen.level_done", "previous" to (previous), "summary" to (summary)) else summary
 }
 
 /**
@@ -83,10 +84,10 @@ internal fun LevelStrip(progress: LevelProgress, onClick: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                tr("Level $level", "Уровень $level"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                text("ui.levels_screen.level", "level" to (level)), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                 color = scheme.onSurface, modifier = Modifier.weight(1f), maxLines = 1,
             )
-            Text(tr("$done of ${Levels.SIZE}", "$done из ${Levels.SIZE}"), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, maxLines = 1)
+            Text(text("ui.levels_screen.of", "done" to (done), "Levels_SIZE" to (Levels.SIZE)), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant, maxLines = 1)
         }
         Spacer(Modifier.height(4.dp))
         Box(Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(50)).background(scheme.outline.copy(alpha = 0.25f))) {
@@ -124,7 +125,7 @@ internal fun LevelGrid(
             if (board == null) {
                 val tone = scheme.secondary
                 HomeTile(
-                    name = tr("All levels", "Все уровни"), accent = tone, tile = ArcadeBoard.tile(tone, BoardHues.isDark(scheme)), solved = false, onClick = { onAllLevels?.invoke() }, modifier = modifier,
+                    name = text("ui.levels_screen.all_levels"), accent = tone, tile = ArcadeBoard.tile(tone, BoardHues.isDark(scheme)), solved = false, onClick = { onAllLevels?.invoke() }, modifier = modifier,
                     motif = {
                         Box(
                             Modifier.size(previewSize).clip(RoundedCornerShape(10.dp)).background(scheme.surface),
@@ -133,7 +134,7 @@ internal fun LevelGrid(
                             Icon(Icons.Default.FormatListNumbered, null, tint = BoardHues.textOn(tone, scheme.surface, 3f), modifier = Modifier.size(previewSize * 0.42f))
                         }
                     },
-                    footer = { TileFooter(if (progress.done.isEmpty()) "" else tr("${progress.done.size} done", "Пройдено: ${progress.done.size}"), ArcadeBoard.tile(tone, BoardHues.isDark(scheme)).ink) },
+                    footer = { TileFooter(if (progress.done.isEmpty()) "" else text("ui.levels_screen.done", "progress_done_size" to (progress.done.size)), ArcadeBoard.tile(tone, BoardHues.isDark(scheme)).ink) },
                 )
             } else {
                 val (puzzle, tier) = board
@@ -168,8 +169,8 @@ fun LevelsScreen(
     val current = progress.current
     val level = selected?.takeIf(progress::isUnlocked)
     TitledScreen(
-        if (level == null) tr("Levels", "Уровни") else tr("Level $level", "Уровень $level"),
-        if (level == null) tr("Finish all five boards to open the next.", "Решите все пять головоломок, чтобы открыть следующий уровень.") else levelLine(progress, level),
+        if (level == null) text("ui.launch_options.levels") else text("ui.levels_screen.level", "level" to (level)),
+        if (level == null) text("ui.levels_screen.finish_all_five_boards_to_open") else levelLine(progress, level),
         onBack,
     ) {
         if (level != null) {
@@ -188,7 +189,7 @@ fun LevelsScreen(
             item {
                 LevelRow(progress, current, onClick = { onSelect(current) }) {
                     Text(
-                        tr("Play", "Играть"),
+                        text("ui.levels_screen.play"),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = scheme.onPrimary,
@@ -212,8 +213,8 @@ fun LevelsScreen(
 
 /** Under one level's title: "3 of 5" for the current level, the total time for a finished one (the tiers are above its grid). */
 private fun levelLine(progress: LevelProgress, level: Int): String =
-    if (level in progress.done) tr("Done in ${formatClock(progress.solves[level].orEmpty().sumOf { it.seconds })}", "Пройден за ${formatClock(progress.solves[level].orEmpty().sumOf { it.seconds })}")
-    else tr("${solvedCount(progress, level)} of ${Levels.SIZE} done", "Решено ${solvedCount(progress, level)} из ${Levels.SIZE}")
+    if (level in progress.done) text("ui.levels_screen.done_in", "value1" to (formatClock(progress.solves[level].orEmpty().sumOf { it.seconds })))
+    else text("ui.levels_screen.of_done", "value1" to (solvedCount(progress, level)), "Levels_SIZE" to (Levels.SIZE))
 
 @Composable
 private fun LevelRow(progress: LevelProgress, level: Int, onClick: () -> Unit, trailing: @Composable () -> Unit) {
@@ -225,7 +226,7 @@ private fun LevelRow(progress: LevelProgress, level: Int, onClick: () -> Unit, t
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(tr("Level $level", "Уровень $level"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+            Text(text("ui.levels_screen.level", "level" to (level)), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
             Spacer(Modifier.height(6.dp))
             // A dot per board in its puzzle's colour: filled once solved.
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -250,8 +251,8 @@ private fun LockedRow(level: Int, current: Int) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            CardText(tr("Level $level", "Уровень $level"), tr("Finish $current to open", "Сначала пройдите уровень $current"), titleColor = scheme.onSurfaceVariant)
+            CardText(text("ui.levels_screen.level", "level" to (level)), text("ui.levels_screen.finish_to_open", "current" to (current)), titleColor = scheme.onSurfaceVariant)
         }
-        Icon(Icons.Default.Lock, tr("Locked", "Недоступно"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.Lock, text("ui.levels_screen.locked"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
     }
 }

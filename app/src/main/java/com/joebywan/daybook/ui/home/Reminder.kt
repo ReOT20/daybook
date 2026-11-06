@@ -1,7 +1,7 @@
 package com.joebywan.daybook.ui.home
 
-import com.joebywan.daybook.core.i18n.tr
-import com.joebywan.daybook.core.i18n.russianPlural
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,14 +40,7 @@ val REMINDER_HOURS = listOf(8, 12, 17, 19, 21)
 const val DEFAULT_REMINDER_HOUR = 19
 
 /** 19 as "7 pm". */
-fun hourLabel(hour: Int): String = tr(when {
-    hour == 0 -> "12 am"
-    hour < 12 -> "$hour am"
-    hour == 12 -> "12 pm"
-    else -> "${hour - 12} pm"
-}, "${hour.toString().padStart(2, '0')}:00")
-
-private val NUMBER_WORDS = listOf("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven")
+fun hourLabel(hour: Int): String = text("reminder.hour.$hour")
 
 /**
  * The notification's text when it goes off at [hour]:[minute] (read at that moment, since an inexact alarm can
@@ -55,20 +48,20 @@ private val NUMBER_WORDS = listOf("no", "one", "two", "three", "four", "five", "
  */
 fun reminderText(hour: Int, minute: Int = 0): String {
     val greeting = when (hour) {
-        in 5..11 -> tr("Good morning!", "Доброе утро!")
-        in 12..16 -> tr("Good afternoon!", "Добрый день!")
-        in 17..23 -> tr("Good evening!", "Добрый вечер!")
-        else -> tr("Hello!", "Здравствуйте!")
+        in 5..11 -> text("ui.reminder.good_morning")
+        in 12..16 -> text("ui.reminder.good_afternoon")
+        in 17..23 -> text("ui.reminder.good_evening")
+        else -> text("ui.reminder.hello")
     }
     val left = 24 * 60 - (hour * 60 + minute)
     val hours = (left + 30) / 60
     val time = when {
-        left < 45 -> tr("Not long left today", "День подходит к концу")
-        hours >= 12 -> tr("The whole day is ahead of you", "Впереди ещё целый день")
-        hours == 1 -> tr("About an hour left today", "До конца дня остался примерно час")
-        else -> tr("About ${NUMBER_WORDS[hours]} hours left today", "До конца дня осталось примерно $hours ${russianPlural(hours, "час", "часа", "часов")}")
+        left < 45 -> text("ui.reminder.not_long_left_today")
+        hours >= 12 -> text("ui.reminder.the_whole_day_is_ahead_of")
+        hours == 1 -> text("ui.reminder.about_an_hour_left_today")
+        else -> text("reminder.hours_left", "count" to (hours), "number" to (text("number.small.$hours")))
     }
-    return tr("$greeting $time: your puzzles are ready when you are.", "$greeting $time. Головоломки ждут вас.")
+    return text("ui.reminder.your_puzzles_are_ready_when_you", "greeting" to (greeting), "time" to (time))
 }
 
 /**
@@ -111,12 +104,11 @@ fun ReminderOffer(completions: List<Completion>, today: LocalDate) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CardText(
-            tr("A reminder each day?", "Напоминать каждый день?"),
-            tr("One quiet note at ${hourLabel(hour)}, and none on a day you've already played. " +
-                "You can change the time or turn it off in Settings.", "Одно тихое уведомление в ${hourLabel(hour)}. Если вы уже играли сегодня, уведомления не будет. Время можно изменить, а напоминание — отключить в настройках."),
+            text("ui.reminder.a_reminder_each_day"),
+            text("ui.reminder.one_quiet_note_at_and_none", "hourLabel_hour_" to (hourLabel(hour))),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            TextButton(onClick = { scope.launch { prefs.setReminderOffered() } }) { Text(tr("No thanks", "Нет, спасибо")) }
+            TextButton(onClick = { scope.launch { prefs.setReminderOffered() } }) { Text(text("ui.reminder.no_thanks")) }
             Button(onClick = {
                 ask { granted ->
                     scope.launch {
@@ -128,7 +120,7 @@ fun ReminderOffer(completions: List<Completion>, today: LocalDate) {
                         }
                     }
                 }
-            }) { Text(tr("Remind me", "Напоминать")) }
+            }) { Text(text("ui.reminder.remind_me")) }
         }
     }
 }

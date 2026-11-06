@@ -11,6 +11,9 @@ object SeedHash {
         if (puzzleId == "words" && epochDay >= LEXICON_CYCLE_FROM) {
             return (LEXICON_CYCLE shl 32) or (difficulty.ordinal.toLong() shl 28) or (epochDay - LEXICON_CYCLE_FROM)
         }
+        if (puzzleId == "words-ru" && epochDay >= RUSSIAN_LEXICON_CYCLE_FROM) {
+            return (RUSSIAN_LEXICON_CYCLE shl 32) or (difficulty.ordinal.toLong() shl 28) or (epochDay - RUSSIAN_LEXICON_CYCLE_FROM)
+        }
         var h = epochDay * 0x100000001B3L
         h = mix(h xor puzzleId.stableHash())
         h = mix(h xor (difficulty.ordinal + 1).toLong())
@@ -30,6 +33,13 @@ object SeedHash {
     /** The cycle's day count (0 on [LEXICON_CYCLE_FROM]) of a Lexicon daily seed, or null for any other seed. */
     fun lexiconCycleDay(seed: Long): Long? =
         if (seed ushr 32 == LEXICON_CYCLE) seed and 0x0FFFFFFFL else null
+
+    /** Independent Russian content cycle; English seeds and round order stay untouched. */
+    val RUSSIAN_LEXICON_CYCLE_FROM: Long = epochDay(2026, 11, 6)
+    private const val RUSSIAN_LEXICON_CYCLE = 0x52754379L // "RuCy"
+
+    fun russianLexiconCycleDay(seed: Long): Long? =
+        if (seed ushr 32 == RUSSIAN_LEXICON_CYCLE) seed and 0x0FFFFFFFL else null
 
     /** Days since 1970-01-01 for a proleptic Gregorian date, without `java.time` (the web has none). */
     fun epochDay(year: Int, month: Int, day: Int): Long {

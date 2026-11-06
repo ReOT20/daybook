@@ -69,6 +69,12 @@ caption: One or two sentences saying what the board shows. Required.
 - A token over three characters is drawn small, and `_` inside a longer token is a space (`r3c1=not_4`).
 - Squares are `r<row>c<col>` from 1, and `r1c1-r3c3` a rectangle.
 
+Russian-content word diagrams add `content-language: ru`. The default stays English for existing diagrams.
+Dwindle diagrams also retain the generated position's hidden bookkeeping as `fixture-lengths:` (remaining
+word lengths), `fixture-tried:` (words already found/tried), and `fixture-letters:` (the original letters,
+including spent tiles). Hexwords records `points-to-go:`. These fields select/verify the teacher's real
+position; they do not draw additional controls. Never translate English fixture letters in place.
+
 For what these cannot draw (a hex, a wheel, a tube): first try tokens in a grid (Cipher's sum is rows of letters). If that really cannot
 show it, add one small key to `board()` in `build.py`, with its check in `GuideTest`. Do not paste in PNGs, and do not draw for one page what others could share.
 

@@ -1,13 +1,17 @@
 package com.joebywan.daybook.platform
 
-import com.joebywan.daybook.core.i18n.tr
-import com.joebywan.daybook.core.i18n.isRussianLanguage
+import com.joebywan.daybook.core.i18n.text
+
+import com.joebywan.daybook.core.i18n.catalogLanguage
 import java.util.Locale
 
 import android.app.Activity
+import android.app.LocaleManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.database.ContentObserver
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -16,6 +20,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.LocaleList
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.activity.compose.BackHandler
@@ -71,6 +76,54 @@ import java.util.concurrent.atomic.AtomicInteger
 fun currentDate(): LocalDate = java.time.LocalDate.now().toKotlinLocalDate()
 
 fun platformLanguage(): String = Locale.getDefault().toLanguageTag()
+
+private const val LANGUAGE_PREFERENCES = "daybook_language"
+private const val LANGUAGE_KEY = "language"
+
+/** Older Android needs the preference before either an Activity or a reminder receiver starts. */
+fun appLanguageContext(base: Context): Context {
+    if (Build.VERSION.SDK_INT >= 33) return base
+    val tag = base.getSharedPreferences(LANGUAGE_PREFERENCES, Context.MODE_PRIVATE).getString(LANGUAGE_KEY, null)
+    val locale = tag?.let(Locale::forLanguageTag) ?: Resources.getSystem().configuration.locales[0]
+    Locale.setDefault(locale)
+    return base.createConfigurationContext(Configuration(base.resources.configuration).apply { setLocale(locale) })
+}
+
+/** Once after an OS upgrade, transfer the old choice to Android's own per-app language setting. */
+fun migrateAppLanguage(context: Context) {
+    if (Build.VERSION.SDK_INT < 33) return
+    val preferences = context.getSharedPreferences(LANGUAGE_PREFERENCES, Context.MODE_PRIVATE)
+    val tag = preferences.getString(LANGUAGE_KEY, null) ?: return
+    val manager = requireNotNull(context.getSystemService(LocaleManager::class.java))
+    if (manager.applicationLocales.isEmpty) manager.applicationLocales = LocaleList.forLanguageTags(tag)
+    preferences.edit().remove(LANGUAGE_KEY).apply()
+}
+
+/** Null follows the device; API 33+ shares the exact same choice with Android Settings. */
+@Composable
+fun rememberAppLanguage(): Pair<String?, (String?) -> Unit> {
+    val context = LocalContext.current
+    val activity = LocalView.current.context as Activity
+    val selected = if (Build.VERSION.SDK_INT >= 33) {
+        requireNotNull(context.getSystemService(LocaleManager::class.java)).applicationLocales[0]?.toLanguageTag()
+    } else context.getSharedPreferences(LANGUAGE_PREFERENCES, Context.MODE_PRIVATE).getString(LANGUAGE_KEY, null)
+    val select: (String?) -> Unit = remember(context, activity, selected) {
+        { tag ->
+            if (tag != selected) {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    requireNotNull(context.getSystemService(LocaleManager::class.java)).applicationLocales =
+                        LocaleList.forLanguageTags(tag.orEmpty())
+                } else {
+                    context.getSharedPreferences(LANGUAGE_PREFERENCES, Context.MODE_PRIVATE).edit().apply {
+                        if (tag == null) remove(LANGUAGE_KEY) else putString(LANGUAGE_KEY, tag)
+                    }.apply()
+                    activity.recreate()
+                }
+            }
+        }
+    }
+    return selected to select
+}
 
 private val formatters = HashMap<Pair<String, Locale>, DateTimeFormatter>()
 
@@ -142,10 +195,7 @@ fun readyBoard(puzzle: PuzzleType, seed: Long, difficulty: Difficulty): PuzzleSt
 const val GENERATION_ANIMATES: Boolean = true
 
 /** Settings text under the Sound switch: what else keeps the chime quiet on this platform. */
-val SOLVE_SOUND_NOTE: String get() = tr(
-    "It follows your media volume and stays quiet when your phone is on silent or vibrate.",
-    "Громкость зависит от громкости мультимедиа. В беззвучном режиме и режиме вибрации звука нет.",
-)
+val SOLVE_SOUND_NOTE: String get() = text("ui.android_platform.it_follows_your_media_volume_and")
 
 /**
  * Called while the home grid is showing. Android generates each board off the main thread when it
@@ -157,7 +207,7 @@ suspend fun prepareBoards(day: LocalDate, difficulty: Difficulty) = Unit
 /** The app's typography in Fredoka (`res/font`, SIL OFL); glyphs it lacks fall back to the system font. */
 @Composable
 fun platformTypography(base: Typography): Typography =
-    base.withFamily(if (isRussianLanguage(platformLanguage())) cyrillic else fredoka)
+    base.withFamily(if (catalogLanguage(platformLanguage()) == "en") fredoka else cyrillic)
 
 private val fredoka = FontFamily(
     Font(R.font.fredoka_regular, FontWeight.Normal),
@@ -279,7 +329,7 @@ fun rememberReducedMotion(): Boolean {
 }
 
 /** Settings text under the Vibration switch: what else keeps it still on this platform. */
-val VIBRATION_NOTE: String get() = tr("It also follows your phone's touch vibration setting.", "Также учитывается системная настройка вибрации при касании.")
+val VIBRATION_NOTE: String get() = text("ui.android_platform.it_also_follows_your_phone_s")
 
 /**
  * The game's buzzes, if [enabled], through `View.performHapticFeedback`, which honours the system's touch
@@ -314,8 +364,8 @@ fun rememberRateLink(): RateLink {
         if (installerOf(context) == "com.android.vending") {
             val id = context.packageName
             RateLink(
-                title = tr("Rate Daybook", "Оценить Daybook"),
-                detail = tr("If Daybook has earned it, a rating on Google Play helps other puzzlers find it.", "Если вам нравится Daybook, оценка в Google Play поможет другим любителям головоломок найти игру."),
+                title = text("ui.android_platform.rate_daybook"),
+                detail = text("ui.android_platform.if_daybook_has_earned_it_a"),
                 open = {
                     openUri(context, "market://details?id=$id", fallback = "https://play.google.com/store/apps/details?id=$id")
                 },

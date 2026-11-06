@@ -2,8 +2,11 @@ package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
 import com.joebywan.daybook.core.neighbours8
-import com.joebywan.daybook.core.plural
 
 /**
  * Mines, reasoned a step at a time (`docs/MINES_SPEC.md`, "The ladder").
@@ -44,9 +47,15 @@ internal object MinesTeacher {
         val mines: Set<Int>,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = safe + mines
     }
 
@@ -60,7 +69,7 @@ internal object MinesTeacher {
         val n = s.width * s.height
         val open = (0 until n).filter { !s.isMine(it) && !s.isOpen(it) && !s.isFlag(it) }
         val i = open.firstOrNull { j -> neighbours8(s.width, s.height, j).any { s.isOpen(it) } } ?: open.firstOrNull() ?: return null
-        return Step(FALLBACK, setOf(i), emptySet(), setOf(i), emptySet(), "This one takes a longer chain. Look at the glowing square.", "This one needs a longer chain than a hint can walk through, so here's the answer for this square: it's safe.")
+        return Step(FALLBACK, setOf(i), emptySet(), setOf(i), emptySet(), message("teacher.mines.teach.1"), message("teacher.mines.teach.2"))
     }
 
     /** Each square's number when it is revealed, else -1: what the player can read off the board. */
@@ -110,27 +119,27 @@ internal object MinesTeacher {
             s.isOpen(j) && neighbours8(s.width, s.height, j).count { s.isFlag(it) || it in s.bumps } > s.number(j)
         }
         val why = when {
-            over == null -> "No way to finish the board has a mine here."
-            s.number(over) == 0 -> "The square beside it has no mines around it at all."
-            else -> "The ${s.number(over)} beside it touches more flags than its number."
+            over == null -> message("teacher.mines.mistake.1")
+            s.number(over) == 0 -> message("teacher.mines.mistake.2")
+            else -> message("teacher.mines.mistake.3", "s_number_over_" to (s.number(over)))
         }
-        return Step(MISTAKE, emptySet(), setOf(wrong), setOf(wrong), setOfNotNull(over), "Check this flag.", "$why Take the flag off: long-press it, or tap it with Flag.")
+        return Step(MISTAKE, emptySet(), setOf(wrong), setOf(wrong), setOfNotNull(over), message("teacher.mines.mistake.4"), message("teacher.mines.mistake.5", "why" to (why)))
     }
 
     // ---- reasoning --------------------------------------------------------------------------------------------------
 
 
-    private fun others(k: Int) = if (k == 1) "other square" else "other $k squares"
+    private fun others(k: Int) = if (k == 1) message("teacher.mines.others.1") else message("teacher.mines.others.2", "k" to (k))
 
     /** Where square [b] lies from [a], on a board [w] wide: "above", "to the right", "up and to the left"... */
-    private fun where(w: Int, a: Int, b: Int): String {
+    private fun where(w: Int, a: Int, b: Int): Message {
         val dr = b / w - a / w
         val dc = b % w - a % w
-        val side = if (dc < 0) "to the left" else "to the right"
+        val side = if (dc < 0) message("teacher.mines.where.1") else message("teacher.mines.where.2")
         return when {
-            dc == 0 -> if (dr < 0) "above" else "below"
+            dc == 0 -> if (dr < 0) message("teacher.mines.where.3") else message("teacher.mines.where.4")
             dr == 0 -> side
-            else -> "${if (dr < 0) "up" else "down"} and $side"
+            else -> message("teacher.mines.where.5", "if_dr_0_up_else_down_" to (if (dr < 0) message("teacher.mines.where.extra.1") else message("teacher.mines.where.extra.2")), "side" to (side))
         }
     }
 
@@ -174,63 +183,60 @@ internal object MinesTeacher {
         val mines = f.mines.toSet()
         val cited = f.cited.toSet()
         val targets = safe + mines
-        val move = if (safe.isNotEmpty()) "Reveal ${if (safe.size == 1) "it" else "them"}." else "Flag ${if (mines.size == 1) "it" else "them"}."
+        val move = if (safe.isNotEmpty()) message("teacher.mines.explain.1", "value1" to (if (safe.size == 1) message("teacher.mines.explain.extra.1") else message("teacher.mines.explain.extra.2"))) else message("teacher.mines.explain.2", "value1" to (if (mines.size == 1) message("teacher.mines.explain.extra.3") else message("teacher.mines.explain.extra.4")))
         return when (f.technique) {
             ALL_FOUND -> {
                 val i = f.cited[0]
-                val text = if (num[i] == 0) "This square has no mines around it, so every hidden square beside it is safe. $move"
-                else "This ${num[i]} already touches ${if (num[i] == 1) "its mine" else "its ${num[i]} mines"}, so every other hidden square around it is safe. $move"
-                Step(ALL_FOUND, safe, mines, cited, cited, "Look at this ${num[i]}.", text)
+                val text = if (num[i] == 0) message("teacher.mines.explain.3", "move" to (move))
+                else message("teacher.mines.explain.4", "num_i_" to (num[i]), "value2" to (if (num[i] == 1) message("teacher.mines.explain.extra.5") else message("teacher.mines.explain.extra.6", "num_i_" to (num[i]))), "move" to (move))
+                Step(ALL_FOUND, safe, mines, cited, cited, message("teacher.mines.explain.5", "num_i_" to (num[i])), text)
             }
             ALL_MINES -> {
                 val i = f.cited[0]
                 val k = need(i)
-                val text = if (found(i) == 0) "This ${num[i]} has exactly ${plural(k, "hidden square")} around it, so ${if (k == 1) "it is a mine" else "they are all mines"}. $move"
-                else "This ${num[i]} still needs ${plural(k, "mine")} and has exactly ${plural(k, "hidden square")} left, so ${if (k == 1) "it is a mine" else "they are all mines"}. $move"
-                Step(ALL_MINES, safe, mines, cited, cited, "Count the hidden squares around this ${num[i]}.", text)
+                val text = if (found(i) == 0) message("teacher.mines.explain.6", "num_i_" to (num[i]), "plural_k_hidden_square_" to (message("teacher.mines.count.hidden_square", "count" to (k))), "value3" to (if (k == 1) message("teacher.mines.explain.extra.8") else message("teacher.mines.explain.extra.9")), "move" to (move))
+                else message("teacher.mines.explain.7", "num_i_" to (num[i]), "plural_k_mine_" to (message("teacher.mines.count.mine", "count" to (k))), "plural_k_hidden_square_" to (message("teacher.mines.count.hidden_square", "count" to (k))), "value4" to (if (k == 1) message("teacher.mines.explain.extra.12") else message("teacher.mines.explain.extra.13")), "move" to (move))
+                Step(ALL_MINES, safe, mines, cited, cited, message("teacher.mines.explain.8", "num_i_" to (num[i])), text)
             }
             SUBSET -> {
                 val (a, b) = f.cited
                 val diff = need(b) - need(a)
                 val k = targets.size
                 val what = when {
-                    diff == 0 -> if (k == 1) "it is safe" else "they are safe"
-                    k == 1 -> "it is a mine"
-                    else -> "they are all mines"
+                    diff == 0 -> if (k == 1) message("teacher.mines.explain.9") else message("teacher.mines.explain.10")
+                    k == 1 -> message("teacher.mines.explain.11")
+                    else -> message("teacher.mines.explain.12")
                 }
-                val text = "This ${num[a]} needs ${need(a)} more ${if (need(a) == 1) "mine" else "mines"}, on squares that all touch the ${num[b]} ${where(w, a, b)}, " +
-                    "which needs ${need(b)}. So the ${num[b]}'s ${others(k)} ${if (k == 1) "holds" else "hold"} $diff: $what. $move"
-                Step(SUBSET, safe, mines, setOf(a), cited, "Compare this ${num[a]} with the ${num[b]} ${where(w, a, b)}.", text)
+                val text = message("teacher.mines.explain.13", "num_a_" to (num[a]), "need_a_" to (need(a)), "value3" to (if (need(a) == 1) message("teacher.mines.explain.extra.14") else message("teacher.mines.explain.extra.15")), "num_b_" to (num[b]), "where_w_a_b_" to (where(w, a, b)), "need_b_" to (need(b)), "others_k_" to (others(k)), "if_k_1_holds_else_hold_" to (if (k == 1) message("teacher.mines.explain.extra.16") else message("teacher.mines.explain.extra.17")), "diff" to (diff), "what" to (what), "move" to (move))
+                Step(SUBSET, safe, mines, setOf(a), cited, message("teacher.mines.explain.14", "num_a_" to (num[a]), "num_b_" to (num[b]), "where_w_a_b_" to (where(w, a, b))), text)
             }
             PAIR -> {
                 val (a, b) = f.cited
                 val k = mines.size
-                val text = "The ${num[b]} ${where(w, a, b)} needs ${need(b)} more, and this ${num[a]} lets at most ${need(a)} sit on squares they share. " +
-                    "So the ${num[b]}'s ${others(k)} ${if (k == 1) "is a mine" else "are mines"}, and this ${num[a]}'s own other squares are safe."
-                Step(PAIR, safe, mines, setOf(a), cited, "Compare this ${num[a]} with the ${num[b]} ${where(w, a, b)}.", text)
+                val text = message("teacher.mines.explain.15", "num_b_" to (num[b]), "where_w_a_b_" to (where(w, a, b)), "need_b_" to (need(b)), "num_a_" to (num[a]), "need_a_" to (need(a)), "others_k_" to (others(k)), "value7" to (if (k == 1) message("teacher.mines.explain.extra.18") else message("teacher.mines.explain.extra.19")))
+                Step(PAIR, safe, mines, setOf(a), cited, message("teacher.mines.explain.16", "num_a_" to (num[a]), "num_b_" to (num[b]), "where_w_a_b_" to (where(w, a, b))), text)
             }
             COUNT -> {
-                val text = if (f.left == 0) "Every one of the $total mines is found, so every hidden square left is safe. $move"
-                else "${plural(f.left, "mine")} ${if (f.left == 1) "is" else "are"} left and only ${plural(f.left, "hidden square")}, so ${if (f.left == 1) "it is a mine" else "they are all mines"}. $move"
-                Step(COUNT, safe, mines, targets, cited, "Count the mines left.", text)
+                val text = if (f.left == 0) message("teacher.mines.explain.17", "total" to (total), "move" to (move))
+                else message("teacher.mines.explain.18", "plural_f_left_mine_" to (message("teacher.mines.count.mine", "count" to (f.left))), "if_f_left_1_is_else_are_" to (if (f.left == 1) message("teacher.mines.explain.extra.21") else message("teacher.mines.explain.extra.22")), "value3" to (message("teacher.mines.count.hidden_square", "count" to (f.left))), "value4" to (if (f.left == 1) message("teacher.mines.explain.extra.24") else message("teacher.mines.explain.extra.25")), "move" to (move))
+                Step(COUNT, safe, mines, targets, cited, message("teacher.mines.explain.19"), text)
             }
             EDGE -> {
-                val text = "${plural(f.left, "mine")} ${if (f.left == 1) "is" else "are"} left, and the marked numbers need all ${f.left} on squares none of them share. " +
-                    "No mine is left for any other hidden square. $move"
-                Step(EDGE, safe, mines, cited, cited, "Count the mines left against these numbers.", text)
+                val text = message("teacher.mines.explain.20", "plural_f_left_mine_" to (message("teacher.mines.count.mine", "count" to (f.left))), "if_f_left_1_is_else_are_" to (if (f.left == 1) message("teacher.mines.explain.extra.27") else message("teacher.mines.explain.extra.28")), "f_left" to (f.left), "move" to (move))
+                Step(EDGE, safe, mines, cited, cited, message("teacher.mines.explain.21"), text)
             }
             WHAT_IF -> {
                 val x = targets.first()
                 // The first number the supposition sets off touches it; each after that touches what the one before settled.
                 val said = f.chain.mapIndexed { k, (i, m) ->
-                    "${if (k == 0) "the ${num[i]} beside it" else "then a ${num[i]}"} ${if (m) "needs all its hidden squares" else "has all its mines"}"
+                    message("teacher.mines.explain.extra.29", "value1" to (if (k == 0) message("teacher.mines.explain.nested.1", "num_i_" to (num[i])) else message("teacher.mines.explain.nested.2", "num_i_" to (num[i]))), "value2" to (if (m) message("teacher.mines.explain.nested.3") else message("teacher.mines.explain.nested.4")))
                 }
-                val end = "${if (f.chain.isEmpty()) "the ${num[f.broke]} beside it" else "until a ${num[f.broke]}"} has ${if (f.tooMany) "too many mines" else "too few squares left"}"
-                val chain = (said + end).joinToString(", ")
-                val text = "Suppose this square ${if (safe.isNotEmpty()) "held a mine" else "were safe"}. Then $chain. So it is ${if (safe.isNotEmpty()) "safe" else "a mine"}."
-                Step(WHAT_IF, safe, mines, setOf(x), cited, "What if this square ${if (safe.isNotEmpty()) "held a mine" else "were safe"}?", text)
+                val end = message("teacher.mines.explain.22", "value1" to (if (f.chain.isEmpty()) message("teacher.mines.explain.extra.30", "num_f_broke_" to (num[f.broke])) else message("teacher.mines.explain.extra.31", "num_f_broke_" to (num[f.broke]))), "value2" to (if (f.tooMany) message("teacher.mines.explain.extra.32") else message("teacher.mines.explain.extra.33")))
+                val chain = (said + end).joinedMessages(", ")
+                val text = message("teacher.mines.explain.23", "value1" to (if (safe.isNotEmpty()) message("teacher.mines.explain.extra.34") else message("teacher.mines.explain.extra.35")), "chain" to (chain), "value3" to (if (safe.isNotEmpty()) message("teacher.mines.explain.extra.36") else message("teacher.mines.explain.extra.37")))
+                Step(WHAT_IF, safe, mines, setOf(x), cited, message("teacher.mines.explain.24", "value1" to (if (safe.isNotEmpty()) message("teacher.mines.explain.extra.38") else message("teacher.mines.explain.extra.39"))), text)
             }
-            else -> error("no explanation for ${f.technique}")
+            else -> error(message("teacher.mines.explain.25", "f_technique" to (f.technique)))
         }
     }
 }

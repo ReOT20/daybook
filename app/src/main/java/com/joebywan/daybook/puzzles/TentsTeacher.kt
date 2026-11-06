@@ -2,9 +2,11 @@ package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
 import com.joebywan.daybook.core.cap
-import com.joebywan.daybook.core.lineName
-import com.joebywan.daybook.core.plural
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.lineNameMessage
 
 /**
  * Tents, reasoned a fact at a time.
@@ -58,9 +60,15 @@ internal object TentsTeacher {
         override val targets: Set<Int>,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     // ---- the whole hint: mistakes, then reasoning, then the honest fallback ---------------------------
 
@@ -71,8 +79,8 @@ internal object TentsTeacher {
         val i = s.solution.indices.firstOrNull { s.solution[it] && s.marks[it] != TENT } ?: return null
         return Step(
             FALLBACK, TENT, setOf(i), setOf(i), emptySet(),
-            "This one takes a longer chain. Look at the glowing square.",
-            "This one needs a longer chain than a hint can walk through, so here's the answer for this square: a tent.",
+            message("teacher.tents.teach.1"),
+            message("teacher.tents.teach.2"),
         )
     }
 
@@ -101,16 +109,16 @@ internal object TentsTeacher {
         val n = s.size
         val wrong = s.marks.indices.firstOrNull { s.marks[it] == TENT && !s.solution[it] } ?: return null
         val tents = s.marks.map { it == TENT }
-        fun step(why: String, cited: Set<Int>) =
-            Step(MISTAKE, 0, setOf(wrong), setOf(wrong), cited, "Check this tent.", "$why Tap it to clear it.")
-        if (TentsLogic.orth(n, wrong).none { s.trees[it] }) return step("This tent has no tree beside it.", emptySet())
+        fun step(why: Message, cited: Set<Int>) =
+            Step(MISTAKE, 0, setOf(wrong), setOf(wrong), cited, message("teacher.tents.step.1"), message("teacher.tents.step.2", "why" to (why)))
+        if (TentsLogic.orth(n, wrong).none { s.trees[it] }) return step(message("teacher.tents.mistake.1"), emptySet())
         val near = TentsLogic.around(n, wrong).filter { tents[it] }
-        if (near.isNotEmpty()) return step("This tent touches another tent.", near.toSet())
+        if (near.isNotEmpty()) return step(message("teacher.tents.mistake.2"), near.toSet())
         val r = wrong / n
         val c = wrong % n
-        if (s.rowTents(r) > s.rowCounts[r]) return step("Row ${r + 1} only holds ${s.rowCounts[r]}, and it has more.", setOf(n * n + r))
-        if (s.colTents(c) > s.colCounts[c]) return step("Column ${c + 1} only holds ${s.colCounts[c]}, and it has more.", setOf(n * n + n + c))
-        return step("No valid way to finish the board keeps this tent.", emptySet())
+        if (s.rowTents(r) > s.rowCounts[r]) return step(message("teacher.tents.mistake.3", "r_1" to (r + 1), "s_rowCounts_r_" to (s.rowCounts[r])), setOf(n * n + r))
+        if (s.colTents(c) > s.colCounts[c]) return step(message("teacher.tents.mistake.4", "c_1" to (c + 1), "s_colCounts_c_" to (s.colCounts[c])), setOf(n * n + n + c))
+        return step(message("teacher.tents.mistake.5"), emptySet())
     }
 
     // ---- reasoning ------------------------------------------------------------------------------------
@@ -168,8 +176,8 @@ internal object TentsTeacher {
         val bare = st.indices.filter { free(it) && TentsLogic.orth(n, it).none { j -> trees[j] } }
         if (bare.isNotEmpty()) return Step(
             NO_TREE, GRASS, bare.toSet(), bare.toSet(), emptySet(),
-            "Which squares have no tree beside them?",
-            "A tent sits right beside its tree (up, down, left or right). These squares have no tree there, so they are grass: cross them out.",
+            message("teacher.tents.next_fact.1"),
+            message("teacher.tents.next_fact.2"),
         )
 
         // 2. A row or column that is full or done.
@@ -181,17 +189,17 @@ internal object TentsTeacher {
             val need = want - line.count { st[it] == TENT }
             val open = line.filter { free(it) }
             if (open.isEmpty() || need < 0 || need > open.size) continue
-            val name = lineName(n, li)
+            val name = lineNameMessage(n, li)
             val placed = line.filter { st[it] == TENT }.toSet()
             if (need == 0) return Step(
                 LINE_DONE, GRASS, open.toSet(), line.toSet() + clue, placed,
-                "Count the tents in $name.",
-                "${name.cap()} holds $want, and they are all placed, so the rest of it is grass.",
+                message("teacher.tents.next_fact.3", "name" to (name)),
+                message("teacher.tents.next_fact.4", "name_cap_" to (name.cap()), "want" to (want)),
             )
             if (need == open.size) return Step(
                 LINE_FULL, TENT, open.toSet(), line.toSet() + clue, placed,
-                "Count the squares left in $name.",
-                "${name.cap()} still needs ${plural(need, "tent")} and has exactly ${if (need == 1) "1 square" else "$need squares"} left that can hold one, so ${if (need == 1) "it is a tent" else "all of them are tents"}.",
+                message("teacher.tents.next_fact.5", "name" to (name)),
+                message("teacher.tents.next_fact.6", "name_cap_" to (name.cap()), "plural_need_tent_" to (message("teacher.tents.count.tent", "count" to (need))), "value3" to (if (need == 1) message("teacher.tents.next_fact.extra.2") else message("teacher.tents.next_fact.extra.3", "need" to (need))), "value4" to (if (need == 1) message("teacher.tents.next_fact.extra.4") else message("teacher.tents.next_fact.extra.5"))),
             )
         }
 
@@ -201,8 +209,8 @@ internal object TentsTeacher {
             val around = TentsLogic.around(n, t).filter { free(it) }
             if (around.isNotEmpty()) return Step(
                 TOUCH, GRASS, around.toSet(), setOf(t) + around, setOf(t),
-                "Look around this tent.",
-                "Tents never touch, not even at a corner, so every free square around this tent is grass.",
+                message("teacher.tents.next_fact.7"),
+                message("teacher.tents.next_fact.8"),
             )
         }
 
@@ -211,8 +219,8 @@ internal object TentsTeacher {
             val choices = choices(t)
             if (choices.size == 1 && st[choices[0]] == 0) return Step(
                 ONE_SPOT, TENT, choices.toSet(), setOf(t, choices[0]), setOf(t),
-                "Look at this tree.",
-                "This tree needs a tent beside it, and every other square next to it is a tree, off the board or ruled out. Only this one is left.",
+                message("teacher.tents.next_fact.9"),
+                message("teacher.tents.next_fact.10"),
             )
         }
 
@@ -223,8 +231,8 @@ internal object TentsTeacher {
             val xs = st.indices.filter { x -> free(x) && x !in choices && choices.all { it in TentsLogic.around(n, x) } }
             if (xs.isNotEmpty()) return Step(
                 SHARED, GRASS, xs.toSet(), setOf(t) + choices + xs, setOf(t) + choices,
-                "Where can this tree's tent go?",
-                "This tree's tent has to go on one of the marked squares. A tent in the crossed one would touch every one of them, so it is grass.",
+                message("teacher.tents.next_fact.11"),
+                message("teacher.tents.next_fact.12"),
             )
         }
 
@@ -237,8 +245,8 @@ internal object TentsTeacher {
                 val owners = near.flatMap { t -> TentsLogic.orth(n, t).filter { owned(it) } }
                 return Step(
                     SERVED, GRASS, setOf(x), setOf(x) + near, near.toSet() + owners,
-                    "Does a tree beside this square still need a tent?",
-                    "${if (near.size == 1) "The tree" else "The trees"} beside this square already ${if (near.size == 1) "has its tent" else "have their tents"}, so a tent here would have no tree of its own. It is grass.",
+                    message("teacher.tents.next_fact.13"),
+                    message("teacher.tents.next_fact.14", "value1" to (if (near.size == 1) message("teacher.tents.next_fact.extra.6") else message("teacher.tents.next_fact.extra.7")), "value2" to (if (near.size == 1) message("teacher.tents.next_fact.extra.8") else message("teacher.tents.next_fact.extra.9"))),
                 )
             }
         }
@@ -262,8 +270,8 @@ internal object TentsTeacher {
         val bare = st.indices.filter { free(it) && TentsLogic.orth(n, it).none { j -> trees[j] } }
         if (bare.isNotEmpty()) yield(Step(
             NO_TREE, GRASS, bare.toSet(), bare.toSet(), emptySet(),
-            "Which squares have no tree beside them?",
-            "A tent sits right beside its tree (up, down, left or right). These squares have no tree there, so they are grass: cross them out.",
+            message("teacher.tents.facts.1"),
+            message("teacher.tents.facts.2"),
         ))
 
         // 2. A row or column that is full or done.
@@ -275,17 +283,17 @@ internal object TentsTeacher {
             val need = want - line.count { st[it] == TENT }
             val open = line.filter { free(it) }
             if (open.isEmpty() || need < 0 || need > open.size) continue
-            val name = lineName(n, li)
+            val name = lineNameMessage(n, li)
             val placed = line.filter { st[it] == TENT }.toSet()
             if (need == 0) yield(Step(
                 LINE_DONE, GRASS, open.toSet(), line.toSet() + clue, placed,
-                "Count the tents in $name.",
-                "${name.cap()} holds $want, and they are all placed, so the rest of it is grass.",
+                message("teacher.tents.facts.3", "name" to (name)),
+                message("teacher.tents.facts.4", "name_cap_" to (name.cap()), "want" to (want)),
             ))
             if (need == open.size) yield(Step(
                 LINE_FULL, TENT, open.toSet(), line.toSet() + clue, placed,
-                "Count the squares left in $name.",
-                "${name.cap()} still needs ${plural(need, "tent")} and has exactly ${if (need == 1) "1 square" else "$need squares"} left that can hold one, so ${if (need == 1) "it is a tent" else "all of them are tents"}.",
+                message("teacher.tents.facts.5", "name" to (name)),
+                message("teacher.tents.facts.6", "name_cap_" to (name.cap()), "plural_need_tent_" to (message("teacher.tents.count.tent", "count" to (need))), "value3" to (if (need == 1) message("teacher.tents.facts.extra.2") else message("teacher.tents.facts.extra.3", "need" to (need))), "value4" to (if (need == 1) message("teacher.tents.facts.extra.4") else message("teacher.tents.facts.extra.5"))),
             ))
         }
 
@@ -295,8 +303,8 @@ internal object TentsTeacher {
             val around = TentsLogic.around(n, t).filter { free(it) }
             if (around.isNotEmpty()) yield(Step(
                 TOUCH, GRASS, around.toSet(), setOf(t) + around, setOf(t),
-                "Look around this tent.",
-                "Tents never touch, not even at a corner, so every free square around this tent is grass.",
+                message("teacher.tents.facts.7"),
+                message("teacher.tents.facts.8"),
             ))
         }
 
@@ -305,8 +313,8 @@ internal object TentsTeacher {
             val choices = choices(t)
             if (choices.size == 1 && st[choices[0]] == 0) yield(Step(
                 ONE_SPOT, TENT, choices.toSet(), setOf(t, choices[0]), setOf(t),
-                "Look at this tree.",
-                "This tree needs a tent beside it, and every other square next to it is a tree, off the board or ruled out. Only this one is left.",
+                message("teacher.tents.facts.9"),
+                message("teacher.tents.facts.10"),
             ))
         }
 
@@ -317,8 +325,8 @@ internal object TentsTeacher {
             val xs = st.indices.filter { x -> free(x) && x !in choices && choices.all { it in TentsLogic.around(n, x) } }
             if (xs.isNotEmpty()) yield(Step(
                 SHARED, GRASS, xs.toSet(), setOf(t) + choices + xs, setOf(t) + choices,
-                "Where can this tree's tent go?",
-                "This tree's tent has to go on one of the marked squares. A tent in the crossed one would touch every one of them, so it is grass.",
+                message("teacher.tents.facts.11"),
+                message("teacher.tents.facts.12"),
             ))
         }
 
@@ -331,8 +339,8 @@ internal object TentsTeacher {
                 val owners = near.flatMap { t -> TentsLogic.orth(n, t).filter { owned(it) } }
                 yield(Step(
                     SERVED, GRASS, setOf(x), setOf(x) + near, near.toSet() + owners,
-                    "Does a tree beside this square still need a tent?",
-                    "${if (near.size == 1) "The tree" else "The trees"} beside this square already ${if (near.size == 1) "has its tent" else "have their tents"}, so a tent here would have no tree of its own. It is grass.",
+                    message("teacher.tents.facts.13"),
+                    message("teacher.tents.facts.14", "value1" to (if (near.size == 1) message("teacher.tents.facts.extra.6") else message("teacher.tents.facts.extra.7")), "value2" to (if (near.size == 1) message("teacher.tents.facts.extra.8") else message("teacher.tents.facts.extra.9"))),
                 ))
             }
         }

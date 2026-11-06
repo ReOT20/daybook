@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -68,7 +71,6 @@ import com.joebywan.daybook.core.highlightGrid
 import com.joebywan.daybook.core.keepClear
 import com.joebywan.daybook.core.movedCursor
 import com.joebywan.daybook.core.neighbours8
-import com.joebywan.daybook.core.plural
 import com.joebywan.daybook.ui.LocalReducedMotion
 import com.joebywan.daybook.ui.MoveFeel
 import com.joebywan.daybook.ui.feelSquare
@@ -93,18 +95,18 @@ import kotlin.math.sqrt
 object Mines : PuzzleType {
 
     override val id = "mines"
-    override val displayName = "Mines"
-    override val tagline = "Every safe square, found without a guess"
+    override val displayName get() = text("puzzle.mines.name")
+    override val tagline get() = text("puzzle.mines.tagline")
     override val accent = 0xFFD45C91
-    override val rules = listOf(
-        "Each number counts the mines in the squares touching it, corners included.",
-        "Reveal every square without a mine. Reveal a mine and the board is lost: try it again from the start.",
-        "Flag a square you are sure holds a mine. A flag is your note, never checked, and keeps its square from being revealed by mistake.",
-        "A tap uses the tool under the board, Reveal or Flag; a long press uses the other. Every board can be cleared without a guess.",
-        "Tap a number whose flags already match it to reveal all its other squares at once. A wrong flag there opens a mine and loses the board.",
+    override val rules get() = listOf(
+        text("puzzle.mines.rule.1"),
+        text("puzzle.mines.rule.2"),
+        text("puzzle.mines.rule.3"),
+        text("puzzle.mines.rule.4"),
+        text("puzzle.mines.rule.5"),
     )
 
-    override val keyboardHelp = listOf("Arrows move, Space or Enter reveals (on a number, reveals around it), F flags or unflags.")
+    override val keyboardHelp get() = listOf(text("puzzle.mines.keyboard.1"))
 
     /**
      * No undo, on purpose (the owner's call). A reveal is never wrong unless it finds a mine, so undo could only take
@@ -175,20 +177,20 @@ object Mines : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Each number counts the mines in the squares touching it, corners included. Reveal every square without one.",
+                caption = message("puzzle.mines.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(SECOND_ONE), soft = around(SECOND_ONE)),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "This 1 has only one hidden square beside it, so that square is a mine: reveal it and the board is lost. Flag it: long-press it, or choose Flag below and tap it.",
+                caption = message("puzzle.mines.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(BUMP), soft = setOf(FIRST_ONE)),
                 accepts = { it is MinesState && it.marks == s1.marks && it.bumps.isEmpty() },
-                retry = "Long-press the glowing square.",
-                done = "Flagged. A flag is your note: that square can't be revealed by mistake.",
+                retry = message("puzzle.mines.tutorial.2.retry"),
+                done = message("puzzle.mines.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "This 1 touches that mine, so its other hidden squares are safe. Tap each glowing square to reveal it.",
+                caption = message("puzzle.mines.tutorial.3.caption"),
                 glow = { now ->
                     BoardHighlight(strong = SAFE.filter { !(now as MinesState).isOpen(it) }.toSet(), soft = setOf(SECOND_ONE, BUMP))
                 },
@@ -201,30 +203,30 @@ object Mines : PuzzleType {
                         else -> TutorialStep.PROGRESS
                     }
                 },
-                retry = "Tap the glowing square.",
-                done = "Safe. A number with all its mines found frees the rest.",
+                retry = message("puzzle.mines.tutorial.3.retry"),
+                done = message("puzzle.mines.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = s2,
-                caption = "This 1 has one hidden square left, so it is a mine too. Flag it.",
+                caption = message("puzzle.mines.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(FLAG_SQUARE), soft = setOf(THIRD_ONE)),
                 accepts = { it is MinesState && it.marks == s3.marks && it.bumps == s3.bumps },
-                retry = "Long-press the glowing square.",
-                done = "Flagged.",
+                retry = message("puzzle.mines.tutorial.4.retry"),
+                done = message("puzzle.mines.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = s3,
-                caption = "This 1's mine is flagged, so its other squares are safe. Tap the 1 itself to reveal them all at once.",
+                caption = message("puzzle.mines.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(CHORD_ONE), soft = CHORDED.toSet() + FLAG_SQUARE),
                 accepts = { it is MinesState && it.marks == s4.marks && it.bumps == s4.bumps },
-                retry = "Tap the glowing 1.",
-                done = "All three at once. A wrong flag would open a mine here, so flag with care.",
+                retry = message("puzzle.mines.tutorial.5.retry"),
+                done = message("puzzle.mines.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = s4,
-                caption = "Your turn: reveal every safe square. Stuck? Hint shows you why.",
+                caption = message("puzzle.mines.tutorial.6.caption"),
                 freePlay = true,
-                done = "Cleared. That's all there is to it.",
+                done = message("puzzle.mines.tutorial.6.done"),
             ),
         )
     }
@@ -492,14 +494,14 @@ object Mines : PuzzleType {
         val scheme = MaterialTheme.colorScheme
         if (s.failed) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Mine hit", style = MaterialTheme.typography.bodyMedium, color = scheme.error, maxLines = 1)
+                Text(text("puzzle.mines.board.hit"), style = MaterialTheme.typography.bodyMedium, color = scheme.error, maxLines = 1)
                 // Not on a board that takes no moves: Training's verdict ends a practice board with its own Next board.
-                if (interactive) FilledTonalButton(onClick = { onState(s.retry()) }) { Text("Try again", maxLines = 1) }
+                if (interactive) FilledTonalButton(onClick = { onState(s.retry()) }) { Text(text("puzzle.mines.board.retry"), maxLines = 1) }
             }
         } else {
             val left = s.minesLeft
             Text(
-                if (s.solved) "All clear" else "${plural(left, "mine")} left",
+                if (s.solved) text("puzzle.mines.board.clear") else text("puzzle.mines.board.remaining", "count" to (left)),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
                 maxLines = 1,
@@ -518,7 +520,7 @@ object Mines : PuzzleType {
         val dark = BoardHues.isDark(scheme)
         PenRow(
             "$REVEAL_PEN$FLAG_PEN", if (flagPen) FLAG_PEN else REVEAL_PEN, enabled, vivid(accent),
-            { if (it == FLAG_PEN) "Flag" else "Reveal" }, { onPen(it == FLAG_PEN) }, vertical,
+            { if (it == FLAG_PEN) text("puzzle.mines.board.flag") else text("puzzle.mines.board.reveal") }, { onPen(it == FLAG_PEN) }, vertical,
         ) { option ->
             val u = size.minDimension
             if (option == FLAG_PEN) drawFlag(0f, 0f, u, BoardHues.ink(BoardHues.HUE_PAIRS[0].second, dark), scheme.onSurface.copy(alpha = 0.7f))

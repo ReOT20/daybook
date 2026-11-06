@@ -1,5 +1,9 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,10 +69,11 @@ data class CodewordState(
     val letters: List<Int>,
     val selected: Int? = null,
     override val moves: Int = 0,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
     /** The rules, not a comparison with [solution]: see [CodewordLogic.isSolved]. */
-    override val solved: Boolean get() = CodewordLogic.isSolved(size, numbers, letters)
+    override val solved: Boolean get() = CodewordLogic.isSolved(size, numbers, letters, contentLanguage)
 
     /** Gives [number] the letter [letter], or takes it away with [EMPTY]. `this` when nothing changes or it is given. */
     fun withLetter(number: Int, letter: Int): CodewordState =
@@ -92,18 +97,18 @@ private const val LETTERS_A_ROW = 13
 object Codeword : PuzzleType {
 
     override val id = "codeword"
-    override val displayName = "Codeword"
-    override val tagline = "Each number is a letter. Crack the grid."
+    override val displayName get() = text("puzzle.codeword.name")
+    override val tagline get() = text("puzzle.codeword.tagline")
     override val accent = 0xFF0F9B89
-    override val rules = listOf(
-        "Every number stands for one letter, the same letter wherever it appears. Different numbers are different letters.",
-        "Every word across and down is a real word.",
-        "A few letters are given. Find the rest: there is exactly one way.",
-        "Tap a square or a number, then a letter. Tap the letter again to clear it.",
-        "A word that no word can match any more, or a letter on two numbers, turns red.",
+    override val rules get() = listOf(
+        text("puzzle.codeword.rule.1"),
+        text("puzzle.codeword.rule.2"),
+        text("puzzle.codeword.rule.3"),
+        text("puzzle.codeword.rule.4"),
+        text("puzzle.codeword.rule.5"),
     )
 
-    override val keyboardHelp = listOf("With a number picked, type its letter (again to clear it); Backspace clears, arrows walk the numbers.")
+    override val keyboardHelp get() = listOf(text("puzzle.codeword.keyboard.1"))
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState = CodewordLogic.generate(seed, difficulty)
 
@@ -111,7 +116,7 @@ object Codeword : PuzzleType {
     override fun neededTechnique(state: PuzzleState): String? {
         val s = state as CodewordState
         val start = s.letters.indices.map { if (it + 1 in s.given) s.solution[it] else EMPTY }
-        return CodewordTeacher.walk(s.size, s.numbers, start)?.maxByOrNull { CodewordTeacher.TECHNIQUES.indexOf(it.technique) }?.technique
+        return CodewordTeacher.walk(s.size, s.numbers, start, contentLanguage = s.contentLanguage)?.maxByOrNull { CodewordTeacher.TECHNIQUES.indexOf(it.technique) }?.technique
     }
 
     override fun withoutSelection(state: PuzzleState): PuzzleState =
@@ -129,8 +134,8 @@ object Codeword : PuzzleType {
         val squares = s.numbers.indices.filter { s.numbers[it] == number }.toSet()
         return Deduction(
             technique = step.technique,
-            nudge = step.nudge,
-            explanation = step.explanation,
+            nudge = step.nudgeMessage,
+            explanation = step.explanationMessage,
             focus = step.focus,
             cited = step.cited,
             targets = squares + CodewordLogic.key(number) + CodewordLogic.letterKey(if (mistake) wrong else letter),
@@ -165,7 +170,7 @@ object Codeword : PuzzleType {
         s.size, square, TEXT, vivid(accent),
         black = { s.numbers[it] == 0 },
         number = { s.numbers[it] },
-        letter = { i -> s.letters[s.numbers[i] - 1].takeIf { it != EMPTY }?.let(::up) },
+        letter = { i -> s.letters[s.numbers[i] - 1].takeIf { it != EMPTY }?.let { up(it, s.contentLanguage) } },
         tint = tint,
         letterColour = { letterColour(s.numbers[it]) },
         modifier = modifier,
@@ -205,10 +210,13 @@ object Codeword : PuzzleType {
         val ink = BoardHues.ink(hueB, dark)
         val (highlight, glow, pulse) = rememberHintPaint()
         val k = s.letters.size
+        val alphabet = WordContent.alphabet(s.contentLanguage)
+        val lettersPerRow = if (s.contentLanguage == "en") LETTERS_A_ROW else 11
+        val letterRows = (alphabet.length + lettersPerRow - 1) / lettersPerRow
 
         // A broken rule shows after a pause and goes at once when mended; held here, not in the state (undo).
         val runs = remember(s.size, s.numbers) { CodewordLogic.runs(s.size, s.numbers) }
-        val live = remember(s.letters) { CodewordLogic.conflicts(s.size, s.numbers, s.letters) }
+        val live = remember(s.letters) { CodewordLogic.conflicts(s.size, s.numbers, s.letters, s.contentLanguage) }
         val settled = rememberSettled(live, reset = s.numbers, change = s.letters)
         val shown = CodewordLogic.Conflicts(live.numbers intersect settled.numbers, live.runs intersect settled.runs)
         val red = shown.runs.flatMap { runs[it].toList() }.toSet()
@@ -216,16 +224,21 @@ object Codeword : PuzzleType {
         val cells = s.numbers.map { if (it == 0) null else s.letters[it - 1] }
         val feel = rememberMoveFeel(cells, runs) { r ->
             val word = runs[r].map { s.letters[s.numbers[it] - 1] }
-            word.none { it == EMPTY } && CodewordWords.isWord(CharArray(word.size) { 'a' + word[it] }.concatToString())
+            word.none { it == EMPTY } && CodewordWords.isWord(CharArray(word.size) { alphabet[word[it]] }.concatToString(), s.contentLanguage)
         }
-        val holder = IntArray(26) { 0 }.also { h -> s.letters.forEachIndexed { i, l -> if (l != EMPTY) h[l] = i + 1 } }
+        val holder = IntArray(alphabet.length) { 0 }.also { h -> s.letters.forEachIndexed { i, l -> if (l != EMPTY) h[l] = i + 1 } }
 
         BoxWithConstraints(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp)
-                .boardKeys(interactive) { key, _, repeat ->
-                    val action = codewordKeyAction(key) ?: return@boardKeys false
+                .boardKeys(interactive, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                    val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                    val index = letter?.let { alphabet.indexOf(it) } ?: -1
+                    if (index < 0 || s.selected == null) false
+                    else { if (!repeat) s.applyKey(CodewordKeyAction.Letter(index))?.let(onState); true }
+                } else null) { key, _, repeat ->
+                    val action = codewordKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                     // With nothing picked a letter is left to the play screen, so H still asks for a hint there.
                     if (action is CodewordKeyAction.Letter && s.selected == null) return@boardKeys false
                     if (!repeat || action is CodewordKeyAction.Move) s.applyKey(action)?.let(onState)
@@ -233,8 +246,8 @@ object Codeword : PuzzleType {
                 },
             contentAlignment = Alignment.Center,
         ) {
-            val numberRows = if (k > LETTERS_A_ROW) 2 else 1
-            val controls = NUMBER_KEY_HEIGHT * numberRows + ROW_GAP * (numberRows - 1) + LETTER_KEY_HEIGHT * 2 + ROW_GAP + GAP * 2
+            val numberRows = (k + LETTERS_A_ROW - 1) / LETTERS_A_ROW
+            val controls = NUMBER_KEY_HEIGHT * numberRows + ROW_GAP * (numberRows - 1) + LETTER_KEY_HEIGHT * letterRows + ROW_GAP * (letterRows - 1) + GAP * 2
             // Sized from both axes (CLAUDE.md): the grid leaves room for the number key and the letters.
             val room = if (constraints.hasBoundedHeight) (maxHeight - controls).coerceAtLeast(0.dp) else maxWidth
             val square = minOf(maxWidth / s.size, room / s.size, MAX_SQUARE)
@@ -292,7 +305,7 @@ object Codeword : PuzzleType {
                             ) {
                                 Text(n.toString(), fontSize = 9.sp, lineHeight = 10.sp, color = scheme.onSurfaceVariant)
                                 Text(
-                                    if (l == EMPTY) "·" else up(l),
+                                    if (l == EMPTY) "·" else up(l, s.contentLanguage),
                                     fontSize = 14.sp,
                                     lineHeight = 16.sp,
                                     fontWeight = if (given) FontWeight.Bold else FontWeight.Medium,
@@ -312,9 +325,10 @@ object Codeword : PuzzleType {
 
                 // The letters, A to Z: one another number holds is greyed with that number under it, never refused.
                 Column(Modifier.fillMaxWidth().keepClear(), verticalArrangement = Arrangement.spacedBy(ROW_GAP)) {
-                    for (row in 0 until 2) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                        for (slot in 0 until LETTERS_A_ROW) {
-                            val l = row * LETTERS_A_ROW + slot
+                    for (row in 0 until letterRows) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        for (slot in 0 until lettersPerRow) {
+                            val l = row * lettersPerRow + slot
+                            if (l >= alphabet.length) { Spacer(Modifier.weight(1f)); continue }
                             val owner = holder[l].takeIf { it != 0 && it != s.selected }
                             val at = s.selected
                             Box(
@@ -337,7 +351,7 @@ object Codeword : PuzzleType {
                                     },
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(up(l), fontSize = 16.sp, color = if (owner != null) scheme.outline else scheme.onSurface)
+                                Text(up(l, s.contentLanguage), fontSize = 16.sp, color = if (owner != null) scheme.outline else scheme.onSurface)
                                 if (owner != null) Text(
                                     owner.toString(),
                                     Modifier.align(Alignment.BottomCenter).padding(bottom = 1.dp),
@@ -412,36 +426,34 @@ object Codeword : PuzzleType {
         listOf(
             TutorialFrame(
                 state = b0,
-                caption = "Each number is a letter, the same one everywhere, and no two numbers share one. T and E are given. " +
-                    "Every word across and down is a real word.",
+                caption = message("puzzle.codeword.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = squaresOf(t) + squaresOf(e)),
             ),
             TutorialFrame(
                 state = b0,
-                caption = "The top word reads $a T E. Only ATE fits, so $a is A. Tap one of its squares, then A.",
+                caption = message("puzzle.codeword.tutorial.2.caption", "a" to (a)),
                 glow = { s ->
                     if (pa.stage(s) < 0) BoardHighlight(strong = TUTORIAL_ATE)
                     else BoardHighlight(strong = setOf(CodewordLogic.letterKey(0)), soft = squaresOf(a))
                 },
                 steps = pa.steps,
-                retry = "Tap a glowing square, then the A.",
-                done = "Every $a is A.",
+                retry = message("puzzle.codeword.tutorial.2.retry"),
+                done = message("puzzle.codeword.tutorial.2.done", "a" to (a)),
             ),
             TutorialFrame(
                 state = tutorialBoard(oneA, selected = a),
-                caption = "The middle row reads E $x T $r A. Only EXTRA fits, so $x is X. Tap $x in the key under the grid, then X.",
+                caption = message("puzzle.codeword.tutorial.3.caption", "x" to (x), "r" to (r)),
                 glow = { s ->
                     if (px.stage(s) < 0) BoardHighlight(strong = setOf(CodewordLogic.key(x)), soft = TUTORIAL_EXTRA)
                     else BoardHighlight(strong = setOf(CodewordLogic.letterKey('x' - 'a')), soft = squaresOf(x))
                 },
                 steps = px.steps,
-                retry = "Tap the glowing $x, then the X.",
-                done = "Every $x is X.",
+                retry = message("puzzle.codeword.tutorial.3.retry", "x" to (x)),
+                done = message("puzzle.codeword.tutorial.3.done", "x" to (x)),
             ),
             TutorialFrame(
                 state = tutorialBoard(twoX, selected = x),
-                caption = "A letter on two numbers turns red. Give $r the X that $x has: tap $r in the key, then X. " +
-                    "Then tap X again to clear it.",
+                caption = message("puzzle.codeword.tutorial.4.caption", "r" to (r), "x" to (x)),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(CodewordLogic.key(r)), soft = squaresOf(x))
@@ -450,14 +462,14 @@ object Codeword : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap the glowing $r, then the X, then the X again.",
-                done = "Cleared. Tapping the letter again takes it out.",
+                retry = message("puzzle.codeword.tutorial.4.retry", "r" to (r)),
+                done = message("puzzle.codeword.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(twoX, selected = r),
-                caption = "Your turn: crack the rest. Stuck? Hint shows you why.",
+                caption = message("puzzle.codeword.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved: ATE, PEAT, EXTRA, TEEN and NET.",
+                done = message("puzzle.codeword.tutorial.5.done"),
             ),
         )
     }

@@ -2,16 +2,10 @@
 
 ## Russian localization
 
-The first pass translates app navigation, settings, calendar, play controls, results/share cards and reminders
-(`docs/LOCALIZATION.md`). The generators, saved identities and English content remain unchanged. Still owed:
-- Extract and translate puzzle names, taglines, rules, tier descriptions and finished-frame notes.
-- Translate teachers, technique names, walkthrough frames and training/achievement content as whole messages;
-  keep technique ids and earning rules stable. English-only achievement prose must keep English tier names.
-- Russian word games need their own screened/licensed corpora, clues, keyboards, alphabet domains, difficulty
-  validation and language-aware board/save identity; never replace or reorder the shipped English lists.
-- Check native Russian Android layouts on phones/tablets, both orientations and large text. Headless
-  Chromium/WebKit layout and offline glyph-request coverage is recorded in `docs/LOCALIZATION.md`.
-  No language picker or live language switching is implemented.
+The shared catalog, language pickers, translated guidance and seven separate Russian word games are
+being validated together. The active acceptance list and remaining evidence are in
+[`LOCALIZATION_PROGRESS.md`](LOCALIZATION_PROGRESS.md). Keep original English pins, vocabulary and saves
+unchanged; documentation and generation details are in [`LOCALIZATION.md`](LOCALIZATION.md).
 
 
 ## Arcade: the rest of the boards

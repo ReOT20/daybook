@@ -1,0 +1,163 @@
+{
+  "count.hints": {
+    "one": "{count} подсказка",
+    "few": "{count} подсказки",
+    "many": "{count} подсказок",
+    "other": "{count} подсказок"
+  },
+  "count.bonus_words": {
+    "one": "{count} бонусное слово",
+    "few": "{count} бонусных слова",
+    "many": "{count} бонусных слов",
+    "other": "{count} бонусных слов"
+  },
+  "count.day_streak": {
+    "one": "серия: {count} день",
+    "few": "серия: {count} дня",
+    "many": "серия: {count} дней",
+    "other": "серия: {count} дней"
+  },
+  "count.puzzles": {
+    "one": "{count} задача",
+    "few": "{count} задачи",
+    "many": "{count} задач",
+    "other": "{count} задач"
+  },
+  "count.days": {
+    "one": "{count} день",
+    "few": "{count} дня",
+    "many": "{count} дней",
+    "other": "{count} дней"
+  },
+  "count.daily_boards": {
+    "one": "{count} ежедневная головоломка",
+    "few": "{count} ежедневные головоломки",
+    "many": "{count} ежедневных головоломок",
+    "other": "{count} ежедневных головоломок"
+  },
+  "count.solves": {
+    "one": "{count} решение",
+    "few": "{count} решения",
+    "many": "{count} решений",
+    "other": "{count} решений"
+  },
+  "list.and": " и ",
+  "number.small.0": "0",
+  "number.small.1": "1",
+  "number.small.2": "2",
+  "number.small.3": "3",
+  "number.small.4": "4",
+  "number.small.5": "5",
+  "number.small.6": "6",
+  "number.small.7": "7",
+  "number.small.8": "8",
+  "number.small.9": "9",
+  "number.small.10": "10",
+  "number.small.11": "11",
+  "level.tier_count": "{number} × {tier}",
+  "difficulty.standard": "Обычный",
+  "difficulty.short.standard": "Обыч.",
+  "difficulty.hard": "Сложный",
+  "difficulty.short.hard": "Сложн.",
+  "difficulty.expert": "Эксперт",
+  "difficulty.short.expert": "Эксп.",
+  "archive.days_unlocked": {
+    "one": "{count} день — всё доступно",
+    "few": "{count} дня — всё доступно",
+    "many": "{count} дней — всё доступно",
+    "other": "{count} дней — всё доступно"
+  },
+  "reminder.hour.0": "00:00",
+  "reminder.hour.1": "01:00",
+  "reminder.hour.2": "02:00",
+  "reminder.hour.3": "03:00",
+  "reminder.hour.4": "04:00",
+  "reminder.hour.5": "05:00",
+  "reminder.hour.6": "06:00",
+  "reminder.hour.7": "07:00",
+  "reminder.hour.8": "08:00",
+  "reminder.hour.9": "09:00",
+  "reminder.hour.10": "10:00",
+  "reminder.hour.11": "11:00",
+  "reminder.hour.12": "12:00",
+  "reminder.hour.13": "13:00",
+  "reminder.hour.14": "14:00",
+  "reminder.hour.15": "15:00",
+  "reminder.hour.16": "16:00",
+  "reminder.hour.17": "17:00",
+  "reminder.hour.18": "18:00",
+  "reminder.hour.19": "19:00",
+  "reminder.hour.20": "20:00",
+  "reminder.hour.21": "21:00",
+  "reminder.hour.22": "22:00",
+  "reminder.hour.23": "23:00",
+  "reminder.hours_left": {
+    "one": "До конца дня осталось примерно {number} час",
+    "few": "До конца дня осталось примерно {number} часа",
+    "many": "До конца дня осталось примерно {number} часов",
+    "other": "До конца дня осталось примерно {number} часов"
+  },
+  "welcome.intro": {
+    "one": "Каждый день — новые задания: {count} вид логических головоломок. Бесплатно, без рекламы и регистрации. Всё работает без интернета.",
+    "few": "Каждый день — новые задания: {count} вида логических головоломок. Бесплатно, без рекламы и регистрации. Всё работает без интернета.",
+    "many": "Каждый день — новые задания: {count} видов логических головоломок. Бесплатно, без рекламы и регистрации. Всё работает без интернета.",
+    "other": "Каждый день — новые задания: {count} видов логических головоломок. Бесплатно, без рекламы и регистрации. Всё работает без интернета."
+  },
+  "share.next.daily": "завтра",
+  "share.next.random": "в следующий раз",
+  "share.guess_nudge": {
+    "one": "Без подсказок, {count} попытка. Сможете меньше {next}?",
+    "few": "Без подсказок, {count} попытки. Сможете меньше {next}?",
+    "many": "Без подсказок, {count} попыток. Сможете меньше {next}?",
+    "other": "Без подсказок, {count} попыток. Сможете меньше {next}?"
+  },
+  "share.misses": {
+    "one": "{count} неудачный выбор",
+    "few": "{count} неудачных выбора",
+    "many": "{count} неудачных выборов",
+    "other": "{count} неудачных выборов"
+  },
+  "share.sets_undone": {
+    "one": "отменено наборов: {count}",
+    "few": "отменено наборов: {count}",
+    "many": "отменено наборов: {count}",
+    "other": "отменено наборов: {count}"
+  },
+  "share.off_nudge": "Без подсказок, {off}. Сможете меньше {next}?",
+  "share.moves_undone": {
+    "one": "Без подсказок, отменено ходов: {count}. Сможете меньше {next}?",
+    "few": "Без подсказок, отменено ходов: {count}. Сможете меньше {next}?",
+    "many": "Без подсказок, отменено ходов: {count}. Сможете меньше {next}?",
+    "other": "Без подсказок, отменено ходов: {count}. Сможете меньше {next}?"
+  },
+  "share.steps_undone": {
+    "one": "Без подсказок, отменено шагов: {count}. Сможете меньше {next}?",
+    "few": "Без подсказок, отменено шагов: {count}. Сможете меньше {next}?",
+    "many": "Без подсказок, отменено шагов: {count}. Сможете меньше {next}?",
+    "other": "Без подсказок, отменено шагов: {count}. Сможете меньше {next}?"
+  },
+  "share.steps_par": {
+    "one": "   {count} шаг · минимум {par}",
+    "few": "   {count} шага · минимум {par}",
+    "many": "   {count} шагов · минимум {par}",
+    "other": "   {count} шагов · минимум {par}"
+  },
+  "share.par_nudge": "Без подсказок и отмен. Минимум — {par}: получится {next}?",
+  "share.bumps": {
+    "one": "{count} столкновение. Сможете без них {next}?",
+    "few": "{count} столкновения. Сможете без них {next}?",
+    "many": "{count} столкновений. Сможете без них {next}?",
+    "other": "{count} столкновений. Сможете без них {next}?"
+  },
+  "share.header": "Daybook · {puzzle} · {tier} · {date}{suffix}",
+  "share.random_board": "случайное поле",
+  "share.hints_nudge.daily": "Подсказки помогли справиться. Попробуйте завтра обойтись меньшим числом подсказок.",
+  "share.hints_nudge.random": "Подсказки помогли справиться. Попробуйте в следующий раз обойтись меньшим числом подсказок.",
+  "share.remaining": {
+    "one": "Осталось решить {names}, чтобы завершить все ежедневные задачи на сложности «{tier}».",
+    "few": "Осталось решить {names}, чтобы завершить все ежедневные задачи на сложности «{tier}».",
+    "many": "Осталось решить {names}, чтобы завершить все ежедневные задачи на сложности «{tier}».",
+    "other": "Осталось решить {names}, чтобы завершить все ежедневные задачи на сложности «{tier}»."
+  },
+  "week.summary": "Сыграно: {days}. Решено: {boards}."
+}

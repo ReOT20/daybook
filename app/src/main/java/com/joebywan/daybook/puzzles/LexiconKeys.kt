@@ -17,7 +17,7 @@ sealed interface LexiconKeyAction {
 }
 
 /** The action for [key], or null for a key the board does not use. The caller has already ruled out chords. */
-fun lexiconKeyAction(key: Key): LexiconKeyAction? = letterKey(key)?.let { LexiconKeyAction.Letter(it) } ?: when {
+fun lexiconKeyAction(key: Key, contentLanguage: String = "en"): LexiconKeyAction? = (if (contentLanguage == "en") letterKey(key) else null)?.let { LexiconKeyAction.Letter(it) } ?: when {
     isEnterKey(key) -> LexiconKeyAction.Enter
     isEraseKey(key) -> LexiconKeyAction.Backspace
     else -> null

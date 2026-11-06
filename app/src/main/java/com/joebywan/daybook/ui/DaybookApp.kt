@@ -1,6 +1,8 @@
 package com.joebywan.daybook.ui
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.savedText
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.Training
 import com.joebywan.daybook.core.TrainingRecord
@@ -460,7 +462,7 @@ private fun DaybookScreens(
                 onThree = { puzzleId -> route = Route.Play(puzzleId, difficulty, today) },
                 threeCard = threeShareCard(
                     three, completions, today, difficulty, formatDate(today, SHARE_DATE),
-                    Stats.streak(completions, today).current, ::formatClock,
+                    Stats.streak(completions, today).current, ::formatClock, dateValue = today,
                 ),
                 puzzles = puzzles,
                 inProgress = { inProgress.value },
@@ -515,7 +517,7 @@ private fun DaybookScreens(
                     else TechniquePractice(
                         course, current.technique, trained, pass, onBack,
                         // Opened by "Practise this" or "Practise", back returns to the game or the Techniques page.
-                        done = if (current.fromHint) tr("Continue", "Продолжить") else tr("Back to ${course.puzzle.displayName} training", "К тренировке: ${course.puzzle.displayName}"),
+                        done = if (current.fromHint) text("ui.daybook_app.continue") else text("ui.daybook_app.back_to_training", "value1" to (course.puzzle.displayName)),
                     )
                 }
             }
@@ -675,7 +677,7 @@ private fun DaybookScreens(
                         val praise = finishPraise(completions, solve, today, puzzle.displayName, taught, needed)
                         val card = shareCard(
                             puzzle, difficulty, current.day?.let { formatDate(it, SHARE_DATE) },
-                            formatClock(seconds), streak, state, log, hints, level,
+                            formatClock(seconds), streak, state, log, hints, level, dateValue = current.day,
                         )
                         // Kept for the stats screen: a random board's save goes when it is solved, and with it this card.
                         scope.launch {
@@ -696,15 +698,17 @@ private fun DaybookScreens(
                                 ::formatClock,
                             )
                             current.day == today && puzzle.id in three ->
-                                threeShareCard(three, completions + solve, today, difficulty, formatDate(today, SHARE_DATE), streak, ::formatClock)
+                                threeShareCard(three, completions + solve, today, difficulty, formatDate(today, SHARE_DATE), streak, ::formatClock, dateValue = today)
                                     ?.takeIf { three.all { id -> id == puzzle.id || (id to difficulty) in doneToday } }
                             else -> null
                         }
                         praise.copy(
-                            title = if (levelDone) tr("Level $level done", "Уровень $level пройден") else praise.title,
+                            title = if (levelDone) text("ui.daybook_app.level_done", "level" to (level)) else praise.title,
+                            titleSource = if (levelDone) savedText("ui.daybook_app.level_done", "level" to requireNotNull(level)) else praise.titleSource,
                             share = card,
                             setShare = setShare,
-                            setShareLabel = if (level != null) tr("Share level", "Уровень") else tr("Share three", "Три за день"),
+                            setShareLabel = if (level != null) text("ui.daybook_app.share_level") else text("ui.daybook_app.share_three"),
+                            setShareLabelSource = savedText(if (level != null) "ui.daybook_app.share_level" else "ui.daybook_app.share_three"),
                         )
                     },
                     options = options,

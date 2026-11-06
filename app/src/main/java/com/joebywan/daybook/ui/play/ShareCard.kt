@@ -1,11 +1,13 @@
 package com.joebywan.daybook.ui.play
 
-import com.joebywan.daybook.core.i18n.tr
-import com.joebywan.daybook.core.i18n.russianPlural
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.SavedText
+import com.joebywan.daybook.core.i18n.SavedArgument
+import com.joebywan.daybook.core.i18n.savedText
+
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.PuzzleType
-import com.joebywan.daybook.core.plural
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.LevelSolve
 import com.joebywan.daybook.puzzles.ChessState
@@ -103,7 +105,10 @@ enum class Mark(val text: String) {
 
 /** A line of the graphic: [marks], then a red square when a hint came before it ([hinted]), then [tail] as written. */
 @Serializable
-data class ShareLine(val marks: List<Mark>, val hinted: Boolean = false, val tail: String = "") {
+data class ShareLine(
+    val marks: List<Mark>, val hinted: Boolean = false, val tail: String = "", val tailSource: SavedText? = null,
+) {
+    fun localized(): ShareLine = copy(tail = tailSource?.resolve() ?: tail)
     fun text(spaced: Boolean): String =
         marks.joinToString(if (spaced) " " else "") { it.text } + (if (hinted) " " + Mark.RED.text else "") + tail
 }
@@ -118,16 +123,61 @@ data class ShareCard(
     val nudge: String,
     /** Tower's pips are spaced apart in the text. */
     val spaced: Boolean = false,
+    /** Legacy cards keep their original snapshot; only new cards have facts that can be translated safely. */
+    val source: ShareCardText? = null,
 ) {
+    fun localized(): ShareCard = source?.let {
+        // Restored metadata may name a catalog key from a newer app; the snapshot is still usable.
+        runCatching { copy(header = it.header.resolve(), lines = lines.map { line -> line.localized() }, stats = it.stats.resolve(),
+            key = it.key.map { (mark, name) -> mark to name.resolve() }, nudge = it.nudge.resolve()) }.getOrDefault(this)
+    } ?: this
+
     val text: String
-        get() = buildString {
-            append(header).append('\n')
-            lines.forEach { append(it.text(spaced)).append('\n') }
-            append(stats).append('\n')
-            append(key.joinToString("  ") { "${it.first.text} ${it.second}" }).append('\n')
-            append(SHARE_URL)
+        get() {
+            val card = localized()
+            return buildString {
+                append(card.header).append('\n')
+                card.lines.forEach { append(it.text(card.spaced)).append('\n') }
+                append(card.stats).append('\n')
+                append(card.key.joinToString("  ") { "${it.first.text} ${it.second}" }).append('\n')
+                append(SHARE_URL)
+            }
         }
 }
+
+/** Spoiler-free presentation facts only: no board, answer, play history or reward calculation. */
+@Serializable
+data class ShareCardText(
+    val header: SavedText, val stats: ShareStats, val key: List<Pair<Mark, SavedText>>, val nudge: SavedText,
+)
+
+@Serializable
+data class ShareStats(
+    val clock: String? = null, val solved: Int? = null, val hints: Int? = null, val bonus: Int = 0, val streak: Int = 0,
+) {
+    fun resolve(): String = buildList {
+        clock?.let { add(it) }
+        solved?.let { add(text("ui.share_card.solved_today", "value1" to it)) }
+        hints?.let { add(text("count.hints", "count" to it)) }
+        if (bonus > 0) add("+" + text("count.bonus_words", "count" to bonus))
+        if (streak >= 2) add(text("count.day_streak", "count" to streak))
+    }.joinToString(" · ")
+}
+
+private fun renderedShareCard(
+    header: SavedText, lines: List<ShareLine>, stats: ShareStats, key: List<Pair<Mark, SavedText>>,
+    nudge: SavedText, spaced: Boolean = false,
+): ShareCard = ShareCard(header.resolve(), lines, stats.resolve(), key.map { (mark, name) -> mark to name.resolve() },
+    nudge.resolve(), spaced, ShareCardText(header, stats, key, nudge))
+
+private fun puzzleNames(
+    ids: List<String>, nameOf: (String) -> String = { PuzzleRegistry.byId(it)?.displayName ?: it },
+    separator: String? = null, sort: Boolean = true,
+): SavedArgument = if (ids.all { PuzzleRegistry.byId(it)?.displayName == nameOf(it) }) SavedArgument.Puzzles(ids, separator, sort)
+    else ids.map(nameOf).let { SavedArgument.Literal((if (sort) it.sorted() else it).joinToString(separator ?: text("list.and"))) }
+
+private fun shareDate(date: String, value: LocalDate?): SavedArgument =
+    value?.let { SavedArgument.Date(it, "d MMM") } ?: SavedArgument.Literal(date)
 
 /** Worst first: a hint, then a taken-back move, then a claim that was not a set. */
 private fun PlayLog.Played.mark() = when {
@@ -150,20 +200,19 @@ internal fun strip(moves: List<PlayLog.Played>): List<Mark> {
 /**
  * The share card for a solve: [puzzle] finished in [state], with the play [log] ([PlayLog]). [date] is the daily's date
  * already formatted, null for a random board or a [level] board (whose header names the level where the daily has the date); [hints] is the game's counted hints (the log may have started part way,
- * from an older save). Spoiler-free: marks, pips and counts only, never a square, piece, word or number of the board.
+ * from an older save). [dateValue] retains a known date for language changes; a caller-supplied label alone stays literal. Spoiler-free: marks, pips and counts only, never a square, piece, word or number of the board.
  */
 fun shareCard(
     puzzle: PuzzleType, tier: Difficulty, date: String?, clock: String, streak: Int,
-    state: PuzzleState, log: String, hints: Int, level: Int? = null,
+    state: PuzzleState, log: String, hints: Int, level: Int? = null, dateValue: LocalDate? = null,
 ): ShareCard {
     val moves = PlayLog.played(log)
     val undone = moves.count { it.undone }
-    var suffix = ""
+    var suffix: Any = ""
     val lines: List<ShareLine>
-    val key: List<Pair<Mark, String>>
+    val key: List<Pair<Mark, SavedText>>
     // A daily comes back tomorrow; a random or level board does not, so its nudges look to the next one instead.
-    val next = if (date != null) "tomorrow" else "next time"
-    val nextRussian = if (date != null) "завтра" else "в следующий раз"
+    val next = savedText(if (date != null) "share.next.daily" else "share.next.random")
     // Rows are the final guesses; the log's live moves are the last of them (an older save logged none before).
     fun hintedRows(guessed: Int): (Int) -> Boolean {
         val live = moves.filter { !it.undone && !it.wrong }
@@ -171,9 +220,9 @@ fun shareCard(
         return { row -> live.getOrNull(row - offset)?.hinted == true }
     }
     fun guessNudge(guessed: Int) =
-        if (guessed == 1) tr("First guess. Nothing to improve on.", "С первой попытки. Лучше уже некуда.") else tr("No hints, ${plural(guessed, "guess", "guesses")}. Fewer $next?", "Без подсказок, $guessed ${russianPlural(guessed, "попытка", "попытки", "попыток")}. Сможете меньше $nextRussian?")
+        if (guessed == 1) savedText("ui.share_card.first_guess_nothing_to_improve_on") else savedText("share.guess_nudge", "count" to (guessed), "next" to (next))
     // Every nudge below is for a solve without hints; one with them gets the same line whatever the puzzle.
-    val own: String
+    val own: SavedText
     when (state) {
         is LexiconState -> {
             val guessed = state.guesses.size
@@ -184,7 +233,7 @@ fun shareCard(
                     when (it) { LexiconMark.CORRECT -> Mark.GREEN; LexiconMark.PRESENT -> Mark.YELLOW; else -> Mark.WHITE }
                 }, hinted(row))
             }
-            key = listOf(Mark.GREEN to tr("right place", "верное место"), Mark.YELLOW to tr("wrong place", "неверное место"), Mark.RED to tr("hint", "подсказка"))
+            key = listOf(Mark.GREEN to savedText("ui.share_card.right_place"), Mark.YELLOW to savedText("ui.share_card.wrong_place"), Mark.RED to savedText("ui.share_card.hint"))
             own = guessNudge(guessed)
         }
         is TowerState -> {
@@ -199,64 +248,62 @@ fun shareCard(
                     hinted(row),
                 )
             }
-            key = listOf(Mark.EXACT to tr("right colour and slot", "верный цвет и место"), Mark.CLOSE to tr("right colour", "верный цвет"), Mark.RED to tr("hint", "подсказка"))
+            key = listOf(Mark.EXACT to savedText("ui.share_card.right_colour_and_slot"), Mark.CLOSE to savedText("ui.share_card.right_colour"), Mark.RED to savedText("ui.share_card.hint"))
             own = guessNudge(guessed)
         }
         is SetsState -> {
             lines = listOf(ShareLine(moves.map { it.mark() }))
-            key = listOf(Mark.GREEN to tr("a set", "набор"), Mark.WHITE to tr("not a set", "не набор"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
+            key = listOf(Mark.GREEN to savedText("ui.share_card.a_set"), Mark.WHITE to savedText("ui.share_card.not_a_set"), Mark.YELLOW to savedText("ui.share_card.taken_back"), Mark.RED to savedText("ui.share_card.hint"))
             val misses = moves.count { it.wrong }
             val off = listOfNotNull(
-                misses.takeIf { it > 0 }?.let { if (it == 1) tr("1 pick that wasn't a set", "1 неудачный выбор") else tr("$it picks that weren't sets", "$it ${russianPlural(it, "неудачный выбор", "неудачных выбора", "неудачных выборов")}") },
-                undone.takeIf { it > 0 }?.let { tr("${plural(it, "set")} taken back", "отменено наборов: $it") },
+                misses.takeIf { it > 0 }?.let { if (it == 1) savedText("ui.share_card.1_pick_that_wasn_t_a") else savedText("share.misses", "count" to (it)) },
+                undone.takeIf { it > 0 }?.let { savedText("share.sets_undone", "count" to (it)) },
             )
-            own = if (off.isEmpty()) tr("Every pick a set. Nothing to improve on.", "Каждый выбор — набор. Лучше уже некуда.") else tr("No hints, ${off.joinToString(" and ")}. Fewer $next?", "Без подсказок, ${off.joinToString(" и ")}. Сможете меньше $nextRussian?")
+            own = if (off.isEmpty()) savedText("ui.share_card.every_pick_a_set_nothing_to") else savedText("share.off_nudge", "off" to SavedArgument.Messages(off), "next" to (next))
         }
         is ChessState -> {
-            suffix = tr(" · mate in ${state.mateIn}", " · мат в ${state.mateIn}")
+            suffix = savedText("ui.share_card.mate_in", "state_mateIn" to (state.mateIn))
             lines = listOf(ShareLine(moves.map { it.mark() }, tail = "#"))
-            key = listOf(Mark.GREEN to tr("move", "ход"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
+            key = listOf(Mark.GREEN to savedText("ui.share_card.move"), Mark.YELLOW to savedText("ui.share_card.taken_back"), Mark.RED to savedText("ui.share_card.hint"))
             own = when {
-                undone > 0 -> tr("No hints, ${plural(undone, "move")} taken back. Fewer $next?", "Без подсказок, отменено ходов: $undone. Сможете меньше $nextRussian?")
-                else -> tr("A clean mate. Nothing to improve on.", "Мат без отмен и подсказок. Лучше уже некуда.")
+                undone > 0 -> savedText("share.moves_undone", "count" to (undone), "next" to (next))
+                else -> savedText("ui.share_card.a_clean_mate_nothing_to_improve")
             }
         }
         is TargetState -> {
             val steps = state.log.size
-            lines = listOf(ShareLine(moves.map { it.mark() }, tail = tr("   ${plural(steps, "step")} · par ${state.par}", "   $steps ${russianPlural(steps, "шаг", "шага", "шагов")} · минимум ${state.par}")))
-            key = listOf(Mark.GREEN to tr("step", "шаг"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
+            val tail = savedText("share.steps_par", "count" to steps, "par" to state.par)
+            lines = listOf(ShareLine(moves.map { it.mark() }, tail = tail.resolve(), tailSource = tail))
+            key = listOf(Mark.GREEN to savedText("ui.share_card.step"), Mark.YELLOW to savedText("ui.share_card.taken_back"), Mark.RED to savedText("ui.share_card.hint"))
             own = when {
-                undone > 0 -> tr("No hints, ${plural(undone, "step")} taken back. Fewer $next?", "Без подсказок, отменено шагов: $undone. Сможете меньше $nextRussian?")
-                steps > state.par -> tr("No hints, nothing taken back. Par is ${state.par}: $next?", "Без подсказок и отмен. Минимум — ${state.par}: получится $nextRussian?")
-                else -> tr("On par, nothing taken back. Nothing to improve on.", "За минимум ходов, без отмен. Лучше уже некуда.")
+                undone > 0 -> savedText("share.steps_undone", "count" to (undone), "next" to (next))
+                steps > state.par -> savedText("share.par_nudge", "par" to (state.par), "next" to (next))
+                else -> savedText("ui.share_card.on_par_nothing_taken_back_nothing")
             }
         }
         // No hints and no undo: the lives are the whole story.
         is PointersState -> {
             val lost = PointersLogic.LIVES - state.lives
             lines = listOf(ShareLine(List(state.lives) { Mark.HEART } + List(lost) { Mark.LOST }))
-            key = listOf(Mark.HEART to tr("life left", "жизнь осталась"), Mark.LOST to tr("life lost", "жизнь потеряна"))
-            own = if (lost == 0) tr("Not a single bump.", "Ни одного столкновения.") else tr("${plural(lost, "bump")}. None $next?", "$lost ${russianPlural(lost, "столкновение", "столкновения", "столкновений")}. Сможете без них $nextRussian?")
+            key = listOf(Mark.HEART to savedText("ui.share_card.life_left"), Mark.LOST to savedText("ui.share_card.life_lost"))
+            own = if (lost == 0) savedText("ui.share_card.not_a_single_bump") else savedText("share.bumps", "count" to (lost), "next" to (next))
         }
         else -> {
             lines = listOf(ShareLine(strip(moves)))
-            key = listOf(Mark.GREEN to tr("own move", "свой ход"), Mark.YELLOW to tr("taken back", "отменено"), Mark.RED to tr("hint", "подсказка"))
+            key = listOf(Mark.GREEN to savedText("ui.share_card.own_move"), Mark.YELLOW to savedText("ui.share_card.taken_back"), Mark.RED to savedText("ui.share_card.hint"))
             own = when {
-                undone > 0 -> tr("No hints, ${plural(undone, "move")} taken back. Fewer $next?", "Без подсказок, отменено ходов: $undone. Сможете меньше $nextRussian?")
-                else -> tr("A clean solve. Nothing to improve on.", "Решено без подсказок и отмен. Лучше уже некуда.")
+                undone > 0 -> savedText("share.moves_undone", "count" to (undone), "next" to (next))
+                else -> savedText("ui.share_card.a_clean_solve_nothing_to_improve")
             }
         }
     }
-    return ShareCard(
-        header = if (level != null) tr("Daybook · Level $level · ${puzzle.displayName} · ${tier.label}$suffix", "Daybook · Уровень $level · ${puzzle.displayName} · ${tier.label}$suffix")
-            else tr("Daybook · ${puzzle.displayName} · ${tier.label} · ${date ?: "random board"}$suffix", "Daybook · ${puzzle.displayName} · ${tier.label} · ${date ?: "случайное поле"}$suffix"),
+    return renderedShareCard(
+        header = if (level != null) savedText("ui.share_card.daybook_level", "level" to (level), "puzzle_displayName" to puzzleNames(listOf(puzzle.id), { puzzle.displayName }), "tier_label" to SavedArgument.Tiers(listOf(tier)), "suffix" to (suffix))
+            else savedText("share.header", "puzzle" to puzzleNames(listOf(puzzle.id), { puzzle.displayName }), "tier" to SavedArgument.Tiers(listOf(tier)), "date" to (date?.let { shareDate(it, dateValue) } ?: savedText("share.random_board")), "suffix" to (suffix)),
         lines = lines,
-        stats = clock +
-            (if (hints > 0) tr(" · ${plural(hints, "hint")}", " · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}") else "") +
-            bonusCount(state).let { if (it > 0) tr(" · +${plural(it, "bonus word")}", " · +$it ${russianPlural(it, "бонусное слово", "бонусных слова", "бонусных слов")}") else "" } +
-            if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
+        stats = ShareStats(clock = clock, hints = hints.takeIf { it > 0 }, bonus = bonusCount(state), streak = streak),
         key = key,
-        nudge = if (hints > 0) tr("The hints got you there. Try ${if (date != null) "tomorrow's" else "the next one"} with fewer.", "Подсказки помогли справиться. Попробуйте ${if (date != null) "завтра" else "в следующий раз"} обойтись меньшим числом подсказок.") else own,
+        nudge = if (hints > 0) savedText(if (date != null) "share.hints_nudge.daily" else "share.hints_nudge.random") else own,
         spaced = state is TowerState,
     )
 }
@@ -272,29 +319,29 @@ private const val DAY_NAMES = 3
  */
 fun dayShareCard(
     ids: List<String>, completions: List<Completion>, today: LocalDate, date: String, streak: Int,
-    nameOf: (String) -> String = { PuzzleRegistry.byId(it)?.displayName ?: it },
+    nameOf: (String) -> String = { PuzzleRegistry.byId(it)?.displayName ?: it }, dateValue: LocalDate? = null,
 ): ShareCard? {
     val done = completions.filter { it.day == today }.map { it.puzzleId to it.difficulty }.toSet()
     val tiers = Difficulty.entries.map { tier -> tier to ids.filter { (it to tier) in done } }.filter { it.second.isNotEmpty() }
     if (tiers.isEmpty()) return null
     val lines = tiers.flatMap { (tier, solved) ->
-        val what = if (solved.size <= DAY_NAMES) solved.joinToString(", ") { nameOf(it) } else tr("${solved.size} puzzles", "${solved.size} ${russianPlural(solved.size, "задача", "задачи", "задач")}")
-        listOf(ShareLine(emptyList(), tail = "${tier.label} · $what")) + solved.chunked(13).map { row -> ShareLine(row.map { Mark.GREEN }) }
+        val what = if (solved.size <= DAY_NAMES) puzzleNames(solved, nameOf, separator = ", ", sort = false)
+            else SavedArgument.Nested(savedText("count.puzzles", "count" to solved.size))
+        val tail = savedText("share.day_row", "tier" to SavedArgument.Tiers(listOf(tier)), "what" to what)
+        listOf(ShareLine(emptyList(), tail = tail.resolve(), tailSource = tail)) + solved.chunked(13).map { row -> ShareLine(row.map { Mark.GREEN }) }
     }
     // The preview's one line about the rest of the day: only when a tier is done or one or two are left at it.
     val left = tiers.map { (tier, solved) -> tier to ids.filter { it !in solved } }.minBy { it.second.size }
     val nudge = when (left.second.size) {
-        0 -> tr("Every ${left.first.label} daily done today.", "Все ежедневные задачи на сложности «${left.first.label}» решены.")
-        1, 2 -> tr("${left.second.joinToString(" and ") { nameOf(it) }} ${if (left.second.size == 1) "is" else "are"} all that's left " +
-            "for every ${left.first.label} daily today.",
-            "Осталось решить ${left.second.joinToString(" и ") { nameOf(it) }}, чтобы завершить все ежедневные задачи на сложности «${left.first.label}».")
-        else -> tr("Well played. Same time tomorrow?", "Отличная игра. До завтра?")
+        0 -> savedText("ui.share_card.every_daily_done_today", "left_first_label" to SavedArgument.Tiers(listOf(left.first)))
+        1, 2 -> savedText("share.remaining", "count" to (left.second.size), "names" to puzzleNames(left.second, nameOf, sort = false), "tier" to SavedArgument.Tiers(listOf(left.first)))
+        else -> savedText("ui.share_card.well_played_same_time_tomorrow")
     }
-    return ShareCard(
-        header = tr("Daybook · $date · today's dailies", "Daybook · $date · ежедневные задачи"),
+    return renderedShareCard(
+        header = savedText("ui.share_card.daybook_today_s_dailies", "date" to shareDate(date, dateValue)),
         lines = lines,
-        stats = tr("${tiers.sumOf { it.second.size }} solved today", "Сегодня решено: ${tiers.sumOf { it.second.size }}") + if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
-        key = listOf(Mark.GREEN to tr("solved", "решено")),
+        stats = ShareStats(solved = tiers.sumOf { it.second.size }, streak = streak),
+        key = listOf(Mark.GREEN to savedText("ui.share_card.solved")),
         nudge = nudge,
     )
 }
@@ -305,19 +352,18 @@ fun dayShareCard(
  */
 fun threeShareCard(
     three: List<String>, completions: List<Completion>, today: LocalDate, tier: Difficulty, date: String, streak: Int,
-    clock: (Int) -> String,
+    clock: (Int) -> String, dateValue: LocalDate? = null,
 ): ShareCard? {
     val solves = three.map { id -> completions.firstOrNull { it.puzzleId == id && it.day == today && it.difficulty == tier } }
     val done = solves.filterNotNull()
     if (done.isEmpty()) return null
     val hints = done.sumOf { it.hints }
-    return ShareCard(
-        header = tr("Daybook · $date · Today's three · ${tier.label}", "Daybook · $date · Тройка дня · ${tier.label}"),
+    return renderedShareCard(
+        header = savedText("ui.share_card.daybook_today_s_three", "date" to shareDate(date, dateValue), "tier_label" to SavedArgument.Tiers(listOf(tier))),
         lines = listOf(ShareLine(solves.map { if (it == null) Mark.WHITE else Mark.GREEN }, tail = "  ${done.size}/${three.size}")),
-        stats = clock(done.sumOf { it.seconds }) + (if (hints > 0) tr(" · ${plural(hints, "hint")}", " · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}") else "") +
-            if (streak >= 2) tr(" · $streak day streak", " · серия: $streak ${russianPlural(streak, "день", "дня", "дней")}") else "",
-        key = listOf(Mark.GREEN to tr("solved", "решено"), Mark.WHITE to tr("not yet", "ещё не решено")),
-        nudge = if (done.size == three.size) tr("All three done. A tidy day's work.", "Все три решены. Отличная работа за день.") else tr("A fine start on today's three.", "Хорошее начало тройки дня."),
+        stats = ShareStats(clock = clock(done.sumOf { it.seconds }), hints = hints.takeIf { it > 0 }, streak = streak),
+        key = listOf(Mark.GREEN to savedText("ui.share_card.solved"), Mark.WHITE to savedText("ui.share_card.not_yet")),
+        nudge = if (done.size == three.size) savedText("ui.share_card.all_three_done_a_tidy_day") else savedText("ui.share_card.a_fine_start_on_today_s"),
     )
 }
 
@@ -329,12 +375,12 @@ fun levelShareCard(level: Int, plan: List<String>, solves: List<LevelSolve>, clo
     val by = solves.filter { it.level == level }.associateBy { it.puzzleId }
     val got = plan.mapNotNull { by[it] }
     val hints = got.sumOf { it.hints }
-    return ShareCard(
-        header = tr("Daybook · Level $level · ${got.size}/${plan.size}", "Daybook · Уровень $level · ${got.size}/${plan.size}"),
+    return renderedShareCard(
+        header = savedText("ui.share_card.daybook_level_9b9efb", "level" to (level), "got_size" to (got.size), "plan_size" to (plan.size)),
         lines = listOf(ShareLine(plan.map { id -> by[id]?.let { if (it.hints > 0) Mark.RED else Mark.GREEN } ?: Mark.WHITE })),
-        stats = tr("${clock(got.sumOf { it.seconds })} · ${plural(hints, "hint")}", "${clock(got.sumOf { it.seconds })} · $hints ${russianPlural(hints, "подсказка", "подсказки", "подсказок")}"),
-        key = listOf(Mark.GREEN to tr("no hints", "без подсказок"), Mark.RED to tr("hints", "подсказки")),
-        nudge = if (hints == 0) tr("Every board your own work.", "Каждое поле решено своими силами.") else tr("Level $level done. On to level ${level + 1}.", "Уровень $level пройден. Вперёд, к уровню ${level + 1}."),
+        stats = ShareStats(clock = clock(got.sumOf { it.seconds }), hints = hints),
+        key = listOf(Mark.GREEN to savedText("ui.share_card.no_hints"), Mark.RED to savedText("ui.share_card.hints")),
+        nudge = if (hints == 0) savedText("ui.share_card.every_board_your_own_work") else savedText("ui.share_card.level_done_on_to_level", "level" to (level), "level_1" to (level + 1)),
     )
 }
 

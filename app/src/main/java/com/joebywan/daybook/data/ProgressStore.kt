@@ -543,6 +543,7 @@ object PuzzleOrder {
         "kings", "mambo", "mosaic", "sets", "inequality", "tents", "lamps", "regions", "tally", // Quick to learn: few rules, instant feedback.
         "shikaku", "atoms", "lits", "chess", "cages", "cipher", "dominoes", "codeword", "pearls", "whoswho", "hexwords", // Takes a bit: more rules, or a longer chain of reasoning.
         "tower", // Last: a colour-code guesser, much the same game as Lexicon, which a new player has met by now.
+        "words-ru", "wordwheel-ru", "mini-ru", "codeword-ru", "hexwords-ru", "dwindle-ru", "cipher-ru",
     )
 
     /** [ids] in [GENTLEST]'s order; an id it does not name (a puzzle added since) goes last, in [ids]' order. */

@@ -3,13 +3,9 @@ package com.joebywan.daybook
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.i18n.calendarDate
-import com.joebywan.daybook.core.i18n.isRussianLanguage
-import com.joebywan.daybook.core.i18n.localized
-import com.joebywan.daybook.core.i18n.russianPlural
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.platform.formatDate
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlinx.datetime.LocalDate
 import java.util.Locale
@@ -17,12 +13,10 @@ import java.util.Locale
 class LocalizationTest {
     @Test fun `Russian language tags select Russian and other languages keep English`() {
         for (tag in listOf("ru", "ru-RU", "ru_BY", "RU-ru")) {
-            assertTrue(tag, isRussianLanguage(tag))
-            assertEquals("Настройки", localized("Settings", "Настройки", tag))
+            assertEquals("Настройки", message("ui.home_screen.settings").resolve(tag))
         }
         for (tag in listOf("en", "fr-FR", "", "rue")) {
-            assertFalse(tag, isRussianLanguage(tag))
-            assertEquals("Settings", localized("Settings", "Настройки", tag))
+            assertEquals("Settings", message("ui.home_screen.settings").resolve(tag))
         }
     }
 
@@ -32,7 +26,7 @@ class LocalizationTest {
             11 to "дней", 12 to "дней", 14 to "дней", 20 to "дней",
             21 to "день", 22 to "дня", 25 to "дней", 101 to "день", 111 to "дней",
         )
-        for ((count, form) in expected) assertEquals("$count", form, russianPlural(count, "день", "дня", "дней"))
+        for ((count, form) in expected) assertEquals("$count", "$count $form", message("count.days", "count" to count).resolve("ru"))
     }
 
     @Test fun `web dates distinguish dates from standalone month headings`() {

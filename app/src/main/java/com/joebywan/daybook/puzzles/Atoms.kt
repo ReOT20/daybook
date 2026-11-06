@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -129,16 +132,16 @@ data class AtomsState(
 object Atoms : PuzzleType {
 
     override val id = "atoms"
-    override val displayName = "Atoms"
-    override val tagline = "Bond every atom into one molecule"
+    override val displayName get() = text("puzzle.atoms.name")
+    override val tagline get() = text("puzzle.atoms.tagline")
     override val accent = 0xFFB2659A
-    override val rules = listOf(
-        "Each atom's number is exactly how many bond-ends it must carry.",
-        "Bonds run straight, horizontally or vertically, between two atoms.",
-        "At most two bonds may join the same pair. Bonds may never cross.",
-        "Every atom must end up connected into a single molecule.",
-        "Tap between two atoms to cycle none, one, two, and back to none.",
-        "Or drag from one atom towards another to bond them.",
+    override val rules get() = listOf(
+        text("puzzle.atoms.rule.1"),
+        text("puzzle.atoms.rule.2"),
+        text("puzzle.atoms.rule.3"),
+        text("puzzle.atoms.rule.4"),
+        text("puzzle.atoms.rule.5"),
+        text("puzzle.atoms.rule.6"),
     )
 
     /**
@@ -456,56 +459,51 @@ object Atoms : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Each atom's number is how many bonds it carries. This 3 has three: " +
-                    "one to the left, one to the right and one below.",
+                caption = message("puzzle.atoms.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(2, line(1), line(2), line(3)), soft = setOf(1, 3, 4)),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Two atoms can share one bond or two, never more. Bonds run straight, never " +
-                    "cross, and every atom must join one molecule.",
+                caption = message("puzzle.atoms.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 1, line(0))),
             ),
             TutorialFrame(
                 state = tutorialBoard(),
-                caption = "This 2 has only one neighbour, the 3 below, so both its bonds go there. Drag from " +
-                    "the 2 down to the 3 to lay one, then tap the bond to make it a double.",
+                caption = message("puzzle.atoms.tutorial.3.caption"),
                 // The 2 glows until the first bond is down, then the bond.
                 glow = { s ->
                     if (double.stage(s) < 0) BoardHighlight(strong = setOf(0), soft = setOf(1, line(0)))
                     else BoardHighlight(strong = setOf(line(0)), soft = setOf(0, 1))
                 },
                 steps = double.steps,
-                retry = "Drag from the glowing 2 down to the 3, then tap the bond.",
-                done = "Doubled. A full atom turns blue.",
+                retry = message("puzzle.atoms.tutorial.3.retry"),
+                done = message("puzzle.atoms.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(2, 0, 0, 0, 0, 0),
-                caption = "Tap the glowing gap twice for a double bond: it fills both 2s and cuts them off from " +
-                    "the rest of the molecule, so it can't be right. Tap once more to clear it.",
+                caption = message("puzzle.atoms.tutorial.4.caption"),
                 // The board draws no red for a molecule cut off, so the glow turns red on the double.
                 glow = { s ->
                     if (cut.stage(s) == 1) BoardHighlight(strong = setOf(line(5), 4, 5), warning = true)
                     else BoardHighlight(strong = setOf(line(5)), soft = setOf(4, 5))
                 },
                 steps = cut.steps,
-                retry = "Tap the glowing gap: once, twice, then once more.",
-                done = "Cleared. A tap goes none, one, two, and back to none.",
+                retry = message("puzzle.atoms.tutorial.4.retry"),
+                done = message("puzzle.atoms.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(2, 0, 0, 0, 0, 0),
-                caption = "So those two 2s share one bond at most, and the corner 2 needs two. At least " +
-                    "one must go up to the 2 above. Tap the gap between them.",
+                caption = message("puzzle.atoms.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(line(4)), soft = setOf(3, 4, 5)),
                 accepts = only(2, 0, 0, 0, 1, 0),
-                retry = "Tap once in the glowing gap.",
-                done = "Bonded.",
+                retry = message("puzzle.atoms.tutorial.5.retry"),
+                done = message("puzzle.atoms.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(2, 0, 0, 0, 1, 0),
-                caption = "Your turn: finish the molecule. Stuck? Hint shows you why.",
+                caption = message("puzzle.atoms.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.atoms.tutorial.6.done"),
             ),
         )
     }

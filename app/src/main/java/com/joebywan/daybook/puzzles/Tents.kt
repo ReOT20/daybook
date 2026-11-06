@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -114,18 +117,18 @@ object Tents : PuzzleType {
     private data class Pending(val cell: Int, val base: TentsState, val after: TentsState)
 
     override val id = "tents"
-    override val displayName = "Tents"
-    override val tagline = "A tent beside every tree, none touching"
+    override val displayName get() = text("puzzle.tents.name")
+    override val tagline get() = text("puzzle.tents.tagline")
     override val accent = 0xFFBE6B0B
-    override val rules = listOf(
-        "Put one tent beside every tree, up, down, left or right of it. Each tent belongs to one tree.",
-        "Tents never touch each other, not even at a corner.",
-        "The numbers say how many tents each row and column holds.",
-        "Tap a square for grass (a note that a tent can't go there), tap again to clear it. Drag to lay grass across squares. Double-tap or long-press for a tent (grass sprouts around it); tap a tent to remove it.",
+    override val rules get() = listOf(
+        text("puzzle.tents.rule.1"),
+        text("puzzle.tents.rule.2"),
+        text("puzzle.tents.rule.3"),
+        text("puzzle.tents.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, T or Enter places a tent, X, G or Space grass, Backspace clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.tents.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -170,29 +173,25 @@ object Tents : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Every tree gets one tent, right beside it: above, below, left or right. The number " +
-                    "beside a row or column is how many tents it holds.",
+                caption = message("puzzle.tents.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(2, rowClue0), soft = setOf(1, 3)),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Tents never touch, not even corner to corner. None of the eight squares " +
-                    "around a tent can hold another.",
+                caption = message("puzzle.tents.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(17), soft = setOf(11, 12, 13, 16, 18, 21, 22, 23)),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "The glowing corner has no tree beside it, so no tent can go there. Tap it to " +
-                    "mark it grass.",
+                caption = message("puzzle.tents.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(0), soft = setOf(1, 5)),
                 accepts = { next -> next is TentsState && next.marks == grass.marks },
-                retry = "Tap the glowing square once.",
-                done = "Grass. That square can never hold a tent.",
+                retry = message("puzzle.tents.tutorial.3.retry"),
+                done = message("puzzle.tents.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = grass,
-                caption = "The top row needs two tents, and only two of its squares sit beside a tree, " +
-                    "so both are tents. Double-tap or long-press each glowing square to place one.",
+                caption = message("puzzle.tents.tutorial.4.caption"),
                 // Each square glows until it holds its tent.
                 glow = { s ->
                     BoardHighlight(strong = pair.filter { (s as TentsState).marks[it] != TentsLogic.TENT }.toSet(), soft = setOf(rowClue0))
@@ -206,23 +205,22 @@ object Tents : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Double-tap the glowing square (two quick taps), or press and hold it.",
-                done = "Two tents, and grass sprouts around them.",
+                retry = message("puzzle.tents.tutorial.4.retry"),
+                done = message("puzzle.tents.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = two,
-                caption = "The bottom row holds no tents. Drag along the glowing squares to mark them all " +
-                    "grass in one sweep.",
+                caption = message("puzzle.tents.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = bottom, soft = setOf(rowClue0 + 4)),
                 accepts = { next -> next is TentsState && next.marks == swept.marks },
-                retry = "Drag along all five glowing squares in one sweep.",
-                done = "Swept: one drag marks a whole run.",
+                retry = message("puzzle.tents.tutorial.5.retry"),
+                done = message("puzzle.tents.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = swept,
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.tents.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.tents.tutorial.6.done"),
             ),
         )
     }

@@ -78,7 +78,8 @@ def board(lines, where):
         key, colon, value = line.partition(":")
         if colon:
             if key.strip() not in ("box", "regions", "cages", "focus", "cite", "answer", "notes", "struck", "lines", "moves", "draw", "edges",
-                                "corners", "solid", "tiles", "top", "left", "caption"):
+                                "corners", "solid", "tiles", "top", "left", "caption", "content-language",
+                                "fixture-lengths", "fixture-tried", "fixture-letters", "points-to-go"):
                 fail(where, f"unknown board key: {key}")
             fields[key.strip()] = value.strip()
         elif line.strip():

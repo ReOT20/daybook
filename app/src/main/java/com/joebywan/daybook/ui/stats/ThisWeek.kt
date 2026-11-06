@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.stats
 
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -26,8 +28,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.Difficulty
-import com.joebywan.daybook.core.i18n.russianPlural
-import com.joebywan.daybook.core.i18n.tr
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.platform.formatClock
 import kotlinx.datetime.DatePeriod
@@ -62,12 +62,8 @@ object ThisWeek {
     fun summary(days: List<Day>): String {
         val played = days.count { it.solved > 0 }
         val boards = days.sumOf { it.solved }
-        if (played == 0) return tr("A fresh week: today's boards are ready.", "Новая неделя: сегодняшние головоломки уже ждут.")
-        fun n(k: Int, one: String) = if (k == 1) "1 $one" else "$k ${one}s"
-        return tr(
-            "${n(played, "day")} played, ${n(boards, "daily board")} solved.",
-            "Сыграно $played ${russianPlural(played, "день", "дня", "дней")}. Ежедневных головоломок решено: $boards.",
-        )
+        if (played == 0) return text("ui.this_week.a_fresh_week_today_s_boards")
+        return text("week.summary", "days" to (text("count.days", "count" to (played))), "boards" to (text("count.daily_boards", "count" to (boards))))
     }
 
     /**
@@ -101,7 +97,7 @@ internal fun WeekStrip(all: List<Completion>, today: LocalDate, modifier: Modifi
     val scheme = MaterialTheme.colorScheme
     val days = ThisWeek.days(all, today)
     Column(modifier.clip(RoundedCornerShape(16.dp)).background(scheme.surface).padding(14.dp)) {
-        Text(tr("This week", "Эта неделя"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+        Text(text("ui.this_week.this_week"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
             days.forEach { d ->
@@ -133,7 +129,7 @@ internal fun TrendLine(trend: ThisWeek.Trend, accent: Color) {
     val scheme = MaterialTheme.colorScheme
     Spacer(Modifier.height(10.dp))
     // Two lines: half a phone's width has no room for the tier, the words and the time together.
-    Text(tr("Your recent median", "Медианное время"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 1)
+    Text(text("ui.this_week.your_recent_median"), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, maxLines = 1)
     Row(Modifier.fillMaxWidth()) {
         Text(trend.difficulty.label, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
         Text(formatClock(trend.recent), style = MaterialTheme.typography.bodySmall, color = scheme.onSurface)

@@ -1,6 +1,7 @@
 package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Difficulty
+import com.joebywan.daybook.core.words.RussianWords
 import com.joebywan.daybook.core.Rng
 import kotlinx.serialization.Serializable
 
@@ -42,6 +43,7 @@ data class WordWheelState(
     val found: List<String> = emptyList(),
     val bonus: List<String> = emptyList(),
     override val moves: Int = 0,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
     /** The rule: every slot holds its word. */
@@ -106,7 +108,9 @@ sealed interface WheelEntry {
  */
 object WheelWords {
 
-    fun grid(length: Int): List<String> = when (length) {
+    fun grid(length: Int, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") {
+        if (length in 3..7) RussianWords.grid(length) else emptyList()
+    } else when (length) {
         3 -> WordWheelWords.GRID_3
         4 -> WordWheelWords.GRID_4
         5 -> WordWheelWords.GRID_5
@@ -115,17 +119,18 @@ object WheelWords {
         else -> emptyList()
     }
 
-    fun roots(length: Int): List<String> = when (length) {
+    fun roots(length: Int, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") RussianWords.roots(length) else when (length) {
         5 -> WordWheelWords.ROOTS_5
         6 -> WordWheelWords.ROOTS_6
         7 -> WordWheelWords.ROOTS_7
         else -> error("no $length-letter wheels")
     }
 
-    fun isGridWord(word: String): Boolean = grid(word.length).binarySearch(word) >= 0
+    fun isGridWord(word: String, contentLanguage: String = "en"): Boolean = grid(word.length, contentLanguage).binarySearch(word) >= 0
 
     /** Whether [word] is accepted at all: a grid word or a bonus word. */
-    fun isWord(word: String): Boolean = isGridWord(word) || WordWheelWords.BONUS.binarySearch(word) >= 0
+    fun isWord(word: String, contentLanguage: String = "en"): Boolean =
+        if (contentLanguage == "ru") RussianWords.isWord(word) else isGridWord(word) || WordWheelWords.BONUS.binarySearch(word) >= 0
 
     // Probed by word, never iterated, so its order cannot reach a seed.
     private val clues: Map<String, String> by lazy {
@@ -133,10 +138,12 @@ object WheelWords {
     }
 
     /** A crossword-style clue for a grid [word]: Lexicon's for four and five letters, Word Wheel's own for the rest. */
-    fun clue(word: String): String = clues[word] ?: WordList.clue(word)
+    fun clue(word: String, contentLanguage: String = "en"): String =
+        if (contentLanguage == "ru") RussianWords.clue(word) else clues[word] ?: WordList.clue(word)
 
     /** Whether [word] can be spelled from [wheel], each letter of the wheel used at most once. */
-    fun spellable(word: String, wheel: String): Boolean {
+    fun spellable(word: String, wheel: String, contentLanguage: String = "en"): Boolean {
+        if (contentLanguage == "ru") return RussianWords.spellable(word, wheel)
         val left = IntArray(26)
         for (c in wheel) left[c - 'a']++
         for (c in word) if (--left[c - 'a'] < 0) return false
@@ -144,8 +151,8 @@ object WheelWords {
     }
 
     /** Every grid word of three letters or more that [wheel] spells, shortest first, then in list order. */
-    fun gridWordsFrom(wheel: String): List<String> =
-        (3..wheel.length).flatMap { n -> grid(n).filter { spellable(it, wheel) } }
+    fun gridWordsFrom(wheel: String, contentLanguage: String = "en"): List<String> =
+        (3..wheel.length).flatMap { n -> grid(n, contentLanguage).filter { spellable(it, wheel, contentLanguage) } }
 }
 
 /**
@@ -183,14 +190,14 @@ internal object WordWheelLogic {
     /** The most grid words that may fit the easiest empty slot at any step of the hints-alone walk. */
     const val MAX_CHOICE = 6
 
-    fun generateVerified(seed: Long, difficulty: Difficulty): WordWheelState? {
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): WordWheelState? {
         val spec = specFor(difficulty)
-        val roots = WheelWords.roots(spec.letters)
+        val roots = WheelWords.roots(spec.letters, contentLanguage)
         val proved = ArrayList<WordWheelState>(KEEP)
         for (attempt in 0 until ATTEMPTS) {
             val rng = Rng(seed + attempt)
             val root = roots[rng.nextInt(roots.size)]
-            val board = lay(root, spec, rng) ?: continue
+            val board = lay(root, spec, rng, contentLanguage) ?: continue
             if (WordWheelTeacher.walk(board).maxChoice > MAX_CHOICE) continue
             proved += board
             if (proved.size == KEEP) break
@@ -201,17 +208,17 @@ internal object WordWheelLogic {
     /** The common words the wheel spells that the grid does not hold: what a player tries before reaching the grid's. */
     fun commonBonus(s: WordWheelState): Int {
         val shortest = s.slots.minOf { it.word.length }
-        return WheelWords.gridWordsFrom(s.wheel).count { w -> w.length >= shortest && s.slots.none { it.word == w } }
+        return WheelWords.gridWordsFrom(s.wheel, s.contentLanguage).count { w -> w.length >= shortest && s.slots.none { it.word == w } }
     }
 
     fun judge(s: WordWheelState, word: String): WheelEntry {
         // First: a saved game can hold a bonus word shorter than the board now takes.
         if (word in s.found || word in s.bonus) return WheelEntry.Found
         if (word.length < s.shortestWord) return WheelEntry.TooShort
-        if (!WheelWords.spellable(word, s.wheel)) return WheelEntry.NotOnWheel
+        if (!WheelWords.spellable(word, s.wheel, s.contentLanguage)) return WheelEntry.NotOnWheel
         val slot = s.slots.indexOfFirst { it.word == word }
         if (slot >= 0) return WheelEntry.Fills(slot)
-        return if (WheelWords.isWord(word)) WheelEntry.Bonus else WheelEntry.NotAWord
+        return if (WheelWords.isWord(word, s.contentLanguage)) WheelEntry.Bonus else WheelEntry.NotAWord
     }
 
     /** The wheel's letters in the order the board shows them first: shuffled, and never spelling the root outright. */
@@ -227,10 +234,10 @@ internal object WordWheelLogic {
      * Lays [root] and as many of its grid words as the tier asks for, or null when it cannot. Squares live in a probe-only
      * map keyed by position (never iterated); everything iterated is a list in placement order.
      */
-    fun lay(root: String, spec: Spec, rng: Rng): WordWheelState? {
+    fun lay(root: String, spec: Spec, rng: Rng, contentLanguage: String = "en"): WordWheelState? {
         val wheel = scramble(root, rng)
         val target = rng.nextInt(spec.minWords, spec.maxWords)
-        val pool = rng.shuffled(WheelWords.gridWordsFrom(root).filter { it != root }).sortedByDescending { it.length }
+        val pool = rng.shuffled(WheelWords.gridWordsFrom(root, contentLanguage).filter { it != root }).sortedByDescending { it.length }
 
         // Coordinates are unbounded while laying (offset so they stay positive) and shifted to 0 at the end.
         val grid = HashMap<Int, Char>() // probe-only
@@ -331,6 +338,7 @@ internal object WordWheelLogic {
             width = maxC - minC + 1,
             height = maxR - minR + 1,
             slots = placed.map { it.copy(row = it.row - minR, col = it.col - minC) },
+            contentLanguage = contentLanguage,
         )
     }
 
@@ -341,6 +349,6 @@ internal object WordWheelLogic {
     const val LAST_RESORT_SEED = 1L
 
     /** The board for the day nothing was proved (a year per tier never reaches it, `FallbackTest`). */
-    fun lastResort(difficulty: Difficulty): WordWheelState =
-        generateVerified(LAST_RESORT_SEED, difficulty) ?: error("the fixed last-resort seed no longer proves a board")
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): WordWheelState =
+        generateVerified(LAST_RESORT_SEED, difficulty, contentLanguage) ?: error("the fixed last-resort seed no longer proves a board")
 }

@@ -2,8 +2,11 @@ package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
 import com.joebywan.daybook.core.orthogonalReading
-import com.joebywan.daybook.core.plural
 import com.joebywan.daybook.puzzles.LampsLogic.Fact
 import com.joebywan.daybook.puzzles.LampsLogic.LAMP
 import com.joebywan.daybook.puzzles.LampsLogic.NO
@@ -48,16 +51,22 @@ internal object LampsTeacher {
         override val targets: Set<Int>,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: LampsState): Step? {
         if (s.solved) return null
         mistake(s)?.let { return it }
         deduce(s.size, s.walls, s.marks)?.let { return it }
         val i = s.solution.indices.firstOrNull { s.solution[it] == '1' && s.marks[it] != LampsLogic.LAMP_MARK } ?: return null
-        return Step(FALLBACK, LAMP, setOf(i), setOf(i), emptySet(), "This one takes a longer chain. Look at the glowing square.", "This one needs a longer chain than a hint can walk through, so here's the answer for this square: a lamp.")
+        return Step(FALLBACK, LAMP, setOf(i), setOf(i), emptySet(), message("teacher.lamps.teach.1"), message("teacher.lamps.teach.2"))
     }
 
     /** The [Deduction] for the play screen; `Lamps.teach` is just this. */
@@ -98,13 +107,13 @@ internal object LampsTeacher {
     private fun mistake(s: LampsState): Step? {
         val n = s.size
         val wrong = s.marks.indices.firstOrNull { s.marks[it] == LampsLogic.LAMP_MARK && s.solution[it] != '1' } ?: return null
-        fun step(why: String, cited: Set<Int>) =
-            Step(MISTAKE, 0, setOf(wrong), setOf(wrong), cited, "Check this lamp.", "$why Tap it to take it away.")
+        fun step(why: Message, cited: Set<Int>) =
+            Step(MISTAKE, 0, setOf(wrong), setOf(wrong), cited, message("teacher.lamps.step.1"), message("teacher.lamps.step.2", "why" to (why)))
         val sees = LampsLogic.sight(n, s.walls, wrong).filter { s.marks[it] == LampsLogic.LAMP_MARK }
-        if (sees.isNotEmpty()) return step("This lamp lights another lamp in its row or column.", sees.toSet())
+        if (sees.isNotEmpty()) return step(message("teacher.lamps.mistake.1"), sees.toSet())
         val over = orthogonalReading(wrong, n).firstOrNull { s.numberAt(it) >= 0 && s.lampsBeside(it) > s.numberAt(it) }
-        if (over != null) return step("The ${s.numberAt(over)} beside it would have too many lamps.", setOf(over))
-        return step("No way to finish the board keeps a lamp here.", emptySet())
+        if (over != null) return step(message("teacher.lamps.mistake.2", "s_numberAt_over_" to (s.numberAt(over))), setOf(over))
+        return step(message("teacher.lamps.mistake.3"), emptySet())
     }
 
     // ---- reasoning ------------------------------------------------------------------------------
@@ -139,9 +148,9 @@ internal object LampsTeacher {
     }
 
     private fun its(num: Int) = when (num) {
-        1 -> "its lamp"
-        2 -> "both its lamps"
-        else -> "all $num of its lamps"
+        1 -> message("teacher.lamps.its.1")
+        2 -> message("teacher.lamps.its.2")
+        else -> message("teacher.lamps.its.3", "num" to (num))
     }
 
     private fun explain(g: LampsLogic.Geo, f: Fact): Step {
@@ -150,41 +159,37 @@ internal object LampsTeacher {
         return when (f.technique) {
             ZERO -> Step(
                 ZERO, NO, t, t + f.wall, setOf(f.wall),
-                "Look beside the 0.",
-                "A 0 has no lamps beside it, so none of the squares next to it can hold one: cross them out.",
+                message("teacher.lamps.explain.1"),
+                message("teacher.lamps.explain.2"),
             )
             DONE -> Step(
                 DONE, NO, t, t + f.wall, setOf(f.wall) + g.beside[f.wall].filter { it !in t },
-                "Count the lamps around this $num.",
-                "The $num already has ${its(num)}, so the other squares beside it hold none: cross them out.",
+                message("teacher.lamps.explain.3", "num" to (num)),
+                message("teacher.lamps.explain.4", "num" to (num), "its_num_" to (its(num))),
             )
             ROOM -> Step(
                 ROOM, LAMP, t, t + f.wall, setOf(f.wall),
-                "How many squares beside this $num can still take a lamp?",
-                "The $num needs ${plural(t.size, if (num > t.size) "more lamp" else "lamp")}, and only ${plural(t.size, "square")} " +
-                    "beside it can still take one (the others are walls, lamps, lit or ruled out), so ${if (t.size == 1) "it is a lamp" else "they are all lamps"}.",
+                message("teacher.lamps.explain.5", "num" to (num)),
+                message("teacher.lamps.explain.6", "num" to (num), "value2" to (if (num > t.size) message("teacher.lamps.count.more_lamp", "count" to t.size) else message("teacher.lamps.count.lamp", "count" to t.size)), "plural_t_size_square_" to (message("teacher.lamps.count.square", "count" to (t.size))), "value4" to (if (t.size == 1) message("teacher.lamps.explain.extra.4") else message("teacher.lamps.explain.extra.5"))),
             )
             ONLY_LIGHT -> if (f.targets[0] == f.seen) Step(
                 ONLY_LIGHT, LAMP, t, t, emptySet(),
-                "How can this square be lit?",
-                "No other square can light this one: everything in its row and column is lit, ruled out or behind a wall. " +
-                    "So it holds its own lamp.",
+                message("teacher.lamps.explain.7"),
+                message("teacher.lamps.explain.8"),
             ) else Step(
                 ONLY_LIGHT, LAMP, t, t + f.seen, setOf(f.seen),
-                "How can the marked square be lit?",
-                "The marked square still needs light, and only one square can still give it: the glowing one. That one is a lamp.",
+                message("teacher.lamps.explain.9"),
+                message("teacher.lamps.explain.10"),
             )
             STARVE -> Step(
                 STARVE, NO, t, t + f.wall + f.lit, setOf(f.wall) + f.lit,
-                "What would a lamp here do to the $num?",
-                "A lamp here would light ${if (f.lit.size == 1) "a square" else "${f.lit.size} squares"} beside the $num, leaving it too few " +
-                    "places for its ${plural(num, "lamp")}. So no lamp here: cross it out.",
+                message("teacher.lamps.explain.11", "num" to (num)),
+                message("teacher.lamps.explain.12", "value1" to (if (f.lit.size == 1) message("teacher.lamps.explain.extra.6") else message("teacher.lamps.explain.extra.7", "f_lit_size" to (f.lit.size))), "num" to (num), "plural_num_lamp_" to (message("teacher.lamps.count.lamp", "count" to (num)))),
             )
             DARK -> Step(
                 DARK, NO, t, t + f.seen + f.lit, setOf(f.seen) + f.lit,
-                "What would a lamp here leave in the dark?",
-                "A lamp here would light every square that could light the marked one, without lighting it, so nothing could " +
-                    "ever light it. So no lamp here: cross it out.",
+                message("teacher.lamps.explain.13"),
+                message("teacher.lamps.explain.14"),
             )
             else -> whatIf(g, f)
         }
@@ -200,27 +205,27 @@ internal object LampsTeacher {
             if (link.seen >= 0) cited += link.seen
             val num = if (link.wall >= 0) g.number[link.wall] else 0
             when (link.technique) {
-                ROOM -> "the $num would need ${if (link.targets.size == 1) "its last free square" else "its last ${link.targets.size} squares"}"
-                ONLY_LIGHT -> "a square would have one way left to be lit"
-                else -> "the $num would have ${its(num)}"
+                ROOM -> message("teacher.lamps.what_if.1", "num" to (num), "value2" to (if (link.targets.size == 1) message("teacher.lamps.what_if.extra.1") else message("teacher.lamps.what_if.extra.2", "link_targets_size" to (link.targets.size))))
+                ONLY_LIGHT -> message("teacher.lamps.what_if.2")
+                else -> message("teacher.lamps.what_if.3", "num" to (num), "its_num_" to (its(num)))
             }
         }
         cited += w.broken.at
         val brokenNum = g.number[w.broken.at]
         val end = when (w.broken.kind) {
-            LampsLogic.OVER -> "the $brokenNum would have too many lamps"
-            LampsLogic.SHORT -> "the $brokenNum could not get its ${plural(brokenNum, "lamp")}"
-            else -> "a square could never be lit"
+            LampsLogic.OVER -> message("teacher.lamps.what_if.4", "brokenNum" to (brokenNum))
+            LampsLogic.SHORT -> message("teacher.lamps.what_if.5", "brokenNum" to (brokenNum), "plural_brokenNum_lamp_" to (message("teacher.lamps.count.lamp", "count" to (brokenNum))))
+            else -> message("teacher.lamps.what_if.6")
         }
-        val start = if (lamp) "Suppose a lamp here." else "Suppose no lamp here."
+        val start = if (lamp) message("teacher.lamps.what_if.7") else message("teacher.lamps.what_if.8")
         val then = (chain + end).let { parts ->
-            if (parts.size == 1) parts[0] else parts.dropLast(1).joinToString(", then ") + ", and " + parts.last()
+            if (parts.size == 1) parts[0] else parts.dropLast(1).joinedMessages(message("teacher.lamps.what_if.9")) + message("teacher.lamps.what_if.10") + parts.last()
         }
-        val verdict = if (lamp) "So no lamp here: cross it out." else "So it holds a lamp."
+        val verdict = if (lamp) message("teacher.lamps.what_if.11") else message("teacher.lamps.what_if.12")
         return Step(
             WHAT_IF, f.value, setOf(w.square), setOf(w.square), cited - w.square,
-            if (lamp) "What if this square held a lamp?" else "What if this square had no lamp?",
-            "$start Then $then. $verdict",
+            if (lamp) message("teacher.lamps.what_if.13") else message("teacher.lamps.what_if.14"),
+            message("teacher.lamps.what_if.15", "start" to (start), "then" to (then), "verdict" to (verdict)),
         )
     }
 }

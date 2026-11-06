@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Tents
 import com.joebywan.daybook.puzzles.TentsLogic
 import com.joebywan.daybook.puzzles.TentsState
@@ -13,17 +14,12 @@ import com.joebywan.daybook.puzzles.TentsTeacher
 val TentsTraining: Course = Course(
     puzzle = Tents,
     explanations = linkedMapOf(
-        TentsTeacher.NO_TREE to "A tent sits right beside its tree: up, down, left or right. A square with no tree there " +
-            "can't hold one, so it's grass: tap it, or drag across several.",
-        TentsTeacher.LINE_DONE to "When a row or column already has all the tents its number says, the rest of it is grass.",
-        TentsTeacher.LINE_FULL to "When a row or column still needs as many tents as it has squares left that could hold " +
-            "one, they are all tents. Double-tap or long-press for a tent.",
-        TentsTeacher.ONE_SPOT to "Every tree needs a tent beside it. When every other square next to a tree is a tree, " +
-            "off the board or grass, its tent goes on the one square left.",
-        TentsTeacher.SHARED to "Tents never touch, not even at a corner. When a tent on a square would touch every spot " +
-            "left for some tree's tent, that square is grass.",
-        TentsTeacher.SERVED to "Each tent belongs to one tree. When every tree beside a square already has its own tent, " +
-            "a tent there would have no tree: it's grass.",
+        TentsTeacher.NO_TREE to message("training.tents_no_tree"),
+        TentsTeacher.LINE_DONE to message("training.tents_line_done"),
+        TentsTeacher.LINE_FULL to message("training.tents_line_full"),
+        TentsTeacher.ONE_SPOT to message("training.tents_one_spot"),
+        TentsTeacher.SHARED to message("training.tents_shared"),
+        TentsTeacher.SERVED to message("training.tents_served"),
     ),
     // Standard reaches no tree and the lines, Hard one spot, shared and served (52, 3 and 11 of 60). "Grass around a tent" is
     // left out: a tent's grass sprouts by itself (TentsState.seen), so that step is always already shown.

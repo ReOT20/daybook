@@ -1,6 +1,10 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.squareName
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.squareNameMessage
 
 /**
  * Pearls, reasoned the way a person reasons it: a pearl at a time, a square at a time, then the rule
@@ -61,9 +65,15 @@ internal object PearlsTeacher {
         val clears: List<Int> = emptyList(),
         val focus: Set<Int>,
         val cited: Set<Int>,
-        val nudge: String,
-        val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) {
+        val nudgeMessage: Message = nudge.asMessage()
+        val explanationMessage: Message = explanation.asMessage()
+        val nudge: String get() = nudgeMessage.english
+        val explanation: String get() = explanationMessage.english
+
+
         /** Highlight indices of the edges the move changes. */
         fun targets(n: Int): Set<Int> = (lines + crosses + clears).map { edgeIndex(n, it) }.toSet()
     }
@@ -109,11 +119,11 @@ internal object PearlsTeacher {
                 clears = listOf(e),
                 focus = setOf(edgeIndex(n, e)),
                 cited = setOf(g.endA[e], g.endB[e]),
-                nudge = "One of your marks doesn't fit the pearls.",
+                nudge = message("teacher.pearls.mistake.1"),
                 explanation = if (wrongLine) {
-                    "No loop that keeps every pearl's rule has the glowing line. Rub it out."
+                    message("teacher.pearls.mistake.2")
                 } else {
-                    "The loop has to pass through the glowing cross: take it off."
+                    message("teacher.pearls.mistake.3")
                 },
             )
         }
@@ -177,28 +187,28 @@ internal object PearlsTeacher {
         val n = g.n
         val s = f.square
         val edgesOf = (0 until 4).mapNotNull { d -> g.edge(s, d).takeIf { it >= 0 } }
-        fun step(technique: String, nudge: String, why: String, focus: Set<Int>, cited: Set<Int> = focus) = Step(
+        fun step(technique: String, nudge: Message, why: Message, focus: Set<Int>, cited: Set<Int> = focus) = Step(
             technique, f.lines.toList(), f.crosses.toList(), focus = focus, cited = cited, nudge = nudge, explanation = why,
         )
         val touched = (f.lines + f.crosses).map { edgeIndex(n, it) }.toSet()
         return when (f.kind) {
             PearlsLogic.K_BLACK -> {
-                val why = (0 until 2).mapNotNull { axis -> blackAxis(g, pearls, st, s, axis) }.joinToString(" ")
+                val why = (0 until 2).mapNotNull { axis -> blackAxis(g, pearls, st, s, axis) }.joinedMessages(" ")
                 step(
-                    BLACK_PEARL, "Look at the glowing black pearl.",
-                    "A black pearl turns and runs straight on two squares each way. $why",
+                    BLACK_PEARL, message("teacher.pearls.local_step.1"),
+                    message("teacher.pearls.local_step.2", "why" to (why)),
                     setOf(s) + touched,
                 )
             }
             PearlsLogic.K_WHITE -> {
                 val axis = if (f.lines.any { !g.isHorizontal(it) } || f.crosses.any { g.isHorizontal(it) }) 0 else 1
-                val run = if (axis == 0) "up and down" else "across"
-                val other = if (axis == 0) "across" else "up and down"
+                val run = if (axis == 0) message("teacher.pearls.local_step.3") else message("teacher.pearls.local_step.4")
+                val other = if (axis == 0) message("teacher.pearls.local_step.5") else message("teacher.pearls.local_step.6")
                 val has = (0 until 2).any { d -> st[g.edge(s, axis + 2 * d)] == PearlsLogic.LINE }
-                val reason = if (has) "The line through it already runs $run" else "It can't go $other (${whiteReason(g, st, s, 1 - axis)})"
+                val reason = if (has) message("teacher.pearls.local_step.7", "run" to (run)) else message("teacher.pearls.local_step.8", "other" to (other), "value2" to (whiteReason(g, st, s, 1 - axis)))
                 step(
-                    WHITE_PEARL, "Look at the glowing white pearl.",
-                    "A white pearl goes straight through. $reason, so it goes straight $run.",
+                    WHITE_PEARL, message("teacher.pearls.local_step.9"),
+                    message("teacher.pearls.local_step.10", "reason" to (reason), "run" to (run)),
                     setOf(s) + touched,
                 )
             }
@@ -211,25 +221,24 @@ internal object PearlsTeacher {
                 }
                 val q = g.next(s, straight)
                 step(
-                    WHITE_TURN, "The glowing white pearl must turn on one side.",
-                    "The loop turns just before or just after a white pearl. It runs straight on through the square on one side, " +
-                        "so it must turn at the square on the other: cross the glowing edge straight on from there.",
+                    WHITE_TURN, message("teacher.pearls.local_step.11"),
+                    message("teacher.pearls.local_step.12"),
                     setOf(s, near) + touched, setOf(s, q, near) + touched,
                 )
             }
             PearlsLogic.K_ONE_WAY -> step(
-                ONE_WAY, "Follow the line into the glowing square.",
-                "The line into the marked square has only one way on, so it continues there.",
+                ONE_WAY, message("teacher.pearls.local_step.13"),
+                message("teacher.pearls.local_step.14"),
                 setOf(s) + touched, setOf(s) + edgesOf.map { edgeIndex(n, it) },
             )
             PearlsLogic.K_PEARL_WAYS -> step(
-                PEARL_WAYS, "The glowing pearl has only two ways in.",
-                "The loop passes every pearl, and the marked pearl has only two ways in left, so both are lines.",
+                PEARL_WAYS, message("teacher.pearls.local_step.15"),
+                message("teacher.pearls.local_step.16"),
                 setOf(s) + touched, setOf(s) + edgesOf.map { edgeIndex(n, it) },
             )
             else -> step(
-                DEAD_END, "The glowing square has only one way in.",
-                "A loop passing the marked square would need two ways in, and it has only one left. So no line goes there: cross it.",
+                DEAD_END, message("teacher.pearls.local_step.17"),
+                message("teacher.pearls.local_step.18"),
                 setOf(s) + touched, setOf(s) + edgesOf.map { edgeIndex(n, it) },
             )
         }
@@ -248,9 +257,8 @@ internal object PearlsTeacher {
             crosses = listOf(e),
             focus = setOf(a, b, edgeIndex(n, e)),
             cited = stretch.map { edgeIndex(n, it) }.toSet() + setOf(a, b),
-            nudge = "Two ends of one line sit side by side at the glowing squares.",
-            explanation = "A line on the glowing edge would close a loop that leaves out " +
-                "a pearl or another line. There is only one loop, so cross it.",
+            nudge = message("teacher.pearls.loop_step.1"),
+            explanation = message("teacher.pearls.loop_step.2"),
         )
     }
 
@@ -262,30 +270,30 @@ internal object PearlsTeacher {
         val b = g.endB[e]
         val c = w.contradiction.square
         val broke = when (w.contradiction.kind) {
-            PearlsLogic.C_THREE -> "${squareName(n, c)} would need three lines"
-            PearlsLogic.C_DEAD_LINE -> "the line would run into a dead end at ${squareName(n, c)}"
-            PearlsLogic.C_PEARL_SHUT -> "the pearl at ${squareName(n, c)} would be left without two ways in"
-            PearlsLogic.C_BLACK -> "the black pearl at ${squareName(n, c)} could not keep its rule"
-            PearlsLogic.C_WHITE -> "the white pearl at ${squareName(n, c)} could not keep its rule"
-            else -> "the line would close a loop that leaves something out"
+            PearlsLogic.C_THREE -> message("teacher.pearls.what_if_step.1", "squareName_n_c_" to (squareNameMessage(n, c)))
+            PearlsLogic.C_DEAD_LINE -> message("teacher.pearls.what_if_step.2", "squareName_n_c_" to (squareNameMessage(n, c)))
+            PearlsLogic.C_PEARL_SHUT -> message("teacher.pearls.what_if_step.3", "squareName_n_c_" to (squareNameMessage(n, c)))
+            PearlsLogic.C_BLACK -> message("teacher.pearls.what_if_step.4", "squareName_n_c_" to (squareNameMessage(n, c)))
+            PearlsLogic.C_WHITE -> message("teacher.pearls.what_if_step.5", "squareName_n_c_" to (squareNameMessage(n, c)))
+            else -> message("teacher.pearls.what_if_step.6")
         }
-        val rounds = if (w.rounds <= 1) "" else " (${w.rounds} steps on)"
-        val suppose = if (line) "With a line on the glowing edge" else "With no line on the glowing edge"
+        val rounds = if (w.rounds <= 1) "" else message("teacher.pearls.what_if_step.7", "w_rounds" to (w.rounds))
+        val suppose = if (line) message("teacher.pearls.what_if_step.8") else message("teacher.pearls.what_if_step.9")
         return Step(
             WHAT_IF,
             lines = if (line) emptyList() else listOf(e),
             crosses = if (line) listOf(e) else emptyList(),
             focus = setOf(a, b, edgeIndex(n, e)),
             cited = setOf(a, b, c),
-            nudge = "Suppose ${if (line) "a line" else "no line"} ran between the two glowing squares.",
-            explanation = "$suppose$rounds, $broke. So ${if (line) "there is none: cross it" else "there is one: draw it"}.",
+            nudge = message("teacher.pearls.what_if_step.10", "value1" to (if (line) message("teacher.pearls.what_if_step.extra.1") else message("teacher.pearls.what_if_step.extra.2"))),
+            explanation = message("teacher.pearls.what_if_step.11", "suppose" to (suppose), "rounds" to (rounds), "broke" to (broke), "value4" to (if (line) message("teacher.pearls.what_if_step.extra.3") else message("teacher.pearls.what_if_step.extra.4"))),
         )
     }
 
     // ---- why a pearl can't go a way ----------------------------------------------------------
 
     /** The sentence for one axis of a black pearl's step, or null when that axis settles nothing. */
-    private fun blackAxis(g: PearlsGrid, pearls: String, st: IntArray, p: Int, axis: Int): String? {
+    private fun blackAxis(g: PearlsGrid, pearls: String, st: IntArray, p: Int, axis: Int): Message? {
         val a = axis
         val b = axis + 2
         fun has(d: Int) = g.edge(p, d) >= 0 && st[g.edge(p, d)] == PearlsLogic.LINE
@@ -304,35 +312,35 @@ internal object PearlsTeacher {
             backEdge >= 0 && st[backEdge] == PearlsLogic.OPEN
         if (!settles) return null
         return if (has(arm)) {
-            "Its line runs ${DIRS[arm]}, so it carries on and can't go ${DIRS[back]}."
+            message("teacher.pearls.black_axis.1", "DIRS_arm_" to (DIRS[arm]), "DIRS_back_" to (DIRS[back]))
         } else {
-            "It can't go ${DIRS[back]} (${blackReason(g, pearls, st, p, back)}), so it runs ${DIRS[arm]}."
+            message("teacher.pearls.black_axis.2", "DIRS_back_" to (DIRS[back]), "value2" to (blackReason(g, pearls, st, p, back)), "DIRS_arm_" to (DIRS[arm]))
         }
     }
 
-    private fun blackReason(g: PearlsGrid, pearls: String, st: IntArray, p: Int, d: Int): String {
+    private fun blackReason(g: PearlsGrid, pearls: String, st: IntArray, p: Int, d: Int): Message {
         val out = g.edge(p, d)
-        if (out < 0) return "the edge of the board"
-        if (st[out] == PearlsLogic.CROSS) return "crossed"
+        if (out < 0) return message("teacher.pearls.black_reason.1")
+        if (st[out] == PearlsLogic.CROSS) return message("teacher.pearls.black_reason.2")
         val q = g.next(p, d)
-        if (pearls[q] == PearlsLogic.BLACK) return "another black pearl there"
+        if (pearls[q] == PearlsLogic.BLACK) return message("teacher.pearls.black_reason.3")
         val on = g.edge(q, d)
-        if (on < 0) return "no room to run on"
-        if (st[on] == PearlsLogic.CROSS) return "it couldn't run on"
-        return "the next square's line runs across"
+        if (on < 0) return message("teacher.pearls.black_reason.4")
+        if (st[on] == PearlsLogic.CROSS) return message("teacher.pearls.black_reason.5")
+        return message("teacher.pearls.black_reason.6")
     }
 
-    private fun whiteReason(g: PearlsGrid, st: IntArray, p: Int, axis: Int): String {
+    private fun whiteReason(g: PearlsGrid, st: IntArray, p: Int, axis: Int): Message {
         for (d in intArrayOf(axis, axis + 2)) {
             val e = g.edge(p, d)
-            if (e < 0) return "the edge of the board"
-            if (st[e] == PearlsLogic.CROSS) return "crossed"
+            if (e < 0) return message("teacher.pearls.white_reason.1")
+            if (st[e] == PearlsLogic.CROSS) return message("teacher.pearls.white_reason.2")
         }
         for (d in intArrayOf((axis + 1) % 4, (axis + 3) % 4)) {
             val e = g.edge(p, d)
-            if (e >= 0 && st[e] == PearlsLogic.LINE) return "a line already crosses that way"
+            if (e >= 0 && st[e] == PearlsLogic.LINE) return message("teacher.pearls.white_reason.3")
         }
-        return "straight on both sides would leave it no turn"
+        return message("teacher.pearls.white_reason.4")
     }
 
     /** The square beside [s] at the far end of edge [e] (which belongs to that neighbour). */
@@ -344,7 +352,7 @@ internal object PearlsTeacher {
         return s
     }
 
-    private val DIRS = listOf("up", "right", "down", "left")
+    private val DIRS = listOf(message("teacher.pearls._d_i_r_s.1"), message("teacher.pearls._d_i_r_s.2"), message("teacher.pearls._d_i_r_s.3"), message("teacher.pearls._d_i_r_s.4"))
 
     // ---- words ------------------------------------------------------------------------------
 

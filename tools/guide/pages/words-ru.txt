@@ -1,0 +1,61 @@
+# Lexicon · RU
+> Find the hidden Russian word
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Type a word on the keyboard under the board and press Enter. A physical keyboard works too: type Russian letters, Backspace deletes, Enter submits.
+
+Each letter of a guess is then marked:
+
+- Green: the right letter in the right place.
+- Yellow: the letter is in the word, but somewhere else.
+- Grey: the word has no (more) of that letter.
+
+A letter is marked only as many times as the word holds it, so a second А can be grey while the first is green. The keys keep the best mark each letter has had.
+
+A row that isn't a word is refused with "Not in the word list", and doesn't use up a guess. Any real word is allowed, even one the marks have already ruled out, and that can be a good way to test several letters at once.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. A hint that points at a word gives it as a crossword-style clue, and only "Show me" types it.
+
+## Rules
+
+- Find the hidden word before you run out of guesses.
+- Every guess must be a real word of the right length.
+
+## What changes per tier
+
+- Standard: Five-letter words, six guesses.
+- Hard: Five-letter words, five guesses.
+- Expert: Four-letter words, seven guesses. Short words have more look-alikes, so the extra guess is there for a reason.
+
+## Techniques
+
+These are the steps the hints teach. On the board, a green tile has an inner line and a yellow one a corner dot.
+
+### opener | A good opening word
+
+Nothing is known yet, so start with a word of common letters: it cuts the list down fast. The hint gives you one as a clue, and which one changes from board to board. It says nothing about the hidden word.
+
+### best-guess | The word that narrows it most
+
+When the marks force nothing, pick a word that fits them and splits what's left. The hint reads the answer list here, says so, and tells you how far its word narrows things down, given as a clue.
+
+### pinned-letter | A letter pinned to its slot
+
+You know a letter is in the word. Cross off each slot a mark has ruled out for it and each slot already held by a green. If only one slot is left, that's where it goes.
+
+~~~board
+К О Л А
+М Е Т Р
+Д Р У Г
+Ж Ю Р И
+. . . .
+content-language: ru
+tiles: r1c1=out r1c2=out r1c3=out r1c4=out r2c1=out r2c2=out r2c3=out r2c4=near r3c1=out r3c2=near r3c3=out r3c4=out r4c1=out r4c2=out r4c3=near r4c4=out
+focus: r2c4 r3c2 r4c3
+cite: r2c4 r3c2 r4c3
+answer: r5c1=Р
+caption: Р is present, but its yellow marks rule out slots 2, 3 and 4. Only slot 1 is left.
+~~~

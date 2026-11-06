@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.play
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.LevelBoard
 import com.joebywan.daybook.core.PuzzleRegistry
@@ -63,19 +64,19 @@ fun nextOptions(daily: Boolean, tier: Difficulty, doneTiers: Set<Difficulty>, to
             today?.let { id ->
                 val name = PuzzleRegistry.byId(id)?.displayName ?: id
                 // The tier is the one just played; the pill has room for the name alone.
-                add(NextOption(tr("Next puzzle", "Далее"), NextKind.TODAY, tier, id, note = name))
+                add(NextOption(text("ui.next_steps.next_puzzle"), NextKind.TODAY, tier, id, note = name))
             }
-            if (easier != null) add(NextOption(tr("Easier daily", "Проще"), NextKind.DAILY, easier))
-            add(NextOption(tr("Random", "Случайная"), NextKind.RANDOM, tier))
-            if (harder != null) add(NextOption(tr("Harder daily", "Сложнее"), NextKind.DAILY, harder))
-            add(NextOption(tr("Done", "Готово"), NextKind.DONE, null))
+            if (easier != null) add(NextOption(text("ui.next_steps.easier_daily"), NextKind.DAILY, easier))
+            add(NextOption(text("ui.launch_options.random"), NextKind.RANDOM, tier))
+            if (harder != null) add(NextOption(text("ui.next_steps.harder_daily"), NextKind.DAILY, harder))
+            add(NextOption(text("ui.next_steps.done"), NextKind.DONE, null))
         }
     } else {
         buildList {
-            add(NextOption(tr("Another", "Ещё одна"), NextKind.RANDOM, tier))
-            tiers.getOrNull(here - 1)?.let { add(NextOption(tr("Easier", "Проще"), NextKind.RANDOM, it)) }
-            tiers.getOrNull(here + 1)?.let { add(NextOption(tr("Harder", "Сложнее"), NextKind.RANDOM, it)) }
-            add(NextOption(tr("Done", "Готово"), NextKind.DONE, null))
+            add(NextOption(text("ui.next_steps.another"), NextKind.RANDOM, tier))
+            tiers.getOrNull(here - 1)?.let { add(NextOption(text("ui.next_steps.easier"), NextKind.RANDOM, it)) }
+            tiers.getOrNull(here + 1)?.let { add(NextOption(text("ui.next_steps.harder"), NextKind.RANDOM, it)) }
+            add(NextOption(text("ui.next_steps.done"), NextKind.DONE, null))
         }
     }
 }
@@ -105,12 +106,12 @@ fun levelNextOptions(level: Int, plan: List<LevelBoard>, solved: Set<String>, ju
     val next = plan.firstNotNullOfOrNull { b -> PuzzleRegistry.byId(b.puzzleId)?.takeIf { b.puzzleId !in done }?.let { b to it.displayName } }
     val go = if (next != null) {
         val (board, name) = next
-        NextOption(tr("Next in level $level", "Далее в уровне $level"), NextKind.LEVEL, board.difficulty, board.puzzleId, level, "$name · ${board.difficulty.label}")
+        NextOption(text("ui.next_steps.next_in_level", "level" to (level)), NextKind.LEVEL, board.difficulty, board.puzzleId, level, "$name · ${board.difficulty.label}")
     } else {
         val to = maxOf(level + 1, current)
-        NextOption(tr("Level $to", "Уровень $to"), NextKind.LEVEL, null, null, to)
+        NextOption(text("ui.next_steps.level", "to" to (to)), NextKind.LEVEL, null, null, to)
     }
-    return listOf(go, NextOption(tr("Home", "Главная"), NextKind.DONE, null))
+    return listOf(go, NextOption(text("ui.next_steps.home"), NextKind.DONE, null))
 }
 
 /**

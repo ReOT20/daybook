@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.home
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.border
 import com.joebywan.daybook.ui.theme.ArcadeBoard
 import com.joebywan.daybook.ui.theme.arcadeLift
@@ -82,14 +83,14 @@ internal fun TodaysThreeRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                tr("Today's three", "Тройка дня"), style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant, maxLines = 1,
+                text("ui.todays_three_row.today_s_three"), style = MaterialTheme.typography.titleSmall, color = scheme.onSurfaceVariant, maxLines = 1,
                 modifier = if (compact) Modifier else Modifier.weight(1f),
             )
             Box(
                 Modifier.size(32.dp).clip(CircleShape).clickable(enabled = shown && card != null) { sharing = true },
                 contentAlignment = Alignment.Center,
             ) {
-                if (card != null) Icon(Icons.Default.Share, tr("Share today's three", "Поделиться тройкой дня"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                if (card != null) Icon(Icons.Default.Share, text("ui.todays_three_row.share_today_s_three"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
             }
             if (compact) chips(Modifier.padding(start = 8.dp).weight(1f))
         }
@@ -121,7 +122,7 @@ private fun ThreeChip(
         Box(contentAlignment = Alignment.TopEnd) {
             puzzle.Preview(Modifier.size(if (compact) 24.dp else 30.dp).clip(RoundedCornerShape(8.dp)).background(scheme.surface))
             if (solved) Box(Modifier.size(14.dp).clip(CircleShape).background(scheme.surface), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Check, tr("Solved", "Решено"), tint = BoardHues.textOn(accent, scheme.surface, 3f), modifier = Modifier.size(10.dp))
+                Icon(Icons.Default.Check, text("ui.archive_screen.solved"), tint = BoardHues.textOn(accent, scheme.surface, 3f), modifier = Modifier.size(10.dp))
             }
         }
     }

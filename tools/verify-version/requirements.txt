@@ -1,0 +1,4 @@
+-r ../web-parity/requirements.txt
+-r ../i18n/requirements.txt
+Pillow==13.0.0
+numpy==2.5.4

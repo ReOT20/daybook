@@ -20,7 +20,10 @@ import androidx.compose.ui.unit.TextUnit
  */
 @Composable
 @ReadOnlyComposable
-fun Dp.boardSp(): TextUnit = with(LocalDensity.current) { toSp() }
+fun Dp.boardSp(): TextUnit = with(LocalDensity.current) { boardFontSize(toPx()) }
+
+/** A squeezed or resizing board can have zero room; Skia cannot derive a line height from a zero font size. */
+internal fun Density.boardFontSize(sizePx: Float): TextUnit = sizePx.coerceAtLeast(1f).toSp()
 
 /**
  * The largest system font size that chrome in a fixed slot follows (the play header, a tier pill, a pen button, a home
@@ -67,4 +70,4 @@ fun BoardGlyph.style(square: Dp): TextStyle {
 
 /** The same in a draw scope or with a measurer, for a square of [squarePx] pixels. */
 fun Density.boardStyle(glyph: BoardGlyph, squarePx: Float): TextStyle =
-    TextStyle(fontSize = (squarePx * glyph.share).toSp(), fontWeight = glyph.weight)
+    TextStyle(fontSize = boardFontSize(squarePx * glyph.share), fontWeight = glyph.weight)

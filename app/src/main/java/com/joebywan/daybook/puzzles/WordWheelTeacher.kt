@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
 
@@ -57,26 +66,32 @@ internal object WordWheelTeacher {
         val word: String,
         /** How many grid words fit the slot. */
         val choices: Int,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-    ) : TeachStep
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     fun shapes(s: WordWheelState): List<Shape> = s.slots.map { Shape(it.row, it.col, it.across, it.length) }
 
     /** Grid words of [length] from [wheel] that agree with the letters showing ([pattern], null for a blank) and were not tried yet. */
-    fun candidates(wheel: String, pattern: List<Char?>, tried: List<String>): List<String> =
-        WheelWords.grid(pattern.size).filter { w ->
-            w !in tried && WheelWords.spellable(w, wheel) && pattern.indices.all { pattern[it] == null || pattern[it] == w[it] }
+    fun candidates(wheel: String, pattern: List<Char?>, tried: List<String>, contentLanguage: String = "en"): List<String> =
+        WheelWords.grid(pattern.size, contentLanguage).filter { w ->
+            w !in tried && WheelWords.spellable(w, wheel, contentLanguage) && pattern.indices.all { pattern[it] == null || pattern[it] == w[it] }
         }
 
     /** [crossings] false is the ladder the generator was built on (pinned, then clue), so boards never move with the teacher. */
     fun teach(s: WordWheelState, crossings: Boolean = true): Step? {
         if (s.solved) return null
         val empty = s.slots.indices.filter { !s.filled(it) }
-        return deduce(s.wheel, s.width, shapes(s), empty, s.shown().toList(), s.found + s.bonus, crossings) ?: clue(s, empty)
+        return deduce(s.wheel, s.width, shapes(s), empty, s.shown().toList(), s.found + s.bonus, crossings, s.contentLanguage) ?: clue(s, empty)
     }
 
     /**
@@ -91,12 +106,13 @@ internal object WordWheelTeacher {
         shown: List<Char?>,
         tried: List<String>,
         crossings: Boolean = true,
+        contentLanguage: String = "en",
     ): Step? {
         val fitsOf = arrayOfNulls<List<String>>(shapes.size)
         for (k in empty) {
             val shape = shapes[k]
             val pattern = shape.cells(width).map { shown[it] }
-            val fits = candidates(wheel, pattern, tried)
+            val fits = candidates(wheel, pattern, tried, contentLanguage)
             fitsOf[k] = fits
             if (fits.size != 1) continue
             val word = fits[0]
@@ -104,25 +120,24 @@ internal object WordWheelTeacher {
             val known = cells.filter { shown[it] != null }.toSet()
             val shapeText = pattern.joinToString(" ") { it?.uppercaseChar()?.toString() ?: "_" }
             val explanation = if (known.isEmpty()) {
-                "Of the well-known words the wheel spells, only one has ${shape.length} letters" +
-                    (if (shape.length == wheel.length) ", using every letter" else "") + ". Its clue: ${clueFor(word)}."
+                message("teacher.wordwheel.deduce.1", "shape_length" to (shape.length), "value2" to ((if (shape.length == wheel.length) message("teacher.wordwheel.deduce.extra.1") else "")), "value3" to (clueFor(word, contentLanguage)))
             } else {
-                "${shape.length} letters, $shapeText. Of the well-known words the wheel spells, only one fits. Its clue: ${clueFor(word)}."
+                message("teacher.wordwheel.deduce.3", "shape_length" to (shape.length), "shapeText" to (shapeText), "value3" to (clueFor(word, contentLanguage)))
             }
             return Step(
                 PINNED, k, word, 1,
-                nudge = if (known.isEmpty()) "One slot's length leaves only one word." else "The letters already in this slot leave one word.",
+                nudge = if (known.isEmpty()) message("teacher.wordwheel.deduce.4") else message("teacher.wordwheel.deduce.5"),
                 explanation = explanation,
                 focus = cells.toSet(),
                 cited = known,
                 targets = cells.toSet(),
             )
         }
-        return if (crossings) crossing(width, shapes, empty, shown, fitsOf) else null
+        return if (crossings) crossing(width, shapes, empty, shown, fitsOf, contentLanguage) else null
     }
 
     /** An empty slot of which only one fitting word leaves every empty slot crossing it a word ([fitsOf]: the words fitting each). */
-    private fun crossing(width: Int, shapes: List<Shape>, empty: List<Int>, shown: List<Char?>, fitsOf: Array<List<String>?>): Step? {
+    private fun crossing(width: Int, shapes: List<Shape>, empty: List<Int>, shown: List<Char?>, fitsOf: Array<List<String>?>, contentLanguage: String): Step? {
         for (a in empty) {
             val fits = fitsOf[a]!!
             if (fits.size < 2) continue
@@ -144,12 +159,11 @@ internal object WordWheelTeacher {
             if (left.size != 1) continue
             val word = left[0]
             val crossCells = blocking.flatMap { b -> shapes[b].cells(width) }.toSet()
-            val them = if (blocking.size == 1) "the slot crossing it" else "the slots crossing it"
+            val them = if (blocking.size == 1) message("teacher.wordwheel.crossing.1") else message("teacher.wordwheel.crossing.2")
             return Step(
                 CROSSING, a, word, 1,
-                nudge = "A slot crossing this one leaves it only one word.",
-                explanation = "${fits.size} words from the wheel fit these ${shape.length} squares, but only one leaves a word for $them. " +
-                    "Its clue: ${clueFor(word)}.",
+                nudge = message("teacher.wordwheel.crossing.3"),
+                explanation = message("teacher.wordwheel.crossing.4", "fits_size" to (fits.size), "shape_length" to (shape.length), "them" to (them), "value4" to (clueFor(word, contentLanguage))),
                 focus = cells.toSet(),
                 cited = cells.filter { shown[it] != null }.toSet() + crossCells,
                 targets = cells.toSet(),
@@ -167,7 +181,7 @@ internal object WordWheelTeacher {
         for (k in empty) {
             val slot = s.slots[k]
             val pattern = slot.cells(s.width).map { shown[it] }
-            val n = candidates(s.wheel, pattern, tried).size
+            val n = candidates(s.wheel, pattern, tried, s.contentLanguage).size
             if (n < bestCount) {
                 best = k
                 bestCount = n
@@ -178,9 +192,8 @@ internal object WordWheelTeacher {
         val cells = slot.cells(s.width)
         return Step(
             CLUE, best, slot.word, bestCount,
-            nudge = "Try the slot with the fewest words that fit.",
-            explanation = "$bestCount words from the wheel fit this ${slot.length}-letter slot. " +
-                "The one here is clued ${clueFor(slot.word)}.",
+            nudge = message("teacher.wordwheel.clue.1"),
+            explanation = message("teacher.wordwheel.clue.2", "bestCount" to (bestCount), "slot_length" to (slot.length), "value3" to (clueFor(slot.word, s.contentLanguage))),
             focus = cells.toSet(),
             cited = cells.filter { shown[it] != null }.toSet(),
             targets = cells.toSet(),
@@ -188,7 +201,7 @@ internal object WordWheelTeacher {
     }
 
     /** "“Lift” (5)": a crossword clue to [word] without the word, as Lexicon gives it. Only "Show me" types the word. */
-    private fun clueFor(word: String) = "\u201C${WheelWords.clue(word)}\u201D (${word.length})"
+    private fun clueFor(word: String, contentLanguage: String) = message("teacher.wordwheel.clue_for.1", "value1" to (WheelWords.clue(word, contentLanguage)), "word_length" to (word.length))
 
     /** The wheel letters that spell [word], first unused copy of each letter, as highlight indices. */
     fun letters(wheel: String, word: String): Set<Int> =

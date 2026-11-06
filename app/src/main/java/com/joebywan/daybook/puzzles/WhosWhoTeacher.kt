@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
 import com.joebywan.daybook.core.listed
@@ -54,9 +63,15 @@ internal object WhosWhoTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
-    ) : TeachStep
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: WhosWhoState): Lesson? {
         if (s.solved) return null
@@ -79,18 +94,18 @@ internal object WhosWhoTeacher {
             val right = s.answer[column][person] == slot
             if (mark == WhosWhoLogic.TICK && right || mark == WhosWhoLogic.CROSS && !right) continue
             val ref = (column + 1) * n + slot
-            val who = s.names[person]
+            val who = WhosWhoText.name(s, person)
             return Lesson(
                 technique = MISTAKE,
                 clears = listOf(at),
                 focus = setOf(cell),
                 cited = emptySet(),
                 targets = setOf(cell),
-                nudge = "One of your marks doesn't fit the clues.",
+                nudge = message("teacher.whoswho.mistake.1"),
                 explanation = if (mark == WhosWhoLogic.TICK) {
-                    "$who can't ${WhosWhoLogic.base(s, ref)}: no way of keeping every clue does. Take the tick off."
+                    message("teacher.whoswho.mistake.2", "who" to (who), "WhosWhoLogic_base_s_ref_" to (WhosWhoText.base(s, ref)))
                 } else {
-                    "$who has to ${WhosWhoLogic.base(s, ref)}: every way of keeping the clues needs it. Take the cross off."
+                    message("teacher.whoswho.mistake.3", "who" to (who), "WhosWhoLogic_base_s_ref_" to (WhosWhoText.base(s, ref)))
                 },
             )
         }
@@ -145,9 +160,9 @@ internal object WhosWhoTeacher {
         val clue = if (step.clue >= 0) setOf(CLUE_BASE + step.clue) else emptySet()
         val cited = clue + citedCells(s, grid, step)
         val nudge = when (step.technique) {
-            WhosWhoLogic.ONLY -> if (step.person >= 0) "Look at ${s.names[step.person]}'s row." else "Look down one column."
-            WhosWhoLogic.WHAT_IF -> "Try supposing something in ${s.names[cellOf(s, step.supposed) / s.columns]}'s row."
-            else -> "Read clue ${step.clue + 1} against the table."
+            WhosWhoLogic.ONLY -> if (step.person >= 0) message("teacher.whoswho.lesson.1", "s_names_step_person_" to (WhosWhoText.name(s, step.person))) else message("teacher.whoswho.lesson.2")
+            WhosWhoLogic.WHAT_IF -> message("teacher.whoswho.lesson.3", "value1" to (WhosWhoText.name(s, cellOf(s, step.supposed) / s.columns)))
+            else -> message("teacher.whoswho.lesson.4", "step_clue_1" to (step.clue + 1))
         }
         return Lesson(
             technique = technique,
@@ -172,36 +187,36 @@ internal object WhosWhoTeacher {
 
     // ---- words ----------------------------------------------------------------------------------
 
-    private fun person(s: WhosWhoState, mark: Int) = s.names[mark / s.n / s.columns]
+    private fun person(s: WhosWhoState, mark: Int) = WhosWhoText.name(s, mark / s.n / s.columns)
 
     private fun itemOf(s: WhosWhoState, mark: Int) = (mark / s.n % s.columns + 1) * s.n + mark % s.n
 
-    private fun clueLine(s: WhosWhoState, k: Int) = "Clue ${k + 1}: ${WhosWhoLogic.clueText(s, k)}"
+    private fun clueLine(s: WhosWhoState, k: Int) = message("teacher.whoswho.clue_line.1", "k_1" to (k + 1), "value2" to (WhosWhoText.clueText(s, k)))
 
     /** "cross the cat off for Ann", "cross the fish and the bird off for Ann", "cross the baker off for Ben and Dev". */
-    private fun crossOff(s: WhosWhoState, crosses: List<Int>): String {
-        val people = crosses.map { person(s, it) }.distinct()
-        val things = crosses.map { WhosWhoLogic.thing(s, itemOf(s, it)) }.distinct()
-        return "cross ${listed(things)} off for ${listed(people)}"
+    private fun crossOff(s: WhosWhoState, crosses: List<Int>): Message {
+        val people = crosses.map { person(s, it) }.distinctBy { it.english }
+        val things = crosses.map { WhosWhoText.thing(s, itemOf(s, it)) }.distinctBy { it.english }
+        return message("teacher.whoswho.cross_off.1", "listed_things_" to (listedMessage(things)), "listed_people_" to (listedMessage(people)))
     }
 
     /** What a NEXT / LEFT clue asks of the partner of the side that holds [item]: "next to", "somewhere right of". */
-    private fun relation(s: WhosWhoState, clue: WhoClue, item: Int): String = when {
-        clue.kind == WhosWhoLogic.NEXT -> "next to"
-        item == clue.a -> "somewhere right of"
-        else -> "somewhere left of"
+    private fun relation(s: WhosWhoState, clue: WhoClue, item: Int): Message = when {
+        clue.kind == WhosWhoLogic.NEXT -> message("teacher.whoswho.relation.1")
+        item == clue.a -> message("teacher.whoswho.relation.2")
+        else -> message("teacher.whoswho.relation.3")
     }
 
-    private fun explain(s: WhosWhoState, grid: WhosWhoLogic.Grid, step: Step): String {
+    private fun explain(s: WhosWhoState, grid: WhosWhoLogic.Grid, step: Step): Message {
         val n = s.n
         return when (step.technique) {
             WhosWhoLogic.CLUE -> {
                 val action = if (step.ticks.isNotEmpty()) {
-                    "Tick ${WhosWhoLogic.thing(s, itemOf(s, step.ticks[0]))} for ${person(s, step.ticks[0])}."
+                    message("teacher.whoswho.explain.1", "value1" to (WhosWhoText.thing(s, itemOf(s, step.ticks[0]))), "person_s_step_ticks_0_" to (person(s, step.ticks[0])))
                 } else {
                     crossOff(s, step.crosses).cap() + "."
                 }
-                "${clueLine(s, step.clue)} $action"
+                message("teacher.whoswho.explain.extra.1", "clueLine_s_step_clue_" to (clueLine(s, step.clue)), "action" to (action))
             }
             WhosWhoLogic.ONLY -> {
                 val mark = step.ticks[0]
@@ -209,9 +224,9 @@ internal object WhosWhoTeacher {
                 val item = itemOf(s, mark)
                 val column = item / n - 1
                 if (step.person >= 0) {
-                    "Every other ${WhosWhoWords.NOUNS[s.groups[column]]} is ruled out for $who, so $who ${WhosWhoLogic.has(s, item)}."
+                    message("teacher.whoswho.explain.2", "value1" to (WhosWhoText.noun(s.groups[column])), "who" to (who), "WhosWhoLogic_has_s_item_" to (WhosWhoText.has(s, item)))
                 } else {
-                    "Everyone but $who is ruled out for ${WhosWhoLogic.thing(s, item)}, so $who ${WhosWhoLogic.has(s, item)}."
+                    message("teacher.whoswho.explain.3", "who" to (who), "value2" to (WhosWhoText.thing(s, item)), "WhosWhoLogic_has_s_item_" to (WhosWhoText.has(s, item)))
                 }
             }
             WhosWhoLogic.LINK -> {
@@ -219,24 +234,24 @@ internal object WhosWhoTeacher {
                 val line = clueLine(s, step.clue)
                 when {
                     step.ticks.isNotEmpty() -> {
-                        val who = s.names[step.person]
-                        "$line $who ${WhosWhoLogic.has(s, step.partner)}, so $who ${WhosWhoLogic.has(s, step.item)} too."
+                        val who = WhosWhoText.name(s, step.person)
+                        message("teacher.whoswho.explain.4", "line" to (line), "who" to (who), "value3" to (WhosWhoText.has(s, step.partner)), "value4" to (WhosWhoText.has(s, step.item)))
                     }
                     step.person >= 0 && clue.kind == WhosWhoLogic.NOT -> {
-                        val who = s.names[step.person]
-                        "$line $who ${WhosWhoLogic.has(s, step.partner)}, so ${crossOff(s, step.crosses)}."
+                        val who = WhosWhoText.name(s, step.person)
+                        message("teacher.whoswho.explain.5", "line" to (line), "who" to (who), "value3" to (WhosWhoText.has(s, step.partner)), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
                     }
                     step.person >= 0 -> {
-                        val who = s.names[step.person]
-                        "$line $who ${WhosWhoLogic.has(s, clue.a)}, so ${crossOff(s, step.crosses)}."
+                        val who = WhosWhoText.name(s, step.person)
+                        message("teacher.whoswho.explain.6", "line" to (line), "who" to (who), "value3" to (WhosWhoText.has(s, clue.a)), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
                     }
                     clue.kind == WhosWhoLogic.SAME -> {
-                        val people = listed(step.crosses.map { person(s, it) })
-                        "$line ${WhosWhoLogic.thing(s, step.partner).cap()} is ruled out for $people, so ${crossOff(s, step.crosses)}."
+                        val people = listedMessage(step.crosses.map { person(s, it) })
+                        message("teacher.whoswho.explain.7", "line" to (line), "value2" to (WhosWhoText.thing(s, step.partner).cap()), "people" to (people), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
                     }
                     else -> {
-                        val people = listed(step.crosses.map { person(s, it) })
-                        "$line ${WhosWhoLogic.thing(s, clue.b).cap()} and ${WhosWhoLogic.thing(s, clue.c)} are both ruled out for $people, so ${crossOff(s, step.crosses)}."
+                        val people = listedMessage(step.crosses.map { person(s, it) })
+                        message("teacher.whoswho.explain.8", "line" to (line), "value2" to (WhosWhoText.thing(s, clue.b).cap()), "value3" to (WhosWhoText.thing(s, clue.c)), "people" to (people), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
                     }
                 }
             }
@@ -244,17 +259,16 @@ internal object WhosWhoTeacher {
                 val clue = s.clues[step.clue]
                 val line = clueLine(s, step.clue)
                 val rel = relation(s, clue, step.item)
-                val partner = WhosWhoLogic.base(s, step.partner)
+                val partner = WhosWhoText.base(s, step.partner)
                 if (step.person >= 0) {
-                    val who = s.names[step.person]
-                    val houses = listed(step.crosses.map { "house ${it % n + 1}" }, "or")
-                    val known = if (step.item / n == 0) "" else "$who ${WhosWhoLogic.has(s, step.item)}, and "
-                    "$line " + "${known}nobody who could $partner can live $rel $houses, so ${crossOff(s, step.crosses)}.".cap()
+                    val who = WhosWhoText.name(s, step.person)
+                    val houses = listedMessage(step.crosses.map { message("teacher.whoswho.explain.9", "it_n_1" to (it % n + 1)) }, "or")
+                    val known = if (step.item / n == 0) "" else message("teacher.whoswho.explain.10", "who" to (who), "value2" to (WhosWhoText.has(s, step.item)))
+                    message("teacher.whoswho.explain.extra.2", "line" to (line), "value2" to (message("teacher.whoswho.explain.11", "known" to (known), "partner" to (partner), "rel" to (rel), "houses" to (houses), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses))).cap()))
                 } else {
                     val people = step.crosses.map { person(s, it) }
-                    val them = if (people.size == 1) people[0] else "any of them"
-                    "$line Wherever ${listed(people)} can live, nobody who could $partner can live $rel $them, " +
-                        "so ${crossOff(s, step.crosses)}."
+                    val them = if (people.size == 1) people[0] else message("teacher.whoswho.explain.12")
+                    message("teacher.whoswho.explain.13", "line" to (line), "listed_people_" to (listedMessage(people)), "partner" to (partner), "rel" to (rel), "them" to (them), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
                 }
             }
             else -> {
@@ -262,31 +276,31 @@ internal object WhosWhoTeacher {
                 val who = person(s, supposed)
                 val chain = if (step.chain.size <= WhosWhoLogic.MAX_LINKS) step.chain.map { link(s, it) } else {
                     val clues = step.chain.mapNotNull { if (it.clue >= 0) it.clue + 1 else null }.distinct().sorted()
-                    listOf("following clues " + listed(clues.map { "$it" }) + " and what they leave")
+                    listOf(message("teacher.whoswho.explain.14", "value1" to (listedMessage(clues.map { "$it" }))))
                 }
                 val end = when (val b = step.broke) {
-                    is Break.EmptyCell -> "${s.names[b.person]} has no ${WhosWhoWords.NOUNS[s.groups[b.column]]} left"
-                    is Break.NoHolder -> "nobody can ${WhosWhoLogic.base(s, (b.column + 1) * n + b.slot)}"
-                    is Break.Clue -> "clue ${b.clue + 1} can't hold"
-                    null -> "nothing fits"
+                    is Break.EmptyCell -> message("teacher.whoswho.explain.15", "s_names_b_person_" to (WhosWhoText.name(s, b.person)), "value2" to (WhosWhoText.noun(s.groups[b.column])))
+                    is Break.NoHolder -> message("teacher.whoswho.explain.16", "value1" to (WhosWhoText.base(s, (b.column + 1) * n + b.slot)))
+                    is Break.Clue -> message("teacher.whoswho.explain.17", "b_clue_1" to (b.clue + 1))
+                    null -> message("teacher.whoswho.explain.18")
                 }
-                val steps = listed(chain + end, oxford = true)
-                "Suppose $who ${WhosWhoLogic.has(s, itemOf(s, supposed))}: then $steps. So ${crossOff(s, step.crosses)}."
+                val steps = listedMessage(chain + end, oxford = true)
+                message("teacher.whoswho.explain.19", "who" to (who), "value2" to (WhosWhoText.has(s, itemOf(s, supposed))), "steps" to (steps), "crossOff_s_step_crosses_" to (crossOff(s, step.crosses)))
             }
         }
     }
 
     /** One step of a what-if, as a clause: "Ann is the baker (clue 2)", "Ben can't have the cat (clue 4)". */
-    private fun link(s: WhosWhoState, step: Step): String {
-        val why = if (step.clue >= 0) " (clue ${step.clue + 1})" else ""
+    private fun link(s: WhosWhoState, step: Step): Message {
+        val why = if (step.clue >= 0) message("teacher.whoswho.link.1", "step_clue_1" to (step.clue + 1)) else ""
         if (step.ticks.isNotEmpty()) {
             val mark = step.ticks[0]
-            return "${person(s, mark)} ${WhosWhoLogic.has(s, itemOf(s, mark))}$why"
+            return message("teacher.whoswho.link.extra.1", "person_s_mark_" to (person(s, mark)), "value2" to (WhosWhoText.has(s, itemOf(s, mark))), "why" to (why))
         }
-        val people = step.crosses.map { person(s, it) }.distinct()
+        val people = step.crosses.map { person(s, it) }.distinctBy { it.english }
         val items = step.crosses.map { itemOf(s, it) }.distinct()
-        val what = WhosWhoLogic.base(s, items[0]) + if (items.size > 1) " or " + listed(items.drop(1).map { WhosWhoLogic.thing(s, it) }, "or") else ""
-        return "${listed(people)} can't $what$why"
+        val what = WhosWhoText.base(s, items[0]) + if (items.size > 1) message("teacher.whoswho.link.2", "value1" to (listedMessage(items.drop(1).map { WhosWhoText.thing(s, it) }, "or"))) else literalMessage("")
+        return message("teacher.whoswho.link.3", "listed_people_" to (listedMessage(people)), "what" to (what), "why" to (why))
     }
 
 }

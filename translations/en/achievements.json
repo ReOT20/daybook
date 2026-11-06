@@ -1,0 +1,69 @@
+{
+  "achievement.solves1.title": "First solve",
+  "achievement.solves1.description": "Solve your first puzzle.",
+  "achievement.solves100.title": "Hundred solves",
+  "achievement.solves100.description": "Solve 100 puzzles.",
+  "achievement.streak3.title": "Three in a row",
+  "achievement.streak7.title": "A full week",
+  "achievement.streak14.title": "Fortnight",
+  "achievement.streak30.title": "A month of puzzles",
+  "achievement.streak60.title": "Sixty days",
+  "achievement.streak100.title": "One hundred days",
+  "achievement.streak365.title": "A whole year",
+  "achievement.puzzle_streak7.title": "Devoted",
+  "achievement.puzzle_streak30.title": "Specialist",
+  "achievement.days30.title": "Regular",
+  "achievement.days30.description": "Play on 30 different days.",
+  "achievement.first_top.title": "First {tier}",
+  "achievement.first_top.description": "Solve a puzzle on {tier}.",
+  "achievement.clean_top.title": "Unaided {tier}",
+  "achievement.clean_top.description": "Solve a {tier} puzzle without hints.",
+  "achievement.one_of_each.title": "One of each",
+  "achievement.one_of_each.description": "Solve every kind of puzzle at least once.",
+  "achievement.full_set.title": "Full set",
+  "achievement.full_set.description": "Finish every difficulty of one puzzle's daily on the same day.",
+  "achievement.todays_three.title": "Today's three",
+  "achievement.todays_three.description": "Finish a day's three on one tier, on the day.",
+  "achievement.all_puzzles.title": "Clean sweep",
+  "achievement.all_puzzles.description": "Finish every puzzle's daily within one week.",
+  "achievement.trained.title": "{puzzle} trained",
+  "achievement.trained.description": "Pass every {puzzle} technique in Training.",
+  "achievement.graduate.title": "{puzzle} graduate",
+  "achievement.graduate.description": "Then solve Training's final board.",
+  "achievement.streak.description": {
+    "one": "Play on {count} day in one streak.",
+    "other": "Play on {count} days in one streak."
+  },
+  "achievement.puzzle_streak.description": {
+    "one": "Reach a {count}-day streak in a single puzzle.",
+    "other": "Reach a {count}-day streak in a single puzzle."
+  },
+  "achievement.remaining.solves100": {
+    "one": "Only {count} more solve to your hundredth.",
+    "other": "Only {count} more solves to your hundredth."
+  },
+  "achievement.remaining.days30": {
+    "one": "{count} more day played to Regular.",
+    "other": "{count} more days played to Regular."
+  },
+  "achievement.remaining.streak": {
+    "one": "{count} more day to your {target}-day streak.",
+    "other": "{count} more days to your {target}-day streak."
+  },
+  "achievement.remaining.puzzle_streak": {
+    "one": "{count} more day to a {target}-day {puzzle} streak.",
+    "other": "{count} more days to a {target}-day {puzzle} streak."
+  },
+  "achievement.remaining.untried": {
+    "one": "{names} is the only puzzle you haven't tried yet.",
+    "other": "{count} puzzles you haven't tried yet: {names}."
+  },
+  "achievement.remaining.full_set": {
+    "one": "{puzzle} on {tiers} is all that's left for a Full set today.",
+    "other": "{puzzle} on {tiers} is all that's left for a Full set today."
+  },
+  "achievement.remaining.all_puzzles": {
+    "one": "{names} is all that's left for a Clean sweep this week.",
+    "other": "{names} are all that's left for a Clean sweep this week."
+  }
+}

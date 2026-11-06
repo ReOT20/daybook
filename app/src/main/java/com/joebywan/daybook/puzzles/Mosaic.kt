@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -176,21 +179,20 @@ data class MosaicState(
 object Mosaic : PuzzleType {
 
     override val id = "mosaic"
-    override val displayName = "Mosaic"
-    override val tagline = "Flood the board down to one colour"
+    override val displayName get() = text("puzzle.mosaic.name")
+    override val tagline get() = text("puzzle.mosaic.tagline")
     override val accent = 0xFFBC4C9C
-    override val rules = listOf(
-        "Squares of one colour joined edge to edge form a single area, drawn with a heavy outline.",
-        "Pick a colour below, then tap an area to flood it with that colour.",
-        "A flooded area merges with every neighbouring area already in that colour — " +
-            "growing one big blob is how you cover ground quickly.",
-        "Turn the whole board one colour before the fills run out.",
-        "The limit is the fewest fills the board can be done in, so every fill has to count.",
-        "Tapping an area in its own colour does nothing and costs nothing.",
+    override val rules get() = listOf(
+        text("puzzle.mosaic.rule.1"),
+        text("puzzle.mosaic.rule.2"),
+        text("puzzle.mosaic.rule.3"),
+        text("puzzle.mosaic.rule.4"),
+        text("puzzle.mosaic.rule.5"),
+        text("puzzle.mosaic.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Number keys pick a colour, arrows move, Space or Enter pours it.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.mosaic.keyboard.1"),
     )
 
     /**
@@ -927,42 +929,38 @@ object Mosaic : PuzzleType {
         listOf(
             TutorialFrame(
                 state = start,
-                caption = "Touching squares of one colour make an area, outlined in black. Turn the whole board " +
-                    "one colour. The line above counts your fills against the fewest this board needs: here 3.",
+                caption = message("puzzle.mosaic.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = tealArea),
             ),
             TutorialFrame(
                 state = start,
-                caption = "Pick amber below, then tap the glowing violet area. It joins every amber " +
-                    "area it touches: three at once, more than any other fill can.",
+                caption = message("puzzle.mosaic.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = start.area(c1).toSet(), soft = amberNeighbours(start, c1)),
                 accepts = pour(start, c1, k1),
-                retry = "Pick amber below, then tap the glowing area.",
-                done = "Four areas became one. The bigger it grows, the more each fill takes.",
+                retry = message("puzzle.mosaic.tutorial.2.retry"),
+                done = message("puzzle.mosaic.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = second,
-                caption = "2 fills left, 3 colours. A fill wipes out a colour only by covering its last " +
-                    "patch, so both fills must. Amber is down to one patch: pour teal into it.",
+                caption = message("puzzle.mosaic.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = second.area(c2).toSet()),
                 accepts = pour(second, c2, k2),
-                retry = "Pick teal below, then tap the glowing area.",
-                done = "Amber is gone. Two colours, one fill.",
+                retry = message("puzzle.mosaic.tutorial.3.retry"),
+                done = message("puzzle.mosaic.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = third,
-                caption = "Every other area touches the teal one, and they're all violet. " +
-                    "Pour violet into teal to finish.",
+                caption = message("puzzle.mosaic.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = third.area(c3).toSet()),
                 accepts = pour(third, c3, k3),
-                retry = "Pick violet below, then tap the glowing area.",
-                done = "One colour, three fills: the least it could take.",
+                retry = message("puzzle.mosaic.tutorial.4.retry"),
+                done = message("puzzle.mosaic.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = MosaicState(6, 6, 3, 4, PRACTICE_CELLS),
-                caption = "Your turn: one colour in 4 fills, none spare. Stuck, or out of fills? Hint shows you why.",
+                caption = message("puzzle.mosaic.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.mosaic.tutorial.5.done"),
             ),
         )
     }
@@ -1064,7 +1062,7 @@ object Mosaic : PuzzleType {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                "${s.moves} of ${s.limit} fills used",
+                text("puzzle.mosaic.board.progress", "moves" to (s.moves), "limit" to (s.limit)),
                 style = MaterialTheme.typography.labelLarge,
                 color = if (s.failed) scheme.error else scheme.onSurfaceVariant,
             )
@@ -1200,7 +1198,7 @@ object Mosaic : PuzzleType {
 
                 if (s.failed) {
                     Text(
-                        "Out of fills. Undo, or tap Hint to find the fill that lost it.",
+                        text("puzzle.mosaic.board.lost"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.error,
                         textAlign = TextAlign.Center,

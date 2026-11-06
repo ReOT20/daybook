@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -63,20 +66,20 @@ import kotlin.math.roundToInt
 object Pearls : PuzzleType {
 
     override val id = "pearls"
-    override val displayName = "Pearls"
-    override val tagline = "One loop through every pearl"
+    override val displayName get() = text("puzzle.pearls.name")
+    override val tagline get() = text("puzzle.pearls.tagline")
     override val accent = 0xFF967028
 
-    override val rules = listOf(
-        "Draw one closed loop through the middles of squares, moving up, down, left or right. It never crosses or branches.",
-        "The loop passes through every pearl. It need not visit every square.",
-        "On a black pearl the loop turns, and goes straight on through the next square on both sides.",
-        "On a white pearl the loop goes straight through, and turns on at least one of the squares just before or after it.",
-        "Drag through squares to draw; drag back along a line to rub it out. Tap between two squares to cross that edge out (a note).",
+    override val rules get() = listOf(
+        text("puzzle.pearls.rule.1"),
+        text("puzzle.pearls.rule.2"),
+        text("puzzle.pearls.rule.3"),
+        text("puzzle.pearls.rule.4"),
+        text("puzzle.pearls.rule.5"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Shift+arrow draws or rubs out the line that way, X then an arrow crosses that edge.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.pearls.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState = PearlsLogic.generate(seed, difficulty)
@@ -172,58 +175,54 @@ object Pearls : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Draw one loop through the middles of squares that passes every pearl. On a black pearl it turns; " +
-                    "on a white pearl it goes straight.",
+                caption = message("puzzle.pearls.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 15)),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "A black pearl turns, then runs straight on two squares each way. In the corner it can only go " +
-                    "down and right: drag from two below it, through it, to two right of it.",
+                caption = message("puzzle.pearls.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 10, 2), soft = setOf(5, 1)),
                 accepts = only(afterBlack),
-                retry = "Drag along the glowing squares in one stroke, through the pearl.",
-                done = "Drawn. A black pearl's arms always run two squares straight.",
+                retry = message("puzzle.pearls.tutorial.2.retry"),
+                done = message("puzzle.pearls.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = afterBlack,
-                caption = "A white pearl goes straight through. This one sits on the bottom edge, so it can't go up and down: " +
-                    "drag across it, from its left to its right.",
+                caption = message("puzzle.pearls.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(21, 20, 22)),
                 accepts = only(afterWhite),
-                retry = "Drag along the glowing squares, straight through the white pearl.",
-                done = "Straight through. It turns at the corner just before it, as a white pearl must on one side.",
+                retry = message("puzzle.pearls.tutorial.3.retry"),
+                done = message("puzzle.pearls.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = afterWhite,
-                caption = "The square after a black pearl runs straight on, so no line leaves it sideways. " +
-                    "Tap the glowing edge to cross it out.",
+                caption = message("puzzle.pearls.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(edgeAt(1, 6)), soft = setOf(0, 1)),
                 accepts = only(afterCross),
-                retry = "Tap once on the glowing edge, between the two squares.",
-                done = "Crossed. A cross is a note: no line here.",
+                retry = message("puzzle.pearls.tutorial.4.retry"),
+                done = message("puzzle.pearls.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = afterCross,
-                caption = "What if the white pearl on the left turned? Drag from it one square right and see.",
+                caption = message("puzzle.pearls.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(15, 16)),
                 accepts = only(afterSlip),
-                retry = "Drag from the glowing white pearl one square right.",
-                done = "It can't: a white pearl goes straight, so it turns red.",
+                retry = message("puzzle.pearls.tutorial.5.retry"),
+                done = message("puzzle.pearls.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = afterSlip,
-                caption = "Drag back along that line, from the pearl's right to the pearl, to rub it out.",
+                caption = message("puzzle.pearls.tutorial.6.caption"),
                 highlight = BoardHighlight(strong = setOf(16, 15), warning = true),
                 accepts = only(afterCross),
-                retry = "Drag back along the red line, in one stroke.",
-                done = "Rubbed out. Dragging along a line takes it away.",
+                retry = message("puzzle.pearls.tutorial.6.retry"),
+                done = message("puzzle.pearls.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = afterCross,
-                caption = "Your turn: finish the loop. Stuck? Hint shows you why.",
+                caption = message("puzzle.pearls.tutorial.7.caption"),
                 freePlay = true,
-                done = "Solved. That's Pearls.",
+                done = message("puzzle.pearls.tutorial.7.done"),
             ),
         )
     }
@@ -241,8 +240,8 @@ object Pearls : PuzzleType {
         val before = s.edges
         return Deduction(
             technique = step.technique,
-            nudge = step.nudge,
-            explanation = step.explanation,
+            nudge = step.nudgeMessage,
+            explanation = step.explanationMessage,
             focus = step.focus,
             cited = step.cited,
             targets = step.targets(s.size),

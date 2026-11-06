@@ -107,6 +107,19 @@ What varies, as built:
 | Hexwords | hexes, longest planted word, and the simple player the target beats (letters vanish on every tier) | 19, up to 5 letters, the middle of biggest-word-first's tries / 29, up to 6, above its best / 44, up to 7, above a one-word-lookahead player too (`HexLogic.specFor`, `targetFor`; `HexwordsRulesTest` `the tiers beat a greedy player and then a careful one`) |
 | Crossword (mini) | grid side, and the clue share: the letters the hints' walk must read from the clues, over the white squares (ladder depth does not separate grids, see `docs/MINI_SPEC.md`) | 5x5 at most 30% / 6x6 over 30% to 40% / 7x7 over 40% (`MiniLogic.specFor`; `MiniRulesTest` `a year of daily boards - the tiers get bigger and leave more to the clues`) |
 
+The seven Russian word editions (`words-ru`, `wordwheel-ru`, `mini-ru`, `codeword-ru`,
+`hexwords-ru`, `dwindle-ru`, `cipher-ru`) reuse their family's mechanics and tier gates with an
+explicit saved content language. Their vocabulary, daily IDs, pins, walkthroughs, guides and frozen
+saves are separate; changing the display language never changes the board. The Russian Mini and
+Codeword block densities are calibrated for their own dictionary, while sizes, exact uniqueness
+proofs, clue-share bands and teaching-depth gates remain the same. Russian Mini has one native
+clue per word, so it does not inherit the English edition's second-clue difficulty setting.
+Frozen data, rebuilding constraints and annual teacher measurements are documented in
+[`tools/words/ru/README.md`](../tools/words/ru/README.md). `RussianWordsTest`,
+`RussianWordGamesTest`, `RussianCrosswordRulesTest` and `RussianCrosswordTutorialTest` check the
+native content and independent solver samples; the shared pin, save, guide, fallback and parity
+contracts include all seven registered identities.
+
 Rules for the tiers:
 
 - **Three tiers, ascending.** Tower once shipped 10 / 10 / 9 guesses for 1,296 / 16,807 / 32,768 codes, a

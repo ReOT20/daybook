@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.ArcadeBoard
 import com.joebywan.daybook.ui.theme.ArcadeFill
 import com.joebywan.daybook.ui.theme.BoardHues
@@ -128,21 +131,21 @@ internal fun nonogramKeyAction(key: Key, shift: Boolean): PenKeyAction? = penKey
 object Nonogram : PuzzleType {
 
     override val id = "nonogram"
-    override val displayName = "Nonogram"
-    override val tagline = "Numbers reveal the picture"
+    override val displayName get() = text("puzzle.nonogram.name")
+    override val tagline get() = text("puzzle.nonogram.tagline")
     override val accent = 0xFFA258C1
 
-    override val rules = listOf(
-        "The numbers beside a row, or above a column, give the lengths of its runs of filled squares, in order.",
-        "Two runs always have at least one empty square between them.",
-        "Pick Fill or Cross under the board and tap squares. Drag along a row or column to sweep several at once.",
-        "On a big board, pinch to zoom in. Zoomed in, a drag moves around the board instead of sweeping, and the corner button shows the whole board again.",
-        "A cross just means \"empty\": it is a note to yourself and never counts against you.",
-        "Solved when every row and column shows its numbers. Every board can be worked out one line at a time, with no guessing.",
+    override val rules get() = listOf(
+        text("puzzle.nonogram.rule.1"),
+        text("puzzle.nonogram.rule.2"),
+        text("puzzle.nonogram.rule.3"),
+        text("puzzle.nonogram.rule.4"),
+        text("puzzle.nonogram.rule.5"),
+        text("puzzle.nonogram.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, F fills, X crosses, Space cycles, Backspace clears; Shift+arrow carries a mark along.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.nonogram.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -177,14 +180,12 @@ object Nonogram : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Each number is a run of filled squares in that row or column, in order. " +
-                    "Row 1 reads \"1 1\": a single square, a gap, then another single square.",
+                caption = message("puzzle.nonogram.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(1, 3, rowIndex(0))),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "Rows 2 and 3 read 5, and the board is five squares wide, so every square in them is " +
-                    "filled. Drag along each row to fill it in one sweep.",
+                caption = message("puzzle.nonogram.tutorial.2.caption"),
                 // The rows still to sweep glow.
                 glow = { b ->
                     val cells = (b as NonogramState).cells
@@ -199,32 +200,30 @@ object Nonogram : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Drag along the whole glowing row in one sweep.",
-                done = "Filled. A run as wide as its row has nowhere to move.",
+                retry = message("puzzle.nonogram.tutorial.2.retry"),
+                done = message("puzzle.nonogram.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = afterRow3,
-                caption = "Row 4 reads 3 in five squares. Imagine a block of 3 pushed to the far left, then the far right: " +
-                    "the middle square is covered both times, so it is filled. Tap it.",
+                caption = message("puzzle.nonogram.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(17, rowIndex(3)), soft = (15..19).toSet() - 17),
                 accepts = afterRow3.only(mapOf(17 to NonogramLogic.FILLED)),
-                retry = "Tap the glowing square once.",
-                done = "Filled. A block pushed both ways shows which squares it cannot avoid.",
+                retry = message("puzzle.nonogram.tutorial.3.retry"),
+                done = message("puzzle.nonogram.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = afterMiddle,
-                caption = "Column 1 reads 2, and rows 2 and 3 already give it that 2, so the rest of the column " +
-                    "is empty. Choose Cross under the board, then tap the bottom square.",
+                caption = message("puzzle.nonogram.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(20, colIndex(0)), soft = setOf(0, 5, 10, 15)),
                 accepts = afterMiddle.only(mapOf(20 to NonogramLogic.CROSSED)),
-                retry = "Switch to Cross under the board, then tap the glowing square.",
-                done = "Crossed. A cross is only a note that the square is empty.",
+                retry = message("puzzle.nonogram.tutorial.4.retry"),
+                done = message("puzzle.nonogram.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = afterCross,
-                caption = "Your turn: finish the picture. Stuck? Hint shows you why. On bigger boards, pinch to zoom in.",
+                caption = message("puzzle.nonogram.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. Every board works out one line at a time.",
+                done = message("puzzle.nonogram.tutorial.5.done"),
             ),
         )
     }
@@ -561,7 +560,7 @@ object Nonogram : PuzzleType {
                                 // Inside the button's own box, so it keeps its size and only its face changes.
                                 Icon(
                                     Icons.Filled.ZoomOutMap,
-                                    contentDescription = "Show the whole board",
+                                    contentDescription = text("puzzle.nonogram.board.fit"),
                                     tint = arcade.control.ink,
                                     modifier = Modifier.size(30.dp).arcadeLift(arcade.control, 15.dp).background(arcade.control.brush, CircleShape).padding(5.dp),
                                 )
@@ -571,7 +570,7 @@ object Nonogram : PuzzleType {
                 }
             }
 
-            PenRow(s.pens, pen, interactive, vivid(accent), { if (it == NonogramLogic.FILLED) "Fill" else "Cross" }, { pen = it }, arcade = arcade) { option ->
+            PenRow(s.pens, pen, interactive, vivid(accent), { if (it == NonogramLogic.FILLED) text("puzzle.nonogram.board.fill") else text("puzzle.nonogram.board.cross") }, { pen = it }, arcade = arcade) { option ->
                 val chosen = option == pen
                 if (option == NonogramLogic.FILLED) {
                     val at = Offset(2f, 2f)

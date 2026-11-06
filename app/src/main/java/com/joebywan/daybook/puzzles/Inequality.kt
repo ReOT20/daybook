@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -96,18 +99,18 @@ private const val CELL = 0.66f
 object Inequality : PuzzleType {
 
     override val id = "inequality"
-    override val displayName = "Inequality"
-    override val tagline = "Each digit once per line, signs point to the smaller"
+    override val displayName get() = text("puzzle.inequality.name")
+    override val tagline get() = text("puzzle.inequality.tagline")
     override val accent = 0xFF1E76D8
-    override val rules = listOf(
-        "Fill every square with a digit from 1 to the size of the grid.",
-        "No digit may repeat in a row or a column.",
-        "A sign between two squares points at the smaller one: the narrow end is the smaller digit.",
-        "Tap a square, then tap a digit. Tap the digit again to clear it.",
-        "A repeat, or a sign that is false, is shown in red as you go.",
+    override val rules get() = listOf(
+        text("puzzle.inequality.rule.1"),
+        text("puzzle.inequality.rule.2"),
+        text("puzzle.inequality.rule.3"),
+        text("puzzle.inequality.rule.4"),
+        text("puzzle.inequality.rule.5"),
     )
 
-    override val keyboardHelp = listOf("Arrows move, 1-6 place a digit, Backspace clears.")
+    override val keyboardHelp get() = listOf(text("puzzle.inequality.keyboard.1"))
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
         generateVerified(seed, difficulty) ?: InequalityLogic.lastResort(difficulty)
@@ -175,30 +178,28 @@ object Inequality : PuzzleType {
         listOf(
             TutorialFrame(
                 state = start,
-                caption = "Fill the grid with 1 to 4 so no digit repeats in any row or column. The bold digits are given.",
+                caption = message("puzzle.inequality.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(8, 9, 10, 11)),
             ),
             TutorialFrame(
                 state = start,
-                caption = "A sign sits between two squares and points at the smaller one. This one says the left square is smaller than the right.",
+                caption = message("puzzle.inequality.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(signAt), soft = setOf(0, 1)),
             ),
             TutorialFrame(
                 state = start,
-                caption = "These four squares hold only 1s and 2s, and rows and columns can't say which goes where. " +
-                    "The sign can: the top-left one is smaller. Tap it, then 1 below.",
+                caption = message("puzzle.inequality.tutorial.3.caption"),
                 glow = { s ->
                     val strong = if (place.stage(s) < 0) 0 else InequalityTeacher.pad(1)
                     BoardHighlight(strong = setOf(strong), soft = setOf(signAt, 1, 4, 5))
                 },
                 steps = place.steps,
-                retry = "Tap the glowing square, then the 1.",
-                done = "The sign settled the rest of that corner.",
+                retry = message("puzzle.inequality.tutorial.3.retry"),
+                done = message("puzzle.inequality.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = 0),
-                caption = "A digit that breaks a rule turns red. Put a 1 in the glowing square: column 3 already " +
-                    "has one. Then tap 1 again to clear it.",
+                caption = message("puzzle.inequality.tutorial.4.caption"),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(TUTORIAL_WRONG), soft = setOf(10))
@@ -207,14 +208,14 @@ object Inequality : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap the glowing square, then the 1, then the 1 again.",
-                done = "Cleared. Tapping the digit again takes it out.",
+                retry = message("puzzle.inequality.tutorial.4.retry"),
+                done = message("puzzle.inequality.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG),
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.inequality.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.inequality.tutorial.5.done"),
             ),
         )
     }

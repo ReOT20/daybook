@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -54,6 +57,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.core.TutorialFrame
 import com.joebywan.daybook.core.boardKeys
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.reportHighlight
 import com.joebywan.daybook.ui.MoveFeel
 import com.joebywan.daybook.ui.feelSquare
@@ -80,18 +84,18 @@ import kotlin.math.sqrt
 object Hexwords : PuzzleType {
 
     override val id = "hexwords"
-    override val displayName = "Hexwords"
-    override val tagline = "Spend the letters well: every word uses them up"
+    override val displayName get() = text("puzzle.hexwords.name")
+    override val tagline get() = text("puzzle.hexwords.tagline")
     override val accent = 0xFF96754A // AccentSpacingTest's printed candidate
-    override val rules = listOf(
-        "Drag through touching hexes to spell a word of three to seven letters, or tap them in turn and press Enter.",
-        "A word's letters leave the board, so a big word can break up the words around it.",
-        "Three letters score 3, four 5, five 8, six 12, seven 17. Reach the target to finish.",
-        "A word may come again from other letters. Nothing is lost for trying: Undo puts a word back.",
+    override val rules get() = listOf(
+        text("puzzle.hexwords.rule.1"),
+        text("puzzle.hexwords.rule.2"),
+        text("puzzle.hexwords.rule.3"),
+        text("puzzle.hexwords.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Type a word that traces on the board, Tab tries another way to trace it, Enter takes it, Backspace deletes, Escape clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.hexwords.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -126,34 +130,34 @@ object Hexwords : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Spell words through touching hexes to reach the target, 16 here. Longer words score far more: 3, 5, 8, 12 and 17 for three to seven letters.",
+                caption = message("puzzle.hexwords.tutorial.1.caption"),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "Drag through A, N, C, H, O, R without lifting, then let go.",
+                caption = message("puzzle.hexwords.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = ANCHOR.toSet()),
                 accepts = tookOnly("anchor", ANCHOR),
-                retry = "Drag along the glowing hexes in order: A, N, C, H, O, R.",
-                done = "ANCHOR scores 12, and its letters are gone.",
+                retry = message("puzzle.hexwords.tutorial.2.retry"),
+                done = message("puzzle.hexwords.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = trapped,
-                caption = "4 points to go, but D, I, C and E don't touch in a way that spells anything. The biggest word cost the target. Undo puts a word back.",
+                caption = message("puzzle.hexwords.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = left),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "Look before you take. Start over with DANCE: tap D, A, N, C, E in turn, then press Enter.",
+                caption = message("puzzle.hexwords.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = DANCE.toSet()),
                 accepts = tookOnly("dance", DANCE),
-                retry = "Tap the glowing hexes in order: D, A, N, C, E. Then press Enter.",
-                done = "DANCE scores 8 and leaves a word behind it.",
+                retry = message("puzzle.hexwords.tutorial.4.retry"),
+                done = message("puzzle.hexwords.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = s0.take("dance", DANCE),
-                caption = "Your turn: find the last 8 points. Stuck? Hint shows you why.",
+                caption = message("puzzle.hexwords.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. Every letter earned its place.",
+                done = message("puzzle.hexwords.tutorial.5.done"),
             ),
         )
     }
@@ -220,10 +224,10 @@ object Hexwords : PuzzleType {
     internal fun leaveProgress(k: Int, ms: Float): Float = ((ms - k * LEAVE_STAGGER_MS) / LEAVE_FADE_MS).coerceIn(0f, 1f)
 
     private fun headerOf(s: HexwordsState, stuck: Boolean, lost: Boolean): String = when {
-        s.solved -> "${s.score} points. Target reached"
-        stuck -> "No words left. Undo one, or start over"
-        lost -> "Out of reach. Undo a word, or start over"
-        else -> "${s.left} points to go · ${s.score} of ${s.target}"
+        s.solved -> text("puzzle.hexwords.board.won", "score" to (s.score))
+        stuck -> text("puzzle.hexwords.board.stuck")
+        lost -> text("puzzle.hexwords.board.lost")
+        else -> text("puzzle.hexwords.board.progress", "left" to (s.left), "score" to (s.score), "target" to (s.target))
     }
 
     private fun takenLine(s: HexwordsState): String =
@@ -242,7 +246,7 @@ object Hexwords : PuzzleType {
         val measurer = rememberTextMeasurer()
         val nb = remember(s.rows) { HexLogic.neighbours(s.rows) }
         val free = s.free
-        val stuck = remember(s.letters, free) { HexLogic.roads(s.letters, nb, free, HexLogic.acceptedWords).isEmpty() }
+        val stuck = remember(s.letters, free) { HexLogic.roads(s.letters, nb, free, HexLogic.acceptedWords(s.contentLanguage)).isEmpty() }
         val feel = rememberMoveFeel(s.letters.indices.map { free shr it and 1L == 1L }, remember { emptyList<IntArray>() }) { false }
 
         // Letters leaving or coming back are decoration over a state that has already moved on, so the board plays on under them.
@@ -297,8 +301,8 @@ object Hexwords : PuzzleType {
             if (path.isEmpty()) return
             val word = path.map { now.letters[it] }.joinToString("")
             when {
-                word.length < HexLogic.MIN_WORD -> notice = "Words have three letters or more"
-                !HexLogic.isWord(word) -> notice = "${word.uppercase()} is not in the word list"
+                word.length < HexLogic.MIN_WORD -> notice = text("puzzle.hexwords.board.too_short")
+                !HexLogic.isWord(word, now.contentLanguage) -> notice = text("puzzle.hexwords.board.not_word", "word" to (word.uppercase()))
                 else -> {
                     notice = null
                     // No units here, so the found word's da-ding is played by hand; the word that solves the board plays the win.
@@ -317,8 +321,21 @@ object Hexwords : PuzzleType {
         BoxWithConstraints(
             Modifier
                 .fillMaxSize()
-                .boardKeys(playable) { key, _, repeat ->
-                    val action = hexKeyAction(key) ?: return@boardKeys false
+                .boardKeys(playable, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                    val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                    if (letter != null && letter in WordContent.alphabet(s.contentLanguage)) {
+                        if (!repeat) {
+                            val more = typed + letter
+                            if (more.length <= HexLogic.MAX_WORD && HexLogic.roads(latest.letters, nb, latest.free, listOf(more)).isNotEmpty()) {
+                                typed = more
+                                trace = 0
+                                retrace()
+                            }
+                        }
+                        true
+                    } else false
+                } else null) { key, _, repeat ->
+                    val action = hexKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                     if (!repeat) when (action) {
                         is HexKeyAction.Letter -> {
                             val more = typed + action.letter

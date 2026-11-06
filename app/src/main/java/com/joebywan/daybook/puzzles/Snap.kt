@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -73,15 +76,15 @@ data class SnapState(
 object Snap : PuzzleType {
 
     override val id = "snap"
-    override val displayName = "Trail"
-    override val tagline = "One line, every square, numbers in order"
+    override val displayName get() = text("puzzle.snap.name")
+    override val tagline get() = text("puzzle.snap.tagline")
     override val accent = 0xFFCA4383
-    override val rules = listOf(
-        "Draw one continuous line from 1 to the highest number.",
-        "The line must pass through every square exactly once.",
-        "It must reach the numbered squares in ascending order.",
-        "Drag to draw. Lift off and carry on from the end whenever you like.",
-        "Drag back along the line, or start again from a square on it, to rub it out.",
+    override val rules get() = listOf(
+        text("puzzle.snap.rule.1"),
+        text("puzzle.snap.rule.2"),
+        text("puzzle.snap.rule.3"),
+        text("puzzle.snap.rule.4"),
+        text("puzzle.snap.rule.5"),
     )
 
     private fun shape(difficulty: Difficulty) = when (difficulty) {
@@ -543,83 +546,74 @@ object Snap : PuzzleType {
         listOf(
             TutorialFrame(
                 state = tutorialBoard(TUTORIAL_SOLUTION),
-                caption = "Draw one line from 1 to the highest number. It passes through every " +
-                    "square exactly once, and meets the numbers in order: 1, 2, 3, 4.",
+                caption = message("puzzle.snap.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = numbered),
             ),
             TutorialFrame(
                 state = tutorialBoard(emptyList()),
-                caption = "A corner touches only two squares. The line must come in by one and " +
-                    "leave by the other, unless it ends there, and only the last number is an end.",
+                caption = message("puzzle.snap.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(corner), soft = setOf(1, below)),
             ),
             TutorialFrame(
                 state = tutorialBoard(emptyList()),
-                caption = "Lines start on 1. Leave 1 any other way and this corner is left one way " +
-                    "in: a dead end. Put your finger on 1 and drag into the corner.",
+                caption = message("puzzle.snap.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(1, corner)),
                 accepts = line(answerTo(2)),
-                retry = "Start on 1 and drag into the glowing corner.",
-                done = "Every line starts on 1.",
+                retry = message("puzzle.snap.tutorial.3.retry"),
+                done = message("puzzle.snap.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(2)),
-                caption = "Lift your finger whenever you like: the line stays. Put it back on the " +
-                    "end of the line and drag down, the corner's only other way out.",
+                caption = message("puzzle.snap.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(below), soft = setOf(corner)),
                 accepts = line(answerTo(3)),
-                retry = "From the end of the line, drag down one square.",
-                done = "Carry on from the end any time.",
+                retry = message("puzzle.snap.tutorial.4.retry"),
+                done = message("puzzle.snap.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(3)),
-                caption = "The square to the right is 4, but 2 and 3 have to come first. So the " +
-                    "line can only go down.",
+                caption = message("puzzle.snap.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(8), soft = setOf(5)),
                 accepts = line(answerTo(4)),
-                retry = "Drag down one square from the end of the line.",
-                done = "Numbers come in order, never early.",
+                retry = message("puzzle.snap.tutorial.5.retry"),
+                done = message("puzzle.snap.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(4)),
-                caption = "Try dashing for 2: drag right two squares. The bottom corner is left one way in, a " +
-                    "dead end, and the line must end on 4. Then start a drag on the glowing square to cut back.",
+                caption = message("puzzle.snap.tutorial.6.caption"),
                 glow = { b ->
                     val path = (b as SnapState).path
                     if (path.size >= 6) BoardHighlight(strong = setOf(8), soft = setOf(12), warning = true)
                     else BoardHighlight(strong = setOf(9, 10) - path.toSet())
                 },
                 steps = outAndBack(answerTo(4), listOf(9, 10)),
-                retry = "Drag along the glowing squares, then cut back.",
-                done = "Everything after it is gone.",
+                retry = message("puzzle.snap.tutorial.6.retry"),
+                done = message("puzzle.snap.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(4)),
-                caption = "Take the corner now, while it still has two ways in. Leave it a pocket " +
-                    "with one way in and the line can't finish. Drag into it.",
+                caption = message("puzzle.snap.tutorial.7.caption"),
                 highlight = BoardHighlight(strong = setOf(12), soft = setOf(8, 13)),
                 accepts = line(answerTo(5)),
-                retry = "Drag down into the corner from the end of the line.",
-                done = "The corner's safe.",
+                retry = message("puzzle.snap.tutorial.7.retry"),
+                done = message("puzzle.snap.tutorial.7.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(6)),
-                caption = "Say you went for 3 first: drag right onto it. 2 has to come before it, so drag " +
-                    "back one square along the line to rub that step out.",
+                caption = message("puzzle.snap.tutorial.8.caption"),
                 glow = { b ->
                     if ((b as SnapState).path.last() == 14) BoardHighlight(strong = setOf(13), soft = setOf(14), warning = true)
                     else BoardHighlight(strong = setOf(14))
                 },
                 steps = outAndBack(answerTo(6), listOf(14)),
-                retry = "Drag onto the glowing 3, then back one square.",
-                done = "Rubbed out. Only 2 is left to go to.",
+                retry = message("puzzle.snap.tutorial.8.retry"),
+                done = message("puzzle.snap.tutorial.8.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(answerTo(6)),
-                caption = "Your turn: finish the line. Every square once, 2 then 3, ending on 4. " +
-                    "Watch for squares down to two ways in.",
+                caption = message("puzzle.snap.tutorial.9.caption"),
                 freePlay = true,
-                done = "Solved. That's Trail.",
+                done = message("puzzle.snap.tutorial.9.done"),
             ),
         )
     }

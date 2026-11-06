@@ -1,5 +1,7 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -156,15 +158,15 @@ internal class ChessReplay(
 object Chess : PuzzleType {
 
     override val id = "chess"
-    override val displayName = "Mate"
-    override val tagline = "Find the forced checkmate"
+    override val displayName get() = text("puzzle.chess.name")
+    override val tagline get() = text("puzzle.chess.tagline")
     override val accent = 0xFFBE7C1C
-    override val rules = listOf(
-        "You play the side shown at the bottom. Checkmate the opposing king in the number of moves shown.",
-        "Tap a piece, then tap where it goes. Tap another of your pieces to change your mind.",
-        "The opponent answers each move. A move that lets them escape mate is not refused: you will be told, and can Undo.",
-        "Standard chess rules, including castling, en passant and promotion (you choose the piece).",
-        "Any mate within the moves counts, not only the one the hint knows.",
+    override val rules get() = listOf(
+        text("puzzle.chess.rule.1"),
+        text("puzzle.chess.rule.2"),
+        text("puzzle.chess.rule.3"),
+        text("puzzle.chess.rule.4"),
+        text("puzzle.chess.rule.5"),
     )
 
     // ---- picking a position ------------------------------------------------------------------
@@ -210,7 +212,7 @@ object Chess : PuzzleType {
     private const val SETTLE_MILLIS = 450L
     private const val LOST_MILLIS = 1000L
 
-    internal const val LOST_CAPTION = "No forced mate from here: Undo or Restart"
+    internal val LOST_CAPTION get() = text("puzzle.chess.board.lost")
 
     /** Highlight index of a promotion-picker button for piece [kind] (2..5 = N B R Q). */
     internal fun picker(kind: Int) = 100 + kind
@@ -439,9 +441,9 @@ object Chess : PuzzleType {
                     val lost = lostShown && !s.solved
                     val text = when {
                         // A Training practice locks the board on a wrong move and has no Undo or Restart; its verdict explains.
-                        lost -> if (interactive) LOST_CAPTION else "No forced mate from here."
-                        s.solved -> "Checkmate."
-                        else -> "${if (whiteBottom) "White" else "Black"} to move: mate in ${s.remaining}."
+                        lost -> if (interactive) LOST_CAPTION else text("puzzle.chess.board.no_mate")
+                        s.solved -> text("puzzle.chess.board.mate")
+                        else -> text("puzzle.chess.board.turn", "side" to (if (whiteBottom) text("puzzle.chess.board.white") else text("puzzle.chess.board.black")), "count" to (s.remaining))
                     }
                     Text(
                         text,

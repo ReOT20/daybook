@@ -1,6 +1,7 @@
 package com.joebywan.daybook.ui.play
 
-import com.joebywan.daybook.core.i18n.tr
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -48,20 +49,22 @@ private val GOLD = Color(0xFFD1A32F)
  */
 @Composable
 fun SharePreview(card: ShareCard, onClose: () -> Unit) {
+    val rendered = card.localized()
     val share = rememberSharer()
-    var label by remember { mutableStateOf(tr("Share", "Поделиться")) }
+    var copied by remember { mutableStateOf(false) }
+    val label = text(if (copied) "ui.web_platform.copied" else "ui.play_screen.share")
     val scheme = MaterialTheme.colorScheme
     AlertDialog(
         onDismissRequest = onClose,
-        title = { Text(card.header.removePrefix("Daybook · "), style = MaterialTheme.typography.titleMedium) },
+        title = { Text(rendered.header.removePrefix("Daybook · "), style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    val widest = card.lines.maxOfOrNull { it.marks.size + if (it.hinted) 2 else 0 } ?: 1
-                    val tail = if (card.lines.any { it.marks.isNotEmpty() && it.tail.length > 2 }) 120.dp else 24.dp
+                    val widest = rendered.lines.maxOfOrNull { it.marks.size + if (it.hinted) 2 else 0 } ?: 1
+                    val tail = if (rendered.lines.any { it.marks.isNotEmpty() && it.tail.length > 2 }) 120.dp else 24.dp
                     val cell = minOf(24.dp, (maxWidth - tail) / widest.coerceAtLeast(1) - 4.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        card.lines.forEach { line ->
+                        rendered.lines.forEach { line ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 line.marks.forEach { MarkShape(it, cell) }
                                 if (line.hinted) {
@@ -75,9 +78,9 @@ fun SharePreview(card: ShareCard, onClose: () -> Unit) {
                         }
                     }
                 }
-                Text(card.stats, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
+                Text(rendered.stats, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    card.key.forEach { (mark, words) ->
+                    rendered.key.forEach { (mark, words) ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             MarkShape(mark, 12.dp)
                             Text(words, style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
@@ -85,13 +88,13 @@ fun SharePreview(card: ShareCard, onClose: () -> Unit) {
                     }
                 }
                 Spacer(Modifier.height(2.dp))
-                Text(card.nudge, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface, fontWeight = FontWeight.Medium)
+                Text(rendered.nudge, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface, fontWeight = FontWeight.Medium)
             }
         },
         confirmButton = {
-            TextButton(onClick = { share(card.text)?.let { label = it } }) { Text(label) }
+            TextButton(onClick = { share(card.text)?.let { copied = true } }) { Text(label) }
         },
-        dismissButton = { TextButton(onClick = onClose) { Text(tr("Close", "Закрыть")) } },
+        dismissButton = { TextButton(onClick = onClose) { Text(text("ui.share_preview.close")) } },
     )
 }
 

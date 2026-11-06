@@ -1,6 +1,9 @@
 package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Difficulty
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.words.RussianWords
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.Rng
 import com.joebywan.daybook.core.SeedHash
 import kotlinx.serialization.Serializable
@@ -35,6 +38,7 @@ data class LexiconState(
     val current: String = "",
     override val moves: Int = 0,
     val opener: Int = 0,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
     override val solved: Boolean get() = guesses.lastOrNull() == answer
@@ -49,7 +53,12 @@ data class LexiconState(
     val allMarks: List<List<Int>> get() = guesses.map(::marks)
 
     fun withLetter(letter: Char): LexiconState =
-        if (!open || current.length >= length) this else copy(current = current + letter, moves = moves + 1)
+        if (!open || current.length >= length) this
+        else if (contentLanguage == "ru") {
+            val canonical = WordContent.normalize(letter.toString(), contentLanguage).singleOrNull()
+            if (canonical == null || canonical !in RussianWords.ALPHABET) this
+            else copy(current = current + canonical, moves = moves + 1)
+        } else copy(current = current + letter, moves = moves + 1)
 
     fun withoutLetter(): LexiconState =
         if (!open || current.isEmpty()) this else copy(current = current.dropLast(1), moves = moves + 1)
@@ -90,13 +99,15 @@ object LexiconRules {
      * The board for [seed]: the answer is one index into the sorted list for the tier's length. A daily seed from
      * [SeedHash.LEXICON_CYCLE_FROM] on carries its day, and the day walks [cycle]; any other seed draws the index.
      */
-    fun newBoard(seed: Long, difficulty: Difficulty): LexiconState {
+    fun newBoard(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): LexiconState {
         val shape = shape(difficulty)
-        val answers = WordList.answers(shape.length)
-        val day = SeedHash.lexiconCycleDay(seed)
-        val index = if (day == null) Rng(seed).nextInt(answers.size) else cycle(day, difficulty)
-        val opener = Rng(seed xor OPENER_SALT).nextInt(LexiconTeacher.openers(shape.length).size)
-        return LexiconState(shape.length, shape.guesses, answers[index], opener = opener)
+        val answers = WordList.answers(shape.length, contentLanguage)
+        val day = if (contentLanguage == "en") SeedHash.lexiconCycleDay(seed) else SeedHash.russianLexiconCycleDay(seed)
+        val index = if (day == null) Rng(seed).nextInt(answers.size)
+            else if (contentLanguage == "ru") answers.binarySearch(RussianWords.dailyAnswer(day, shape.length, difficulty.ordinal))
+            else cycle(day, difficulty)
+        val opener = Rng(seed xor OPENER_SALT).nextInt(LexiconTeacher.openers(shape.length, contentLanguage).size)
+        return LexiconState(shape.length, shape.guesses, answers[index], opener = opener, contentLanguage = contentLanguage)
     }
 
     private const val OPENER_SALT = 0x4F70656E6572L // "Opener"
@@ -140,17 +151,18 @@ object LexiconRules {
     /** [mark] packed base 3, first slot lowest: cheap to count and compare across a whole list. */
     fun markCode(guess: String, answer: String): Int {
         val n = guess.length
-        val left = IntArray(26)
+        val origin = if (answer.firstOrNull() in 'а'..'я') 'а' else 'a'
+        val left = IntArray(if (origin == 'а') 32 else 26)
         val out = IntArray(n)
         for (i in 0 until n) {
-            if (guess[i] == answer[i]) out[i] = LexiconMark.CORRECT else left[answer[i] - 'a']++
+            if (guess[i] == answer[i]) out[i] = LexiconMark.CORRECT else left[answer[i] - origin]++
         }
         var code = 0
         var weight = 1
         for (i in 0 until n) {
             var m = out[i]
             if (m != LexiconMark.CORRECT) {
-                val k = guess[i] - 'a'
+                val k = guess[i] - origin
                 if (left[k] > 0) {
                     left[k]--
                     m = LexiconMark.PRESENT
@@ -171,8 +183,8 @@ object LexiconRules {
      * briefly over the board; nothing is spent.
      */
     fun problem(state: LexiconState): String? {
-        if (state.current.length < state.length) return "Not enough letters"
-        if (!WordList.isWord(state.current)) return "Not in the word list"
+        if (state.current.length < state.length) return text("puzzle.words.board.too_short")
+        if (!WordList.isWord(state.current, state.contentLanguage)) return text("puzzle.words.board.not_word")
         return null
     }
 }
@@ -184,7 +196,7 @@ object LexiconRules {
  */
 object WordList {
 
-    fun answers(length: Int): List<String> = when (length) {
+    fun answers(length: Int, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") RussianWords.answers(length) else when (length) {
         4 -> LexiconWords.ANSWERS_4
         5 -> LexiconWords.ANSWERS_5
         else -> error("no $length-letter words")
@@ -197,7 +209,8 @@ object WordList {
     }
 
     /** Whether [word] is accepted as a guess: every answer, and many more besides. */
-    fun isWord(word: String): Boolean = guesses(word.length).binarySearch(word) >= 0
+    fun isWord(word: String, contentLanguage: String = "en"): Boolean =
+        if (contentLanguage == "ru") RussianWords.isWord(word) else guesses(word.length).binarySearch(word) >= 0
 
     // Probed by word, never iterated, so its order cannot reach a seed.
     private val clues: Map<String, String> by lazy {
@@ -205,5 +218,6 @@ object WordList {
     }
 
     /** A crossword-style clue for an answer-list [word]; every answer has one (`LexiconCluesTest`). */
-    fun clue(word: String): String = clues.getValue(word)
+    fun clue(word: String, contentLanguage: String = "en"): String =
+        if (contentLanguage == "ru") RussianWords.clue(word) else clues.getValue(word)
 }

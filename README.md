@@ -15,7 +15,7 @@ Each puzzle has a page in the **[player guide](https://knowhowit.com.au/daybook/
 
 | Every puzzle, every day | Sudoku | Cage Sudoku | Word Wheel |
 |---|---|---|---|
-| ![The home screen on day one: the Daily/Random, Levels and Training row over the tier row, today's three and the grid of all 33 puzzles, the first twelve in view, Crossword and Mines among them](docs/screenshots/home.png) | ![A Sudoku board with a hint open, offering to practise its technique](docs/screenshots/sudoku.png) | ![A Hard Cage Sudoku board with a hint open](docs/screenshots/cage-sudoku.png) | ![A Word Wheel board](docs/screenshots/word-wheel.png) |
+| ![The home screen: Daily/Random, Levels and Training above the tiers, today's three and the puzzle grid](docs/screenshots/home.png) | ![A Sudoku board with a hint open, offering to practise its technique](docs/screenshots/sudoku.png) | ![A Hard Cage Sudoku board with a hint open](docs/screenshots/cage-sudoku.png) | ![A Word Wheel board](docs/screenshots/word-wheel.png) |
 
 ![On a tablet the board sits beside the title, hints and tools: a Cage Sudoku with a hint open](docs/screenshots/tablet-cage-sudoku.png)
 
@@ -242,9 +242,12 @@ browser (see the standards doc, sections 4 and 5).
 
 ## Building
 
-The interface follows the device/browser language: Russian or English. Russian currently covers app
-navigation, settings, calendars, play controls, results and sharing; puzzle rules, teaching content,
-achievements and word puzzles remain English. See [localization notes](docs/LOCALIZATION.md).
+Choose English, Русский, or the device/browser language in Settings. Russian includes game names,
+rules, hints, walkthroughs, training, achievements, calendars, results and sharing. Seven word games
+also have separate Russian editions: Lexicon, Word Wheel, Mini, Codeword, Hexwords, Dwindle and Cipher.
+Changing interface language keeps each board's vocabulary and saved progress. The external player guide
+is in English. See [localization notes](docs/LOCALIZATION.md) and the
+[version verifier](docs/VERIFY_VERSION.md), which uses a private emulator and headless browsers.
 
 Build with **Java 17**, the JDK CI uses. Gradle 9 will run on newer ones, but nothing else is checked.
 

@@ -8,7 +8,7 @@
 //    they are cache-first, and a deploy simply asks for new names.
 // Every path is relative to this file, because the app is served from a subpath.
 
-const CACHE = 'daybook-v2';
+const CACHE = 'daybook-v3';
 const NETWORK_TIMEOUT_MS = 4000;
 const SHELL = [
   './',
@@ -22,6 +22,19 @@ const SHELL = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
+  // Fonts may finish after the page's first-visit resource reports. Cache every bundled weight
+  // and fallback during installation, so a later offline language switch needs no warm-up.
+  'composeResources/com.joebywan.daybook.web.resources/font/fredoka_bold.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/fredoka_medium.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/fredoka_regular.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/fredoka_semibold.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_cyrillic_bold.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_cyrillic_medium.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_cyrillic_regular.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_cyrillic_semibold.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_math.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_symbols2.ttf',
+  'composeResources/com.joebywan.daybook.web.resources/font/noto_sans_symbols_arrows.ttf',
 ];
 
 const HASHED = /[0-9a-f]{16,}[^/]*$/;

@@ -180,12 +180,19 @@ class GuideTest {
         "mines" to ::minesStep,
         "lits" to ::litsStep,
         "words" to ::lexiconStep,
+        "words-ru" to ::lexiconStep,
         "wordwheel" to ::wordWheelStep,
+        "wordwheel-ru" to ::wordWheelStep,
         "mini" to ::miniStep,
+        "mini-ru" to ::miniStep,
         "codeword" to ::codewordStep,
+        "codeword-ru" to ::codewordStep,
         "dwindle" to ::dwindleStep,
+        "dwindle-ru" to ::dwindleStep,
         "hexwords" to ::hexwordsStep,
+        "hexwords-ru" to ::hexwordsStep,
         "cipher" to ::cipherStep,
+        "cipher-ru" to ::cipherStep,
         "target" to { _ -> null }, // Nothing praised, so no boards: see its page.
         "sets" to ::setsStep,
         "tower" to ::towerStep,
@@ -648,8 +655,8 @@ class GuideTest {
                 }
             }
         }
-        assertTrue("${b.technique}: some word draws these marks", LexiconTeacher.candidates(n, guesses, marks).isNotEmpty())
-        val taught = LexiconTeacher.teach(n, guesses, marks, "") ?: return null
+        assertTrue("${b.technique}: some word draws these marks", LexiconTeacher.candidates(n, guesses, marks, b.fields["content-language"] ?: "en").isNotEmpty())
+        val taught = LexiconTeacher.teach(n, guesses, marks, "", contentLanguage = b.fields["content-language"] ?: "en") ?: return null
         val move = taught.move as LexiconTeacher.Move.Pin
         assertEquals("${b.technique}: the letter", move.letter.uppercase(), b.marks("answer")[guesses.size * n + move.slot])
         return step(taught, taught.focus, taught.targets.filter { it < LexiconTeacher.KEY }.toSet())
@@ -686,7 +693,7 @@ class GuideTest {
         val letters = shapes.map { s -> s.cells(b.width).map { shown[it] } }
         val empty = shapes.indices.filter { null in letters[it] }
         val tried = shapes.indices.filter { it !in empty }.map { letters[it].joinToString("") }
-        val taught = WordWheelTeacher.deduce(wheel, b.width, shapes, empty, shown, tried) ?: return null
+        val taught = WordWheelTeacher.deduce(wheel, b.width, shapes, empty, shown, tried, contentLanguage = b.fields["content-language"] ?: "en") ?: return null
         val spelled = shapes[taught.slot].cells(b.width).joinToString("") { b.marks("answer").getValue(it) }
         assertEquals("${b.technique}: the word", taught.word.uppercase(), spelled)
         return taught
@@ -702,7 +709,7 @@ class GuideTest {
             }
         }
         val slots = MiniLogic.slots(size, letters)
-        val taught = MiniTeacher.deduce(size, letters, List(slots.size) { "" }) ?: return null
+        val taught = MiniTeacher.deduce(size, letters, List(slots.size) { "" }, contentLanguage = b.fields["content-language"] ?: "en") ?: return null
         val squares = slots[taught.slot].squares
         assertEquals("${b.technique}: the word", taught.word!!.uppercase(), squares.joinToString("") { b.marks("answer").getValue(it) })
         return object : TeachStep {
@@ -725,10 +732,10 @@ class GuideTest {
         val numberOf = placed.withIndex().associate { (i, letter) -> letter to spare[i] }
         val numbers = tokens.map { if (it == "_") 0 else it.toIntOrNull() ?: numberOf.getValue(it) }
         val letters = MutableList(k) { CodewordLogic.EMPTY }
-        for ((letter, n) in numberOf) letters[n - 1] = letter[0] - 'A'
-        val taught = CodewordTeacher.deduce(b.width, numbers, letters) ?: return null
+        for ((letter, n) in numberOf) letters[n - 1] = com.joebywan.daybook.core.words.WordContent.index(letter[0].lowercaseChar(), b.fields["content-language"] ?: "en")
+        val taught = CodewordTeacher.deduce(b.width, numbers, letters, contentLanguage = b.fields["content-language"] ?: "en") ?: return null
         val squares = numbers.indices.filter { numbers[it] == taught.number + 1 }.toSet()
-        for (v in b.marks("answer").values) assertEquals("${b.technique}: the letter", (taught.letter + 'A'.code).toChar().toString(), v)
+        for (v in b.marks("answer").values) assertEquals("${b.technique}: the letter", com.joebywan.daybook.core.words.WordContent.alphabet(b.fields["content-language"] ?: "en")[taught.letter].uppercase(), v)
         return object : TeachStep {
             override val technique = taught.technique
             override val nudge = taught.nudge
@@ -762,11 +769,15 @@ class GuideTest {
     /** A tile's token is its letter and its uses left, `S2`; `_` a tile gone. */
     private fun dwindleStep(b: Board): TeachStep? {
         val tokens = b.rows.flatten()
-        val fixture = dwindleFixtures.getValue(b.technique)
+        val fixture = if (b.fields["content-language"] == "ru") DwindleFixture(
+            b.fields.getValue("fixture-lengths").split(' ').map(String::toInt),
+            b.fields["fixture-tried"]?.split(' ')?.filter { it.isNotEmpty() } ?: emptyList(),
+            b.fields["fixture-letters"],
+        ) else dwindleFixtures.getValue(b.technique)
         val letters = fixture.letters ?: tokens.joinToString("") { it.take(1).lowercase() }
         tokens.forEachIndexed { i, t -> if (t != "_") assertEquals("${b.technique}: tile $i", letters[i], t[0].lowercaseChar()) }
         val counts = IntArray(tokens.size) { tokens[it].drop(1).toIntOrNull() ?: 0 }
-        return DwindleTeacher.deduce(b.width, b.rows.size, letters, counts, fixture.lengths, fixture.tried, diagonal = false)
+        return DwindleTeacher.deduce(b.width, b.rows.size, letters, counts, fixture.lengths, fixture.tried, diagonal = false, contentLanguage = b.fields["content-language"] ?: "en")
     }
 
     /** The points still to go, shown in the app's header line and said in each caption. */
@@ -780,13 +791,14 @@ class GuideTest {
     private fun hexwordsStep(b: Board): TeachStep? {
         val tokens = b.rows.flatten()
         val cells = tokens.indices.filter { tokens[it] != "_" }
-        val letters = cells.joinToString("") { if (tokens[it] == ".") "q" else tokens[it].lowercase() }
+        val letters = cells.joinToString("") { if (tokens[it] == ".") { if (b.fields["content-language"] == "ru") "ъ" else "q" } else tokens[it].lowercase() }
         val spent = cells.indices.filter { tokens[cells[it]] == "." }
         val state = HexwordsState(
             rows = b.rows.map { row -> row.count { it != "_" } },
             letters = letters,
-            target = hexPointsToGo.getValue(b.technique),
+            target = b.fields["points-to-go"]?.toInt() ?: hexPointsToGo.getValue(b.technique),
             taken = listOf(HexTake("", spent)),
+            contentLanguage = b.fields["content-language"] ?: "en",
         )
         val taught = HexwordsTeacher.teach(state) ?: return null
         assertEquals("${b.technique}: the first letter", taught.word[0].uppercase(), b.marks("answer")[cells[taught.path[0]]])
@@ -799,7 +811,7 @@ class GuideTest {
     /** Rows are the words, right-aligned; a placed letter's token is the letter and its digit (`E7`). */
     private fun cipherStep(b: Board): TeachStep? {
         val tokens = b.rows.map { row -> row.filter { it != "_" } }
-        val sum = CipherSum(tokens.map { row -> row.joinToString("") { it.take(1).lowercase() } })
+        val sum = CipherSum(tokens.map { row -> row.joinToString("") { it.take(1).lowercase() } }, b.fields["content-language"] ?: "en")
         val answer = (CipherLogic.prove(sum) as? Verdict.ExactlyOne)?.value ?: error("${b.technique}: a sum with one answer")
         val digits = sum.letters.indices.map { l ->
             tokens.flatten().firstOrNull { it[0].lowercaseChar() == sum.letters[l] }?.drop(1)?.toIntOrNull() ?: CipherLogic.EMPTY

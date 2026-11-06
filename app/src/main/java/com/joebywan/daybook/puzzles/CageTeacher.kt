@@ -1,10 +1,15 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.boxPositionMessage
+import com.joebywan.daybook.core.joinedMessages
 import com.joebywan.daybook.core.digitsOf
 import com.joebywan.daybook.core.has
-import com.joebywan.daybook.core.listed
+import com.joebywan.daybook.core.listedMessage
 import com.joebywan.daybook.puzzles.CageLogic.Board
 import com.joebywan.daybook.puzzles.CageLogic.Group
 import com.joebywan.daybook.puzzles.CageLogic.Kind
@@ -67,9 +72,22 @@ internal object CageTeacher {
     )
 
     private fun unitName(u: Int) = when {
-        u < 9 -> "the ${CageLogic.BOX_NAMES[u]} box"
-        u < 18 -> "row ${u - 8}"
-        else -> "column ${u - 17}"
+        u < 9 -> message("teacher.cages.unit_name.1", "CageLogic_BOX_NAMES_u_" to (boxPositionMessage(u)))
+        u < 18 -> message("teacher.cages.unit_name.2", "u_8" to (u - 8))
+        else -> message("teacher.cages.unit_name.3", "u_17" to (u - 17))
+    }
+
+    private fun scopeNameMessage(scope: CageLogic.Scope): Message {
+        val rows = scope.cells.map { it / 9 }.distinct()
+        val columns = scope.cells.map { it % 9 }.distinct()
+        if (rows.size == scope.unitCount) return if (rows.size == 1) unitName(rows[0] + 9)
+            else message("teaching.rows", "first" to rows.first() + 1, "last" to rows.last() + 1)
+        if (columns.size == scope.unitCount) return if (columns.size == 1) unitName(columns[0] + 18)
+            else message("teaching.columns", "first" to columns.first() + 1, "last" to columns.last() + 1)
+        val boxes = scope.cells.map { it / 9 / 3 * 3 + it % 9 / 3 }.distinct()
+        return if (boxes.size == 1) unitName(boxes[0]) else message(
+            "teaching.boxes", "first" to boxPositionMessage(boxes[0]), "second" to boxPositionMessage(boxes[1]),
+        )
     }
 
     // ---- the whole hint: mistakes, then reasoning, then the honest fallback -----------------------
@@ -86,26 +104,26 @@ internal object CageTeacher {
         val solution = s.grid.solution
         val wrong = cells.indices.firstOrNull { cells[it] != 0 && cells[it] != solution[it] } ?: return null
         val d = cells[wrong]
-        val clear = "Select it and tap $d again to clear it"
-        fun step(explanation: String, cited: Set<Int>) = PlacementStep(
-            MISTAKE, wrong, 0, setOf(wrong), cited, "Check this $d.", explanation,
+        val clear = message("teacher.cages.mistake.1", "d" to (d))
+        fun step(explanation: CharSequence, cited: Set<Int>) = PlacementStep(
+            MISTAKE, wrong, 0, setOf(wrong), cited, message("teacher.cages.step.1", "d" to (d)), explanation,
         )
 
         for (u in CageLogic.unitsOf(wrong)) {
             val twin = CageLogic.units[u].firstOrNull { it != wrong && cells[it] == d } ?: continue
-            return step("This $d clashes with the $d in ${unitName(u)}. $clear.", setOf(twin))
+            return step(message("teacher.cages.mistake.2", "d" to (d), "unitName_u_" to (unitName(u)), "clear" to (clear)), setOf(twin))
         }
         val cage = board.cages[s.cageOf[wrong]]
         val total = s.sums[s.cageOf[wrong]]
         cage.firstOrNull { it != wrong && cells[it] == d }?.let {
-            return step("This $d repeats a $d in its cage, and a cage never repeats a digit. $clear.", setOf(it))
+            return step(message("teacher.cages.mistake.3", "d" to (d), "clear" to (clear)), setOf(it))
         }
         val filled = cage.sumOf { cells[it] }
         if (filled > total) {
-            return step("This cage totals $total, and its digits already add up to $filled. $clear.", cage.toSet())
+            return step(message("teacher.cages.mistake.4", "total" to (total), "filled" to (filled), "clear" to (clear)), cage.toSet())
         }
         if (cage.none { cells[it] == 0 } && filled != total) {
-            return step("This cage totals $total, but its digits add up to $filled. $clear.", cage.toSet())
+            return step(message("teacher.cages.mistake.5", "total" to (total), "filled" to (filled), "clear" to (clear)), cage.toSet())
         }
 
         // Otherwise, reason from the correct digits plus this one: does it leave something impossible?
@@ -113,7 +131,7 @@ internal object CageTeacher {
         val plain = Sight(board, seen, prune = false)
         for (i in 0 until 81) {
             if (seen[i] == 0 && plain.cand[i] == 0) {
-                return step("With a $d here, the marked square would have no digit left. $clear.", setOf(i))
+                return step(message("teacher.cages.mistake.6", "d" to (d), "clear" to (clear)), setOf(i))
             }
         }
         val full = Sight(board, seen)
@@ -121,12 +139,12 @@ internal object CageTeacher {
             for (g in board.groups) {
                 val open = full.open(g)
                 if (open.isEmpty() || (full.allowed(g)?.any { it == 0 } != true)) continue
-                val what = if (g.kind == Kind.CAGE) "the cage totalling ${g.sum} could not be made"
-                else "the ${g.cells.size} marked squares could not total ${g.sum}, as the whole rows, columns or boxes need"
-                return step("With a $d here, $what. $clear.", g.cells.toSet())
+                val what = if (g.kind == Kind.CAGE) message("teacher.cages.mistake.7", "g_sum" to (g.sum))
+                else message("teacher.cages.mistake.8", "g_cells_size" to (g.cells.size), "g_sum" to (g.sum))
+                return step(message("teacher.cages.mistake.9", "d" to (d), "what" to (what), "clear" to (clear)), g.cells.toSet())
             }
         }
-        return step("This $d isn't part of the answer. $clear, and look again.", emptySet())
+        return step(message("teacher.cages.mistake.10", "d" to (d), "clear" to (clear)), emptySet())
     }
 
     /** Nothing short enough to explain applied: point at a digit from the answer, and say so plainly. */
@@ -158,9 +176,8 @@ internal object CageTeacher {
             val all = CageLogic.units[u].toSet()
             return PlacementStep(
                 FULL_HOUSE, empty[0], d, focus = all, cited = all,
-                nudge = "Look at ${unitName(u)}.",
-                explanation = "${unitName(u).cap()} has one empty square left, and $d is the only digit it's " +
-                    "missing, so $d goes there.",
+                nudge = message("teacher.cages.full_house.1", "unitName_u_" to (unitName(u))),
+                explanation = message("teacher.cages.full_house.2", "unitName_u_cap_" to (unitName(u).cap()), "d" to (d)),
             )
         }
         return null
@@ -173,12 +190,11 @@ internal object CageTeacher {
             if (empty.size != 1) continue
             val d = board.sums[k] - cage.sumOf { cells[it] }
             if (d !in 1..9) continue
-            val explanation = if (cage.size == 1) "This cage is a single square, so its total, ${board.sums[k]}, is the digit."
-            else "This cage totals ${board.sums[k]} and its other squares add up to ${board.sums[k] - d}, so " +
-                "the glowing square is $d."
+            val explanation = if (cage.size == 1) message("teacher.cages.cage_last.1", "board_sums_k_" to (board.sums[k]))
+            else message("teacher.cages.cage_last.2", "board_sums_k_" to (board.sums[k]), "board_sums_k_d" to (board.sums[k] - d), "d" to (d))
             return PlacementStep(
                 CAGE_LAST, empty[0], d, focus = cage.toSet(), cited = cage.toSet(),
-                nudge = "Look at the cage totalling ${board.sums[k]}.",
+                nudge = message("teacher.cages.cage_last.3", "board_sums_k_" to (board.sums[k])),
                 explanation = explanation,
             )
         }
@@ -201,9 +217,8 @@ internal object CageTeacher {
                     if (boxes) HIDDEN_SINGLE_BOX else HIDDEN_SINGLE_LINE, cell, d,
                     focus = CageLogic.units[u].toSet(),
                     cited = CageLogic.units[u].toSet() + blockers,
-                    nudge = "Look at ${unitName(u)}.",
-                    explanation = "Every other empty square in ${unitName(u)} already sees a $d in its row, " +
-                        "column, box or cage. So its $d goes in the glowing square.",
+                    nudge = message("teacher.cages.hidden_single.1", "unitName_u_" to (unitName(u))),
+                    explanation = message("teacher.cages.hidden_single.2", "unitName_u_" to (unitName(u)), "d" to (d)),
                 )
             }
         }
@@ -218,9 +233,8 @@ internal object CageTeacher {
                 NAKED_SINGLE, cell, d,
                 focus = setOf(cell),
                 cited = (Sudoku.peers(cell).toList() + s.board.mates[cell].toList()).filter { s.cells[it] != 0 }.toSet(),
-                nudge = "What can go in the glowing square?",
-                explanation = "Its row, column, box and cage already hold every digit except $d, so $d is " +
-                    "the only one left for it.",
+                nudge = message("teacher.cages.naked_single.1"),
+                explanation = message("teacher.cages.naked_single.2", "d" to (d)),
             )
         }
         return null
@@ -228,28 +242,26 @@ internal object CageTeacher {
 
     // ---- the cage totals, one group at a time ------------------------------------------------------
 
-    private fun lead(s: Sight, g: Group): String {
+    private fun lead(s: Sight, g: Group): Message {
         return when (g.kind) {
             Kind.CAGE -> {
                 val open = s.open(g)
                 val r = s.remaining(g)
                 val fits = s.fitting(g)
-                val head = if (open.size == g.cells.size) "The ${open.size} squares of this cage total $r"
-                else "The ${open.size} open squares of this cage still need $r"
-                if (fits.size == 1) "$head, which only ${listed(digitsOf(fits[0]))} make."
-                else "$head, so they can only use ${listed(digitsOf(fits.fold(0) { a, m -> a or m }))}."
+                val head = if (open.size == g.cells.size) message("teacher.cages.lead.1", "open_size" to (open.size), "r" to (r))
+                else message("teacher.cages.lead.2", "open_size" to (open.size), "r" to (r))
+                if (fits.size == 1) message("teacher.cages.lead.3", "head" to (head), "listed_digitsOf_fits_0_" to (listedMessage(digitsOf(fits[0]))))
+                else message("teacher.cages.lead.4", "head" to (head), "value2" to (listedMessage(digitsOf(fits.fold(0) { a, m -> a or m }))))
             }
             Kind.INNIE -> {
                 val sc = CageLogic.scopes[g.scope]
                 val whole = 45 * sc.unitCount
-                "${sc.name.cap()} ${if (sc.unitCount == 1) "holds" else "hold"} $whole and the cages inside " +
-                    "${if (sc.unitCount == 1) "it" else "them"} add up to ${whole - g.sum}, so the marked squares total ${g.sum}."
+                message("teacher.cages.lead.5", "sc_name_cap_" to (scopeNameMessage(sc).cap()), "value2" to (if (sc.unitCount == 1) message("teacher.cages.lead.extra.1") else message("teacher.cages.lead.extra.2")), "whole" to (whole), "value4" to (if (sc.unitCount == 1) message("teacher.cages.lead.extra.3") else message("teacher.cages.lead.extra.4")), "whole_g_sum" to (whole - g.sum), "g_sum" to (g.sum))
             }
             Kind.OUTIE -> {
                 val sc = CageLogic.scopes[g.scope]
                 val whole = 45 * sc.unitCount
-                "${sc.name.cap()} ${if (sc.unitCount == 1) "holds" else "hold"} $whole, but the cages touching " +
-                    "${if (sc.unitCount == 1) "it" else "them"} add up to ${g.sum + whole}, so the squares outside total ${g.sum}."
+                message("teacher.cages.lead.6", "sc_name_cap_" to (scopeNameMessage(sc).cap()), "value2" to (if (sc.unitCount == 1) message("teacher.cages.lead.extra.5") else message("teacher.cages.lead.extra.6")), "whole" to (whole), "value4" to (if (sc.unitCount == 1) message("teacher.cages.lead.extra.7") else message("teacher.cages.lead.extra.8")), "g_sum_whole" to (g.sum + whole), "g_sum" to (g.sum))
             }
         }
     }
@@ -271,28 +283,28 @@ internal object CageTeacher {
             }
             if (removed.isEmpty()) continue
             val single = singleAfter(plain, after, g, removed) ?: continue
-            val text = "${lead(plain, g)} ${single.sentence}"
+            val text = message("teacher.cages.group.extra.1", "lead_plain_g_" to (lead(plain, g)), "single_sentence" to (single.sentence))
             if (text.length > MAX_EXPLANATION) continue
             val scope = if (g.scope >= 0) CageLogic.scopes[g.scope] else null
             return PlacementStep(
                 if (g.kind == Kind.CAGE) CAGE_COMBO else FORTY_FIVE, single.cell, single.digit,
                 focus = g.cells.toSet() + (scope?.cells?.toSet() ?: emptySet()) + single.cell,
                 cited = g.cells.toSet() + (single.unit?.let { CageLogic.units[it].toSet() } ?: emptySet()),
-                nudge = if (scope != null) "Look at ${scope.name}." else "Look at the cage totalling ${g.sum}.",
+                nudge = if (scope != null) message("teacher.cages.group.1", "scope_name" to (scopeNameMessage(scope))) else message("teacher.cages.group.2", "g_sum" to (g.sum)),
                 explanation = text,
             )
         }
         return null
     }
 
-    private class Single(val cell: Int, val digit: Int, val unit: Int?, val sentence: String)
+    private class Single(val cell: Int, val digit: Int, val unit: Int?, val sentence: Message)
 
     /** A single that exists only because of [removed]: a square of [g] left with one digit, or a digit left one place in a unit. */
     private fun singleAfter(plain: Sight, after: IntArray, g: Group, removed: List<Pair<Int, Int>>): Single? {
         for (c in g.cells.sorted()) {
             if (plain.cells[c] == 0 && after[c].countOneBits() == 1) {
                 val d = digitsOf(after[c])[0]
-                return Single(c, d, null, "That leaves the glowing square only $d.")
+                return Single(c, d, null, message("teacher.cages.single_after.1", "d" to (d)))
             }
         }
         for ((cell, d) in removed) {
@@ -300,7 +312,7 @@ internal object CageTeacher {
                 if (plain.holds(u, d)) continue
                 val places = CageLogic.units[u].filter { plain.cells[it] == 0 && after[it] and (1 shl d) != 0 }
                 if (places.size == 1) {
-                    return Single(places[0], d, u, "That leaves the glowing square the only place for $d in ${unitName(u)}.")
+                    return Single(places[0], d, u, message("teacher.cages.single_after.2", "d" to (d), "unitName_u_" to (unitName(u))))
                 }
             }
         }
@@ -318,8 +330,8 @@ internal object CageTeacher {
     }
 
     /** What a group says, as its sentence's opening; the 45-rule is named the first time only ([named]). */
-    private fun subject(g: Group, named: Boolean, twins: List<Group>): String {
-        val rule = if (named) "" else "by the 45-rule, "
+    private fun subject(g: Group, named: Boolean, twins: List<Group>): Message {
+        val rule = if (named) "" else message("teacher.cages.subject.1")
         return when (g.kind) {
             Kind.CAGE -> {
                 // Another cage of the same total in the same line: say where this one starts, by its box when that tells them apart.
@@ -327,13 +339,13 @@ internal object CageTeacher {
                 val box = CageLogic.unitsOf(first)[0]
                 val others = twins.filter { it !== g && it.kind == Kind.CAGE && it.sum == g.sum && it.cage != g.cage }
                 when {
-                    others.isEmpty() -> "the cage totalling ${g.sum}"
-                    others.none { CageLogic.unitsOf(it.cells.min())[0] == box } -> "the ${CageLogic.BOX_NAMES[box]} cage totalling ${g.sum}"
-                    else -> "the cage totalling ${g.sum} at row ${first / 9 + 1}, column ${first % 9 + 1}"
+                    others.isEmpty() -> message("teacher.cages.subject.2", "g_sum" to (g.sum))
+                    others.none { CageLogic.unitsOf(it.cells.min())[0] == box } -> message("teacher.cages.subject.3", "CageLogic_BOX_NAMES_box_" to (boxPositionMessage(box)), "g_sum" to (g.sum))
+                    else -> message("teacher.cages.subject.4", "g_sum" to (g.sum), "first_9_1" to (first / 9 + 1), "first_9_12" to (first % 9 + 1))
                 }
             }
-            Kind.INNIE -> "$rule${CageLogic.scopes[g.scope].name}'s marked squares total ${g.sum}"
-            Kind.OUTIE -> "${rule}the squares sticking out of ${CageLogic.scopes[g.scope].name} total ${g.sum}"
+            Kind.INNIE -> message("teacher.cages.subject.5", "rule" to (rule), "value2" to (scopeNameMessage(CageLogic.scopes[g.scope])), "g_sum" to (g.sum))
+            Kind.OUTIE -> message("teacher.cages.subject.6", "rule" to (rule), "value2" to (scopeNameMessage(CageLogic.scopes[g.scope])), "g_sum" to (g.sum))
         }
     }
 
@@ -400,24 +412,24 @@ internal object CageTeacher {
             val g = groups[i]
             val who = subject(g, groups.take(i).any { it.kind != Kind.CAGE }, groups)
             if (i == groups.lastIndex) {
-                val end = if (unit == null) "only $digit" else "the only place for $digit in ${unitName(unit)}"
-                return@map if (g.kind == Kind.CAGE) "$who leaves the glowing square $end" else "$who, which leaves the glowing square $end"
+                val end = if (unit == null) message("teacher.cages.linked_step.1", "digit" to (digit)) else message("teacher.cages.linked_step.2", "digit" to (digit), "unitName_unit_" to (unitName(unit)))
+                return@map if (g.kind == Kind.CAGE) message("teacher.cages.linked_step.3", "who" to (who), "end" to (end)) else message("teacher.cages.linked_step.4", "who" to (who), "end" to (end))
             }
             // The squares this group hands on: those a later group shares, else all of its open ones.
             val later = groups.drop(i + 1).flatMap { it.cells.toList() }.toSet()
             val open = g.cells.filter { link.cand[it] != 0 }
             val handed = open.filter { it in later }
             val shared = handed.ifEmpty { open }
-            val digits = listed(digitsOf(shared.fold(0) { m, c -> m or link.cuts[i][c] }), "or")
+            val digits = listedMessage(digitsOf(shared.fold(0) { m, c -> m or link.cuts[i][c] }), message("teacher.cages.linked_step.5"))
             // Squares no later group shares (a chain's cuts can narrow a row's places for a digit side by side): its own.
             val these = when {
-                handed.isEmpty() -> if (g.kind == Kind.CAGE) "its open squares" else "those squares"
-                shared.size == 1 -> "the shared square"
-                else -> "the shared squares"
+                handed.isEmpty() -> if (g.kind == Kind.CAGE) message("teacher.cages.linked_step.6") else message("teacher.cages.linked_step.7")
+                shared.size == 1 -> message("teacher.cages.linked_step.8")
+                else -> message("teacher.cages.linked_step.9")
             }
-            if (g.kind == Kind.CAGE) "$who leaves $these only $digits" else "$who, so $these can only be $digits"
+            if (g.kind == Kind.CAGE) message("teacher.cages.linked_step.10", "who" to (who), "these" to (these), "digits" to (digits)) else message("teacher.cages.linked_step.11", "who" to (who), "these" to (these), "digits" to (digits))
         }
-        val text = parts.mapIndexed { i, p -> if (i == 0) p.cap() else "Then $p" }.joinToString(". ") + "."
+        val text = parts.mapIndexed { i, p -> if (i == 0) p.cap() else message("teacher.cages.linked_step.12", "p" to (p)) }.joinedMessages(". ") + "."
         if (text.length > cap) return null
         val cells = groups.flatMap { it.cells.toList() }.toSet()
         return PlacementStep(
@@ -425,8 +437,8 @@ internal object CageTeacher {
             focus = cells + cell,
             cited = cells + (unit?.let { CageLogic.units[it].toSet() } ?: emptySet()),
             // A chain may be one group cutting again on what its own first cut left.
-            nudge = if (groups.size == 1) "Work this total through, then again on what it leaves."
-            else "These totals share squares. Work them through one after another.",
+            nudge = if (groups.size == 1) message("teacher.cages.linked_step.13")
+            else message("teacher.cages.linked_step.14"),
             explanation = text,
         )
     }
@@ -518,9 +530,8 @@ internal object CageTeacher {
             CAGE_CHAIN, cell, d,
             focus = board.cages[board.cageOf[cell]].toSet() + cell,
             cited = board.cages[board.cageOf[cell]].toSet(),
-            nudge = "What do the cage totals leave for the glowing square?",
-            explanation = "Work the cage totals through together with the digits around them, and the glowing " +
-                "square must be $d.",
+            nudge = message("teacher.cages.chain.1"),
+            explanation = message("teacher.cages.chain.2", "d" to (d)),
         )
     }
 }
