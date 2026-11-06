@@ -243,6 +243,8 @@ def check(device, apk, repo):
     if stored() != before:
         raise RuntimeError("could not seed the mixed English/Russian retained save fixtures")
     device.start()
+    device.wait("Settings")
+    device.screenshot("home-en")
     device.settings(False)
     device.screenshot("system-en")
     device.tap("Language")

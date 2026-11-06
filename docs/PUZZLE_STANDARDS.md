@@ -463,7 +463,8 @@ Interactive, played on the puzzle's real `Board` by `ui/tutorial/TutorialRunner.
    offers them) and the frame ends when the board is solved. The test must prove hints alone finish it with no
    fallback and no mistake.
 7. Captions: at most four lines. The runner's slot under the board is sized from the walkthrough's own text (its
-   tallest caption plus that frame's feedback lines, measured once, at most `MaxCaptionSlot`, 156 dp), so the longest
+   tallest caption plus that frame's feedback lines, measured once, at most `MaxCaptionSlot`, 156 dp; short windows
+   use a 120 dp budget that still reserves one caption and two feedback lines at the player's text size), so the longest
    caption costs every frame's board its room; the tests cap them at
    170 chars (LITS, Sudoku, Tower, Sets) or 200 (Snap). Teach with the board's own numbers and names, not
    abstractions (Kings builds region names with `regionNames`).

@@ -147,9 +147,14 @@ def short_layout(page, server, screenshot):
     page.touchscreen.tap(281, 505)
     if screenshot("2x-tutorial-next") == first:
         raise AssertionError("the 2× tutorial's Next control did not advance")
-    page.mouse.move(187, 420)
+    # This fixture's caption is above the reserved feedback rows; wheel inside its visible text.
+    caption_region = {"x": 18, "y": 350, "width": 339, "height": 48}
+    caption_before = page.screenshot(clip=caption_region)
+    page.mouse.move(187, 365)
     page.mouse.wheel(0, 1000)
     screenshot("2x-tutorial-caption-end")
+    if page.screenshot(clip=caption_region) == caption_before:
+        raise AssertionError("the 2× tutorial's caption did not scroll")
     for width, height, name in [(812, 375, "landscape"), (375, 240, "zero-room-resize"), (375, 537, "portrait-restored")]:
         page.set_viewport_size({"width": width, "height": height})
         screenshot("2x-tutorial-" + name)
@@ -184,6 +189,9 @@ def choose(page, language):
     page.wait_for_function("([key, value]) => localStorage.getItem(key) === value", arg=[LANGUAGE_KEY, language], timeout=10000)
     expected = language or page.evaluate("navigator.language")
     page.wait_for_function("lang => document.documentElement.lang === lang", arg=expected, timeout=10000)
+    # The locale changes before its new font fetches start; let the live UI paint and finish them before navigating.
+    R.settle(page, 8)
+    page.wait_for_load_state("networkidle", timeout=15000)
     return expected
 
 

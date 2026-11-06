@@ -25,7 +25,7 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
 - **Dates are `kotlinx.datetime.LocalDate`.** Nothing on disk stores a date object (completions hold
   an epoch-day number), so saves are untouched; `CompletionFormatTest` pins that. Tests keep writing
   `java.time` dates through `JavaDates.kt`. Formatting goes through the seam so Android keeps its
-  locale-aware `DateTimeFormatter`; the web spells out English names.
+  locale-aware `DateTimeFormatter`; the web uses the generated catalogs' calendar names.
 - **Storage is `data/KeyValueStore`.** Android: the same two DataStore files and keys as ever
   (`DataStoreKeyValueStore`). Web: `localStorage`, key `file.key`, sets as JSON arrays. The web
   backup (Stats screen, export/import) is every one of those entries, so it needs no change when a

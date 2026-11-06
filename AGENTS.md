@@ -36,6 +36,25 @@ sounded. Do not turn it off.
 - `Preview(modifier)` draws a fixed motif for the home grid. **Never call `generate()` in it** —
   every one of them draws on every composition.
 
+## Languages and word content
+
+- `translations/` is the shared keyed catalog; `tools/i18n/build.py` generates Kotlin, CLDR integer
+  plurals/calendar names and Android's locale list. Add languages through metadata and complete catalogs,
+  not language branches at UI call sites. Contracts, font coverage and the ten-language generation check:
+  `docs/LOCALIZATION.md` and `tools/i18n/test_*.py`.
+- `Message` keeps canonical English text and length inside reasoning: some teachers use text-length gates,
+  so translating there can move daily boards. Resolve descriptors at UI boundaries. Retained celebrations
+  and share cards carry `SavedText` recipes; old string-only snapshots remain readable.
+- Display language never chooses word content. Russian word editions have their own `-ru` IDs and an
+  explicit saved `contentLanguage`; old states default to English. Keep full IDs in seeds, saves and
+  progress. Family aliases are only for presentation/techniques. Frozen vocabulary, attribution, board
+  tables and rebuilding rules: `tools/words/ru/README.md`; measured teachers: `docs/TEACHING.md`.
+- Android's picker shares `LocaleManager` with system settings on API 33+, and uses a separate preference
+  context below that; web choices persist independently of the browser locale. Verify switches and restarts,
+  not just string lookup. `python tools/verify-version/check.py` checks the signed minified test APK on a
+  private emulator plus isolated offline browsers; prerequisites and exact coverage: `docs/VERIFY_VERSION.md`.
+  An unavailable emulator is a failed prerequisite, never a passing native check.
+
 ## Teaching: hints that explain, and walkthroughs
 
 All puzzles teach (Snap and Pointers through their walkthrough only; Pointers and Mines have no undo). Shared code: `core/Teaching.kt`, `ui/teach/Hints.kt`,
