@@ -1,12 +1,10 @@
 # Daybook TODO
 
-## Russian localization
+## Localization acceptance
 
-The shared catalog, language pickers, translated guidance and seven separate Russian word games are
-being validated together. The active acceptance list and remaining evidence are in
-[`LOCALIZATION_PROGRESS.md`](LOCALIZATION_PROGRESS.md). Keep original English pins, vocabulary and saves
-unchanged; documentation and generation details are in [`LOCALIZATION.md`](LOCALIZATION.md).
-
+The app, full JVM/release build and device-free verifier pass. The last annual comparison hit
+its page deadline while two Russian word-game pages were still progressing in WebKit. Pass the
+full rerun with the bounded-timeout correction tracked in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
 
 ## Arcade: the rest of the boards
 

@@ -2,8 +2,8 @@ name: Web parity
 description: >
   Compare every board the built wasm distribution generates, in Chromium and WebKit, with the JVM's.
   The caller has already built web/build/dist/wasmJs/productionExecutable (./gradlew
-  :web:wasmJsBrowserDistribution) with JDK 17 and the Android SDK set up. A year of every puzzle and
-  tier (12,045 boards) takes about a minute in each browser; see tools/web-parity/check.py.
+  :web:wasmJsBrowserDistribution) with JDK 17 and the Android SDK set up. A full year of every puzzle and
+  tier, plus levels, is compared in both browsers; see tools/web-parity/check.py.
 
 runs:
   using: composite

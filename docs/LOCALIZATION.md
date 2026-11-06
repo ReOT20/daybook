@@ -157,18 +157,23 @@ Russian hint walks finish all 7,665 sampled boards without mistakes, stalls or l
 fallback rates remain separate in [TEACHING.md](TEACHING.md). Catalog/font checks pass 10 tests,
 including ten-language generation, and verifier self-checks pass 8. Only English and Russian ship.
 
-Combined JVM evidence accounts for 227 classes / 1,486 methods: 1,471 passes and 15 opt-in assumption
-skips, with no unresolved failures. It combines checkpoints and changed-class reruns; it is not a fresh
-full-suite run. The minified local-test APK for source `55c79d98` builds with the persistent local test
+The fresh CI build on `f90c9a5f` executed the full JVM suite and passed the guide and release builds.
+Earlier combined JVM evidence accounts for 227 classes / 1,486 methods, with no unresolved failures;
+that separate coverage map combines checkpoints and changed-class reruns. The minified local-test
+APK for source `55c79d98` builds with the persistent local test
 certificate and passes signature, artifact and 16 KiB alignment checks. It is not production signed.
 
-The KVM workflow passed native APK installation/artifact checks and API 34 language/restart/reinstall
-verification on PR merge `63ddffed`: all 144 frozen saves loaded unchanged, with zero lost/changed;
+The complete [KVM workflow](https://github.com/ReOT20/daybook/actions/runs/42153038123) passed all
+nine stages on PR merge `92884f3f`, containing `f90c9a5f`: all 144 frozen saves loaded unchanged;
 all 14 mixed English/Russian identities survived eight lifecycle cases. Its targeted JVM stage reported
 137 tests with four skips and no failures/errors. All six Settings screenshots were reviewed without
-clipping or malformed Cyrillic. This native pass is separate from the overall workflow, which failed
-later in the old browser font-timing check.
+clipping or malformed Cyrillic. All four Chromium/WebKit × English/Russian offline cases also passed,
+with all eleven fonts cached and no page errors or external requests. The native home capture is
+reviewed and checked in at the required half scale.
 
-Fresh full CI `build` and the corrected end-to-end verifier remain pending. The API 34 pass does not
+The later annual parity run passed Chromium but timed out two still-progressing WebKit word-game
+pages at 900 seconds, without reporting a board mismatch. A full rerun with a larger bounded page
+timeout remains required; the earlier two-engine annual pass remains separate evidence.
+The API 34 pass does not
 prove the older Android preference/migration path. Physical devices and real Safari were not used;
 Linux WebKit is the documented approximation in `AGENTS.md`.

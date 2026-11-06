@@ -123,12 +123,15 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   (as LITS's generator changes were checked) is `DAYBOOK_PARITY_DAYS=730`.
 
   **CI runs the year.** `tools/web-parity/check.py --jvm <file>` does the comparison by hand above for
-  you: it serves the built dist, loads `?dump&range=N&puzzle=<id>` for all puzzles at once in
+  you: it serves the built dist, loads `?dump&range=N&puzzle=<id>` with at most four pages at once in
   Chromium then WebKit (Playwright, pinned in `tools/web-parity/requirements.txt`), strips `RANGE `,
   and diffs each puzzle against the JVM file (N is read from it), printing the first differences by
-  puzzle, date and tier. Exit 1 on any difference, missing line, page error or timeout. A full year
-  (12,045 boards) takes 30 s in Chromium and 40 s in WebKit on a 32-core machine, 36 s and 49 s pinned
-  to 4 cores, so there is no short-range variant. `WebParityDumpTest` takes `DAYBOOK_PARITY_DAYS`
+  puzzle, date and tier. Exit 1 on any difference, missing line, page error or timeout. Four pages
+  bound Wasm memory and CPU contention; the engines run sequentially. With 40 puzzles, a full year
+  compares 45,625 boards, including 365 five-board levels. Runtime varies with the runner: Russian
+  word generators exceeded the old 900-second page deadline while still making progress. The default
+  page limit is now 1,800 seconds, with a 90-minute CI job budget; coverage and comparisons are unchanged.
+  CI always compares all 365 days. `WebParityDumpTest` takes `DAYBOOK_PARITY_DAYS`
   (default 365) for a quicker local look. CI wires it as the composite action
   `.github/actions/web-parity`, used twice: by the `web-parity` job in `ci.yml` (a required check beside `build`; it always runs, and passes at once when the change touches nothing that could alter a board: app/src/main, web/, Gradle files, the parity tools, `WebParityDumpTest` or ci.yml) and by `pages.yml`, between building the dist and uploading it, so a divergence that got past review stops the deploy. Renovate's dispatched CI runs post a `web-parity` commit status as they do `build`. The dump test must be run with
   `--rerun` (the env var is not a Gradle input; a cached test would write no file). Playwright's own

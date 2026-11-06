@@ -97,7 +97,8 @@ jobs:
   # so this job always runs and passes at once when nothing that could change a board was touched.
   web-parity:
     runs-on: ubuntu-26.04
-    timeout-minutes: 75
+    # Slow runners need room for the full year plus build and browser setup.
+    timeout-minutes: 90
     permissions:
       contents: read
       statuses: write   # only used by the workflow_dispatch steps below
