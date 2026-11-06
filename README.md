@@ -245,7 +245,8 @@ browser (see the standards doc, sections 4 and 5).
 Choose English, Русский, or the device/browser language in Settings. Russian includes game names,
 rules, hints, walkthroughs, training, achievements, calendars, results and sharing. Seven word games
 also have separate Russian editions: Lexicon, Word Wheel, Mini, Codeword, Hexwords, Dwindle and Cipher.
-Changing interface language keeps each board's vocabulary and saved progress. The external player guide
+Menus show word puzzles matching the interface language. Changing language keeps each board's vocabulary
+and saved progress; games in the other language return when switching back. The external player guide
 is in English. See [localization notes](docs/LOCALIZATION.md) and the
 [version verifier](docs/VERIFY_VERSION.md), which uses a private emulator and headless browsers.
 

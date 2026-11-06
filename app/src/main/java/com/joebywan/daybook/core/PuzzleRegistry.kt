@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.catalogLanguage
 import com.joebywan.daybook.puzzles.Atoms
 import com.joebywan.daybook.puzzles.Cages
 import com.joebywan.daybook.puzzles.Chess
@@ -93,4 +94,18 @@ object PuzzleRegistry {
     )
 
     fun byId(id: String): PuzzleType? = all.firstOrNull { it.id == id }
+
+    private val wordEditions = all.filter { puzzleFamilyId(it.id) != it.id }
+        .associate { puzzleFamilyId(it.id) to it.id }
+
+    /** Menus select an edition; a saved board always retains its own full ID and word content. */
+    fun localizedId(id: String, languageTag: String): String {
+        val family = puzzleFamilyId(id)
+        val russian = wordEditions[family] ?: return id
+        return if (catalogLanguage(languageTag) == "ru") russian else family
+    }
+
+    /** One edition per family, in the original registry position; [all] still includes hidden saves. */
+    fun forLanguage(languageTag: String): List<PuzzleType> =
+        all.map { localizedId(it.id, languageTag) }.distinct().mapNotNull(::byId)
 }

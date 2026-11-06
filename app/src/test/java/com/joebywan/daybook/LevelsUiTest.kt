@@ -36,9 +36,11 @@ class LevelsUiTest {
         val routes = listOf(
             Route.Home, Route.Stats, Route.Settings, Route.Achievements(true), Route.Archive("kings"),
             Route.Levels(), Route.Levels(14),
+            Route.Levels(levelLanguage = "en"), Route.Levels(14, "ru"),
             Route.Play("kings", Difficulty.HARD, LocalDate(2026, 10, 1)),
             Route.Play("kings", Difficulty.HARD, null, 7L),
             Route.Play("kings", Difficulty.EXPERT, null, level = 14),
+            Route.Play("kings", Difficulty.EXPERT, null, level = 14, levelLanguage = "ru"),
         )
         for (r in routes) assertEquals(r, decodeRoute(encodeRoute(r)))
     }
@@ -52,12 +54,33 @@ class LevelsUiTest {
             Route.Play("kings", Difficulty.HARD, LocalDate(2026, 10, 1), 0L, fromArchive = true),
             decodeRoute("play|kings|HARD|2026-10-01|0|true"),
         )
+        assertEquals(Route.Levels(14), decodeRoute("levels|14"))
+        assertEquals(
+            Route.Play("kings", Difficulty.HARD, null, level = 14),
+            decodeRoute("play|kings|HARD||0|false|14|false|false"),
+        )
     }
 
     @Test fun `back from one level's boards is the list, from the list or a level board home`() {
         assertEquals(Route.Levels(), backFrom(Route.Levels(3)))
+        assertEquals(Route.Levels(levelLanguage = "ru"), backFrom(Route.Levels(3, "ru")))
         assertEquals(Route.Home, backFrom(Route.Levels()))
         assertEquals(Route.Home, backFrom(Route.Play("kings", Difficulty.HARD, null, level = 3)))
+    }
+
+    @Test fun `a saved level route retains its lane while the interface changes language`() {
+        val original = java.util.Locale.getDefault()
+        try {
+            val route = Route.Play("words-ru", Difficulty.HARD, null, level = 14, levelLanguage = "ru")
+            val saved = encodeRoute(route)
+            for (locale in listOf(java.util.Locale.ENGLISH, java.util.Locale.forLanguageTag("ru-RU"))) {
+                java.util.Locale.setDefault(locale)
+                assertEquals(route, decodeRoute(saved))
+                assertEquals("ru", (decodeRoute(saved) as Route.Play).levelLanguage)
+            }
+        } finally {
+            java.util.Locale.setDefault(original)
+        }
     }
 
     @Test fun `mid level offers the first unsolved board, then home`() {

@@ -50,6 +50,9 @@ object Levels {
 
     const val SIZE = 5
 
+    /** Frozen English-family pool before editions were appended; language lanes deal each family once. */
+    const val LANGUAGE_POOL_SIZE = 33
+
     /** Every level number the app plans or accepts from storage or a link; far past any player, and `SIZE * level` never overflows. */
     val LEVELS: IntRange = 1..10_000
 
@@ -119,6 +122,15 @@ object Levels {
     fun plan(level: Int, poolSize: Int = POOL.size, deal: Int = LATEST): List<LevelBoard> {
         require(poolSize in (if (deal == 3) LevelSpread.RANKED else STARTER)..POOL.size) { "pool size $poolSize outside the range for deal $deal" }
         return plan(level, POOL.take(poolSize), deal)
+    }
+
+    /** Independent language lanes retain the frozen deal, then select one word edition per family. */
+    fun planForLanguage(level: Int, poolSize: Int = LANGUAGE_POOL_SIZE, deal: Int = LATEST, languageTag: String): List<LevelBoard> {
+        require(poolSize in (if (deal == 3) LevelSpread.RANKED else STARTER)..LANGUAGE_POOL_SIZE)
+        return plan(level, poolSize, deal).map { board ->
+            val id = PuzzleRegistry.localizedId(board.puzzleId, languageTag)
+            LevelBoard(id, board.difficulty, SeedHash.levelForLanguage(level, id, board.difficulty, languageTag))
+        }
     }
 
     /** [plan] over any pool, so tests can append puzzles that do not exist yet. */

@@ -1,17 +1,7 @@
 package com.joebywan.daybook.puzzles
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.BoardHighlight
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleType
@@ -33,7 +23,8 @@ object RussianMini : PuzzleType by Mini {
     override fun generate(seed: Long, difficulty: Difficulty): MiniState =
         generateVerified(seed, difficulty) ?: MiniLogic.lastResort(difficulty, "ru")
 
-    @Composable override fun Preview(modifier: Modifier) = RussianCrosswordMotif(modifier, listOf("НОС", "ОСА", "САД"))
+    private val preview by lazy { tutorialBoard().withWord(0, "нос") }
+    @Composable override fun Preview(modifier: Modifier) = Mini.Preview(modifier, preview)
 
     internal const val TUTORIAL_ANSWER = "нососасад"
     internal fun tutorialBoard() = MiniState(
@@ -98,7 +89,8 @@ object RussianCodeword : PuzzleType by Codeword {
     override fun generate(seed: Long, difficulty: Difficulty): CodewordState =
         generateVerified(seed, difficulty) ?: CodewordLogic.lastResort(difficulty, "ru")
 
-    @Composable override fun Preview(modifier: Modifier) = RussianCrosswordMotif(modifier, listOf("Н4С", "4С1", "С1Д"))
+    private val preview by lazy { tutorialBoard().withLetter(4, WordContent.index('о', "ru")) }
+    @Composable override fun Preview(modifier: Modifier) = Codeword.Preview(modifier, preview, pick = 4)
 
     internal val TUTORIAL_NUMBERS = listOf(3, 4, 5, 4, 5, 1, 5, 1, 2)
     internal val TUTORIAL_SOLUTION = "аднос".map { WordContent.index(it, "ru") }
@@ -149,7 +141,8 @@ object RussianCipher : PuzzleType by Cipher {
     override fun generate(seed: Long, difficulty: Difficulty): CipherState =
         generateVerified(seed, difficulty) ?: CipherLogic.lastResort(difficulty, "ru")
 
-    @Composable override fun Preview(modifier: Modifier) = RussianCrosswordMotif(modifier, listOf("НОС", "СОН", "СЕНО"))
+    private val preview by lazy { tutorialBoard().withDigit(0, 0).withDigit(3, 1) }
+    @Composable override fun Preview(modifier: Modifier) = Cipher.Preview(modifier, preview.sum, preview.digits, pick = 3)
 
     internal val TUTORIAL_WORDS = listOf("нос", "сон", "сено")
     internal val TUTORIAL_SOLUTION = listOf(0, 8, 9, 1) // Е Н О С: 891 + 198 = 1089.
@@ -186,17 +179,5 @@ object RussianCipher : PuzzleType by Cipher {
             TutorialFrame(second, message("puzzle.cipher_ru.tutorial.play"), freePlay = true,
                 done = message("puzzle.cipher_ru.tutorial.done")),
         )
-    }
-}
-
-/** A fixed motif is cheap and cannot consume a generator's random stream. */
-@Composable
-private fun RussianCrosswordMotif(modifier: Modifier, rows: List<String>) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            for (row in rows) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (letter in row) Text(letter.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-        }
     }
 }

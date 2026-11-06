@@ -318,16 +318,18 @@ object Cipher : PuzzleType {
 
     /** TO + GO = OUT with O and T found: a legal moment from the walkthrough's sum. */
     @Composable
-    override fun Preview(modifier: Modifier) {
+    override fun Preview(modifier: Modifier) = Preview(modifier, CipherSum(TUTORIAL_WORDS), listOf(EMPTY, 1, 2, EMPTY), T)
+
+    @Composable
+    internal fun Preview(modifier: Modifier, sum: CipherSum, digits: List<Int>, pick: Int) {
         val scheme = MaterialTheme.colorScheme
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val sum = CipherSum(TUTORIAL_WORDS)
             val slot = minOf(maxWidth / (sum.width + 1), maxHeight / (sum.rows + RULE))
             val dark = BoardHues.isDark(scheme)
             val (hueA, hueB) = BoardHues.HUE_PAIRS[0]
             SumTiles(
-                sum, digits = listOf(EMPTY, 1, 2, EMPTY), selected = null, slot = slot, ruleInk = BoardHues.ink(hueA, dark),
-                tileColour = { if (it == T) BoardHues.fill(hueB, dark) else scheme.surfaceVariant },
+                sum, digits = digits, selected = null, slot = slot, ruleInk = BoardHues.ink(hueA, dark),
+                tileColour = { if (it == pick) BoardHues.fill(hueB, dark) else scheme.surfaceVariant },
                 textColour = { _, placed -> if (placed) BoardHues.ink(hueB, dark) else scheme.onSurface },
             )
         }

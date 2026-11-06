@@ -1,5 +1,28 @@
 # Localization implementation and acceptance
 
+## Tester follow-up: language menus and icons
+
+The 2026-11-06 test feedback identified mixed-language word menus and placeholder Russian tile icons.
+The follow-up selects 33 games per interface language, keeps all 40 identities available for saved boards,
+preserves hidden custom-order slots, and replaces all seven Russian placeholders with real family motifs.
+Continue, daily suggestions, archive, statistics and training use the same selection. Coverage achievements
+accept either edition while puzzle-specific records retain their full IDs.
+
+New Levels have separate English/Russian progress and seed namespaces; all original levels stay available
+through Previous levels. Open routes retain their captured lane, including during crossfades. All 10,000
+levels per language deal five unique matching families. Legacy plans, seeds and raw store entries are unchanged.
+
+- [x] Final Android/Wasm build and 149 JVM tests in 19 classes pass, with zero failures/errors and four
+  opt-in skips. Evidence: `/tmp/daybook-language-menu-fix-final-build/`.
+- [x] Before the Levels follow-up, 16 browser cases / 100 screenshots cover both engines, both phone sizes,
+  themes and 1×/2× text. All seven Russian motifs are visually reviewed; actual Home taps open matching EN/RU
+  Lexicon boards. Live switches retain 14 frozen records, both freshly played boards and the full stored order,
+  with no browser errors or external requests. Evidence: `/tmp/daybook-language-menu-fix/acceptance-summary.json`.
+- [ ] Final Levels runtime checks on the updated distribution, native verifier, refreshed README home image,
+  signed `1.39.3` APK and draft PR update.
+
+## Initial implementation acceptance
+
 Completed on 2026-11-06 on `feat/russian-localization`, based on `chore/shared-agent-guidance`.
 The existing `AGENTS.md` guidance, puzzle standards, saved-state contracts and original English pins
 are preserved. [PR2](https://github.com/ReOT20/daybook/pull/2) remains a draft stacked on the guidance

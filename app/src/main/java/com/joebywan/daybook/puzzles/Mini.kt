@@ -260,10 +260,12 @@ object Mini : PuzzleType {
 
     /** The walkthrough's grid with its first across word in and the cursor on it: a legal moment of a real board. */
     @Composable
-    override fun Preview(modifier: Modifier) {
+    override fun Preview(modifier: Modifier) = Preview(modifier, PREVIEW)
+
+    @Composable
+    internal fun Preview(modifier: Modifier, s: MiniState) {
         val scheme = MaterialTheme.colorScheme
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val s = PREVIEW
             val square = minOf(maxWidth, maxHeight) / s.size
             val dark = BoardHues.isDark(scheme)
             val (hueA, hueB) = BoardHues.HUE_PAIRS[2]

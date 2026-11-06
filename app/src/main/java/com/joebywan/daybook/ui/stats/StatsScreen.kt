@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.sp
 import com.joebywan.daybook.core.ACHIEVEMENTS
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.earnedAchievements
-import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.KeptCard
@@ -92,8 +91,8 @@ fun StatsScreen(
 
     TitledScreen(text("ui.home_screen.statistics"), text("ui.stats_screen.all_time_on_this_device"), onBack, trailing = {
         // Only once a daily is solved today. The title's two lines are taller than the button, so it moves nothing.
-        val card = remember(completions, today, platformLanguage()) {
-            dayShareCard(PuzzleRegistry.all.map { it.id }, completions, today, formatDate(today, "d MMM"), streak.current, dateValue = today)
+        val card = remember(completions, today, puzzles, platformLanguage()) {
+            dayShareCard(puzzles.map { it.id }, completions, today, formatDate(today, "d MMM"), streak.current, dateValue = today)
         }
         // Saveable, so turning the device keeps the preview open.
         var sharing by rememberSaveable { mutableStateOf(sharePreviewOpen) }

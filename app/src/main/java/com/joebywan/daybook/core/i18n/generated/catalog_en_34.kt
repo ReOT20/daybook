@@ -2,6 +2,9 @@
 package com.joebywan.daybook.core.i18n
 
 internal fun catalog_en_34(): Map<String, CatalogEntry> = mapOf(
+    "whoswho.word.job.2.in" to CatalogEntry(mapOf("other" to "farmer")),
+    "whoswho.word.job.2.name" to CatalogEntry(mapOf("other" to "farmer")),
+    "whoswho.word.job.2.object" to CatalogEntry(mapOf("other" to "farmer")),
     "whoswho.word.job.2.of" to CatalogEntry(mapOf("other" to "farmer")),
     "whoswho.word.job.2.with" to CatalogEntry(mapOf("other" to "farmer")),
     "whoswho.word.job.3.in" to CatalogEntry(mapOf("other" to "pilot")),

@@ -47,6 +47,10 @@ object TodaysThree {
         return listOfNotNull(QUICK.at(d), STARTER_MID.at(d), STARTER_WORDS.at(d))
     }
 
+    /** The same scheduled families, with the word slot in the menu's language. */
+    fun starter(day: LocalDate, languageTag: String): List<String> =
+        starter(day).map { PuzzleRegistry.localizedId(it, languageTag) }.distinct()
+
     /** The three for [day], quick first, from the puzzles [ids] (the registry's, in its order); everything else is mid-weight. */
     fun of(day: LocalDate, ids: List<String> = PuzzleRegistry.all.map { it.id }): List<String> {
         val available = if (day < RUSSIAN_FROM) ids.filterNot { it in RUSSIAN_WORDS } else ids
@@ -60,4 +64,8 @@ object TodaysThree {
         fun List<String>.at(i: Long) = if (isEmpty()) null else this[i.mod(size)]
         return listOfNotNull(quick.at(d), mid.at(m), words.at(d))
     }
+
+    /** Keep the date's quick/mid-weight slots and historical schedule; select the matching word edition. */
+    fun of(day: LocalDate, languageTag: String): List<String> =
+        of(day).map { PuzzleRegistry.localizedId(it, languageTag) }.distinct()
 }

@@ -174,13 +174,13 @@ private fun TrainingList(title: String, subtitle: String, intro: String, onBack:
  * passed, ticked once it is finished (its final board, or every technique where it has none).
  */
 @Composable
-fun TrainingScreen(record: Set<String>, onOpen: (String) -> Unit, onBack: () -> Unit) {
+fun TrainingScreen(record: Set<String>, onOpen: (String) -> Unit, onBack: () -> Unit, courses: List<Course> = Training.COURSES) {
     TrainingList(
         text("ui.training_screen.training"), text("ui.training_screen.practise_what_the_hints_teach"),
         text("ui.training_screen.pick_a_puzzle_then_a_technique", "Training_RUN" to (Training.RUN)),
         onBack,
     ) {
-        Training.COURSES.forEach { c ->
+        courses.forEach { c ->
             val done = c.techniques.count { c.passed(record, it) }
             TrainingRow(
                 c.puzzle.displayName, text("ui.training_screen.of_passed", "done" to (done), "c_techniques_size" to (c.techniques.size)),

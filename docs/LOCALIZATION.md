@@ -2,7 +2,8 @@
 
 Completed implementation and acceptance evidence are in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
 The shared catalogs cover interface text, game names, rules, hints, walkthroughs, techniques, training,
-achievements, sharing and reminders. Display language and puzzle vocabulary are separate choices.
+achievements, sharing and reminders. Menus select word editions matching the interface language;
+each open or saved board keeps its original vocabulary and identity.
 
 ## Language selection
 
@@ -69,6 +70,19 @@ words, alphabet, answer, daily identity or record. Existing level pools and deal
 prefixes; new IDs are appended. Today's three adds the Russian editions from 2026-11-06; earlier dates
 keep their original three and earned achievements. Each catalog schedule has its own no-repeat cycle.
 
+`PuzzleRegistry.forLanguage` selects 26 language-neutral puzzles and seven matching word editions for
+Daily/Random, Archive and statistics. Continue, Today's Three, next-puzzle suggestions and training
+use that selection too. The full registry stays available for saved-board lookup and restored routes.
+Hidden editions keep their saves and custom-order positions and reappear when switching back.
+Coverage achievements accept either edition of each word family; puzzle-specific records remain separate.
+Home previews reuse each family's real motif, with fixed Russian positions for letter-based diagrams.
+
+New Levels also select matching word editions. English and Russian keep separate progress and saved
+boards, including language-neutral puzzles. Plans deal the frozen 33-family prefix before choosing an
+edition, avoiding duplicate families; their seed namespace is separate from previous levels.
+Existing levels are available through **Previous levels**, with their original boards, seeds and progress
+unchanged. An open level route keeps its captured language across interface changes and recreation.
+
 The frozen corpus, provenance, licenses, vocabulary screening and reproducible build commands are in
 [tools/words/ru/README.md](../tools/words/ru/README.md). Guesses use a broad dictionary, while answers
 and clued grid words use separate reviewed lists. Input normalizes Ё to Е; prose keeps proper spelling.
@@ -131,7 +145,7 @@ Use `tools/render/render.py --locale ru-RU` (its default is `en-US`). The glyph-
 locale after its output and distribution directories. Do not re-pin boards or rewrite save fixtures
 to make a translation pass.
 
-### Validation on 2026-11-06
+### Initial implementation validation on 2026-11-06
 
 Final isolated Chromium/WebKit checks pass under both English and Russian system locales: live
 picker changes, persisted overrides, return to system, service-worker cache contents, actual offline

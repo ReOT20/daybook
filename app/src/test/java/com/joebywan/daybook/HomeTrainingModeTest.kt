@@ -1,6 +1,7 @@
 package com.joebywan.daybook
 
 import com.joebywan.daybook.core.Training
+import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.TrainingRecord
 import com.joebywan.daybook.ui.Route
 import com.joebywan.daybook.ui.backFrom
@@ -51,5 +52,20 @@ class HomeTrainingModeTest {
         val practice = Route.Training("last-square", puzzle = "kings", listFromHint = true)
         assertEquals(practice, decodeRoute(encodeRoute(practice)))
         assertEquals(course, backFrom(practice))
+    }
+
+    @Test fun `training totals include only courses in the visible language catalog`() {
+        val cipher = Training.of("cipher")!!
+        val record = cipher.techniques.map { TrainingRecord.entry(cipher.id, it) }.toSet() +
+            TrainingRecord.entry(cipher.id, Training.EXAM)
+        fun courses(language: String) = Training.COURSES.filter { course ->
+            PuzzleRegistry.forLanguage(language).any { it.id == course.id }
+        }
+        assertEquals(21, tally(record, courses("en")).courses)
+        assertEquals(1, tally(record, courses("en")).graduated)
+        assertEquals(20, tally(record, courses("ru")).courses)
+        assertEquals(0, tally(record, courses("ru")).graduated)
+        assertEquals(0, tally(record, courses("ru")).passed)
+        assertEquals(1, tally(record, courses("en")).graduated)
     }
 }

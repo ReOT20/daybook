@@ -1,5 +1,11 @@
 # Daybook TODO
 
+## Language menu follow-up acceptance
+
+The tester's menu and icon fixes are implemented. Finish the final language-level browser checks,
+native verifier/updated home capture and signed APK delivery; evidence is tracked in
+`docs/LOCALIZATION_PROGRESS.md`.
+
 ## Arcade: the rest of the boards
 
 Six boards are fully converted (`docs/COLOUR.md`, top). The other 25 are on the lighter look, so the app is uneven until they are done. Also owed:

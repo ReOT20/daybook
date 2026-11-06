@@ -45,8 +45,9 @@ sounded. Do not turn it off.
 - `Message` keeps canonical English text and length inside reasoning: some teachers use text-length gates,
   so translating there can move daily boards. Resolve descriptors at UI boundaries. Retained celebrations
   and share cards carry `SavedText` recipes; old string-only snapshots remain readable.
-- Display language never chooses word content. Russian word editions have their own `-ru` IDs and an
-  explicit saved `contentLanguage`; old states default to English. Keep full IDs in seeds, saves and
+- Menus show word editions matching the interface language; switching language never rewrites an open
+  or saved board. Russian editions have their own `-ru` IDs and an explicit saved `contentLanguage`;
+  old states default to English. Keep full IDs in seeds, saves and
   progress. Family aliases are only for presentation/techniques. Frozen vocabulary, attribution, board
   tables and rebuilding rules: `tools/words/ru/README.md`; measured teachers: `docs/TEACHING.md`.
 - Android's picker shares `LocaleManager` with system settings on API 33+, and uses a separate preference
@@ -914,6 +915,11 @@ Spec and what was built: `docs/LEVELS_SPEC.md`. `core/Levels.kt` (the plan), `Se
 
 - **`Levels.POOL` is append-only and a plan is `(level, poolSize, deal)` alone.** An opened level stores the pool size it was opened with,
   so adding a puzzle never changes a level someone has started; `LevelsTest` pins the plans, and the web parity check diffs a year of them.
+- New menus use separate language levels: `planForLanguage` deals the frozen 33-family prefix before selecting word editions.
+  `levels_<tag>` / `level_solves_<tag>` and `SeedHash.levelForLanguage` isolate progress and neutral saves. Previous levels
+  retain their old keys, plans and seeds behind an explicit entry. Routes append their fixed language (missing means previous
+  levels); never reselect an open board's language from the current interface. Contracts: `LanguageLevelsTest`,
+  `LevelProgressTest`, `LevelsUiTest`.
 - **Levels 1-5 deal the gentlest first (deal 2).** A stored entry is `"n|poolSize|deal"` (no deal = deal 1, the old free
   shuffle of deck 0); deal 2 deals deck 0 in bands of `Levels.GENTLE`, a frozen copy of `GENTLEST` (edit `GENTLEST` freely,
   never `GENTLE`). The deal is **per player**: `openLevel` writes the one already stored, `Levels.LATEST` only for a first

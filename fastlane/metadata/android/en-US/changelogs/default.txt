@@ -1,3 +1,3 @@
 - Choose English, Russian or your system language in Settings, including Android's app-language setting.
 - Russian game names, rules, hints, walkthroughs, training and achievements, with offline fonts.
-- Seven separate Russian word games, with their own daily boards and saved progress. Existing English games stay available.
+- Seven Russian word games with proper preview icons. Menus and new levels follow the interface language; previous saves and levels are preserved.

@@ -1,5 +1,7 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.catalogLanguage
+
 /**
  * Every board's seed: a daily's from its epoch day ([DailySeed] passes a date's), a random game's from its nonce, a
  * level board's from its level. One copy, compiled by both builds, so a phone and a browser cannot disagree about
@@ -67,10 +69,15 @@ object SeedHash {
         return h
     }
 
+    /** A neutral puzzle has a different saved board in each language lane and in previous levels. */
+    fun levelForLanguage(level: Int, puzzleId: String, difficulty: Difficulty, languageTag: String): Long =
+        mix(level(level, puzzleId, difficulty) xor LANGUAGE_LEVEL xor catalogLanguage(languageTag).stableHash())
+
     /** The seed of a draw [Levels] makes: [index] is a deck or a level number, [salt] says which draw. */
     fun levelPick(index: Int, salt: Long): Long = mix(mix(index.toLong() xor LEVEL_PICK) xor salt)
 
     private const val LEVEL = 0x4C6576656C730001L // "Levels" and a version
+    private const val LANGUAGE_LEVEL = 0x4C6576656C734C31L // "LevelsL1"
     private const val LEVEL_PICK = 0x4C65766C50696B01L
 
     /**

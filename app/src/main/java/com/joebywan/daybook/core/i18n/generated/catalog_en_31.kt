@@ -2,6 +2,9 @@
 package com.joebywan.daybook.core.i18n
 
 internal fun catalog_en_31(): Map<String, CatalogEntry> = mapOf(
+    "ui.share_card.all_three_done_a_tidy_day" to CatalogEntry(mapOf("other" to "All three done. A tidy day's work.")),
+    "ui.share_card.daybook_level" to CatalogEntry(mapOf("other" to "Daybook · Level {level} · {puzzle_displayName} · {tier_label}{suffix}")),
+    "ui.share_card.daybook_level_9b9efb" to CatalogEntry(mapOf("other" to "Daybook · Level {level} · {got_size}/{plan_size}")),
     "ui.share_card.daybook_today_s_dailies" to CatalogEntry(mapOf("other" to "Daybook · {date} · today's dailies")),
     "ui.share_card.daybook_today_s_three" to CatalogEntry(mapOf("other" to "Daybook · {date} · Today's three · {tier_label}")),
     "ui.share_card.every_board_your_own_work" to CatalogEntry(mapOf("other" to "Every board your own work.")),
@@ -99,7 +102,4 @@ internal fun catalog_en_31(): Map<String, CatalogEntry> = mapOf(
     "ui.tutorial_runner.next" to CatalogEntry(mapOf("other" to "Next")),
     "ui.tutorial_runner.of" to CatalogEntry(mapOf("other" to "{index_1} of {frames_size}")),
     "ui.tutorial_runner.rules" to CatalogEntry(mapOf("other" to "Rules")),
-    "ui.tutorial_runner.skip" to CatalogEntry(mapOf("other" to "Skip")),
-    "ui.web_platform.a_browser_cannot_see_your_phone" to CatalogEntry(mapOf("other" to "A browser cannot see your phone's silent switch, so turn this off if you want it quiet.")),
-    "ui.web_platform.add_daybook_to_your_home_screen" to CatalogEntry(mapOf("other" to "Add Daybook to your Home Screen")),
 )

@@ -60,13 +60,14 @@ The default command checks:
 
 - Catalog keys and placeholders with `tools/i18n/build.py --check`; localization, language, catalog,
   board pins, save compatibility, serialization, share-card, guide, tier-note, and Russian word-game
-  data/rules JVM tests.
+  data/rules JVM tests. Menu selection, hidden-edition ordering, localized daily suggestions and
+  independent language-level plans/progress/routes are included.
 - The actual APK with `apksigner verify`, non-debuggable application/package and permission checks,
   `zipalign -c -P 16`, and every arm64 ELF `LOAD` segment's alignment and address/offset congruence.
 - Installation and unchanged rewriting of frozen saves using the existing release save checker.
 - Android system English/Russian, explicit in-app language overrides, process restarts, return to
   system language, native Android Settings/`LocaleManager` agreement, and language/save retention
-  through an in-place reinstall.
+  through an in-place reinstall, with native home captures in both languages.
 - Live language-picker changes in Chromium and WebKit, persisted overrides, return to the browser's
   language, bundled Cyrillic fonts, no requests off localhost, service-worker cache contents, and
   actual offline reloads and navigation through home, archive, statistics, and share screens.

@@ -5,6 +5,8 @@ import com.joebywan.daybook.core.i18n.text
 import com.joebywan.daybook.core.i18n.SavedText
 import com.joebywan.daybook.core.i18n.SavedArgument
 import com.joebywan.daybook.core.i18n.savedText
+import com.joebywan.daybook.core.i18n.SUPPORTED_LANGUAGES
+import com.joebywan.daybook.platform.platformLanguage
 import kotlinx.datetime.LocalDate
 
 /**
@@ -71,21 +73,30 @@ val ACHIEVEMENTS: List<Achievement> = listOf(
         h.any { it.difficulty == TOP && it.hints == 0 }
     },
     Achievement("oneOfEach", AchievementCategory.COVERAGE, { text("achievement.one_of_each.title") }, { text("achievement.one_of_each.description") }) { h, _, ids ->
-        h.mapTo(HashSet()) { it.puzzleId }.containsAll(ids)
+        h.mapTo(HashSet()) { puzzleFamilyId(it.puzzleId) }.containsAll(ids.map(::puzzleFamilyId))
     },
     Achievement("fullSet", AchievementCategory.COVERAGE, { text("achievement.full_set.title") }, { text("achievement.full_set.description") }) { h, _, _ ->
         h.filter { it.day != null }.groupBy { it.puzzleId to it.day }
             .any { (_, c) -> c.mapTo(HashSet()) { it.difficulty }.size == Difficulty.entries.size }
     },
-    // The registry's three (TodaysThree), or the day's starter three, not puzzleIds: a test's fake ids would leave a three of one.
+    // Accept old and localized schedules independently of the current menu, so switching language never un-earns one.
     Achievement("todaysThree", AchievementCategory.COVERAGE, { text("achievement.todays_three.title") }, { text("achievement.todays_three.description") }) { h, _, _ ->
         h.filter { it.day != null }.groupBy { it.day!! to it.difficulty }
-            .any { (k, c) -> c.mapTo(HashSet()) { it.puzzleId }.let { it.containsAll(TodaysThree.of(k.first)) || it.containsAll(TodaysThree.starter(k.first)) } }
+            .any { (k, c) ->
+                val solved = c.mapTo(HashSet()) { it.puzzleId }
+                solved.containsAll(TodaysThree.of(k.first)) || solved.containsAll(TodaysThree.starter(k.first)) ||
+                    SUPPORTED_LANGUAGES.any { language ->
+                        solved.containsAll(TodaysThree.of(k.first, language.tag)) ||
+                            solved.containsAll(TodaysThree.starter(k.first, language.tag))
+                    }
+            }
     },
     // Within a week, not one day: the puzzles are a menu, not a day's quota. The old one-day rule is a case of this one,
     // so nobody who earned it loses it.
     Achievement("allPuzzles", AchievementCategory.COVERAGE, { text("achievement.all_puzzles.title") }, { text("achievement.all_puzzles.description") }) { h, _, ids ->
-        ids.isNotEmpty() && h.mapNotNullTo(HashSet()) { it.day }.any { start -> weekFrom(h, start).containsAll(ids) }
+        ids.isNotEmpty() && h.mapNotNullTo(HashSet()) { it.day }.any { start ->
+            weekFrom(h, start).mapTo(HashSet(), ::puzzleFamilyId).containsAll(ids.map(::puzzleFamilyId))
+        }
     },
 ) +
     // Training (docs/TRAINING_SPEC.md): read off the training record, never the completions. Two per course, in
@@ -154,6 +165,12 @@ fun remaining(
     if (a.earned(history, today, puzzleIds)) return null
     fun go(left: Int, text: String, source: SavedText) = if (left in 1..2) ToGo(id, left, text, source) else null
     fun liveStreak(days: Set<LocalDate>) = streakOf(days, today).takeIf { it.alive }?.current ?: 0
+    fun missingFrom(solved: Set<String>): List<String> {
+        val families = solved.mapTo(HashSet(), ::puzzleFamilyId)
+        return puzzleIds.distinctBy(::puzzleFamilyId).filter { puzzleFamilyId(it) !in families }
+            .map { PuzzleRegistry.localizedId(it, platformLanguage()) }
+    }
+    fun visible(puzzleId: String) = PuzzleRegistry.localizedId(puzzleId, platformLanguage()) == puzzleId
     val dailies = history.filter { it.day == today }
     return when {
         id == "solves100" -> (100 - history.size).let { go(it, text("achievement.remaining.solves100", "count" to it), savedText("achievement.remaining.solves100", "count" to it)) }
@@ -165,17 +182,19 @@ fun remaining(
         id.startsWith("puzzleStreak") -> {
             val n = id.removePrefix("puzzleStreak").toInt()
             history.groupBy { it.puzzleId }
+                .filterKeys(::visible)
                 .map { (p, c) -> p to n - liveStreak(playedDays(c)) }
                 .filter { it.second in 1..2 }.minWithOrNull(compareBy({ it.second }, { it.first }))
                 ?.let { (p, left) -> go(left, text("achievement.remaining.puzzle_streak", "count" to left, "target" to n, "puzzle" to nameOf(p)),
                     savedText("achievement.remaining.puzzle_streak", "count" to left, "target" to n, "puzzle" to SavedArgument.Puzzles(listOf(p)))) }
         }
         id == "oneOfEach" -> {
-            val missing = puzzleIds - history.mapTo(HashSet()) { it.puzzleId }.toSet()
+            val missing = missingFrom(history.mapTo(HashSet()) { it.puzzleId })
             go(missing.size, untried(missing, nameOf),
                 savedText("achievement.remaining.untried", "count" to missing.size, "names" to SavedArgument.Puzzles(missing)))
         }
         id == "fullSet" -> dailies.groupBy { it.puzzleId }
+            .filterKeys(::visible)
             .map { (p, c) -> p to Difficulty.entries - c.mapTo(HashSet()) { it.difficulty }.toSet() }
             .filter { it.second.size in 1..2 }.minWithOrNull(compareBy({ it.second.size }, { it.first }))
             ?.let { (p, miss) ->
@@ -184,8 +203,8 @@ fun remaining(
             }
         // The week ending today: the only one a solve from now on can still finish.
         id == "allPuzzles" -> {
-            val missing = puzzleIds - weekFrom(history, LocalDate.fromEpochDays(today.toEpochDays() - 6))
-            if (missing.size == puzzleIds.size) null
+            val missing = missingFrom(weekFrom(history, LocalDate.fromEpochDays(today.toEpochDays() - 6)))
+            if (missing.size == puzzleIds.distinctBy(::puzzleFamilyId).size) null
             else go(missing.size, text("achievement.remaining.all_puzzles", "count" to missing.size, "names" to names(missing, nameOf)),
                 savedText("achievement.remaining.all_puzzles", "count" to missing.size, "names" to SavedArgument.Puzzles(missing)))
         }

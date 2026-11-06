@@ -1,17 +1,5 @@
 package com.joebywan.daybook.puzzles
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.BoardHighlight
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleType
@@ -27,8 +15,6 @@ object RussianLexicon : PuzzleType by Lexicon {
     override val rules get() = listOf(text("puzzle.words_ru.rule.1")) + Lexicon.rules.drop(1) + text("puzzle.words_ru.rule.alphabet")
     override val keyboardHelp get() = listOf(text("puzzle.words_ru.keyboard"))
     override fun generate(seed: Long, difficulty: Difficulty): LexiconState = LexiconRules.newBoard(seed, difficulty, "ru")
-
-    @Composable override fun Preview(modifier: Modifier) = RussianWordMotif(modifier, listOf("СЛО", "ВАР", "ЬРУ"))
 
     internal fun tutorialBoard() = LexiconState(5, 6, "масло", guesses = listOf("лампа"), contentLanguage = "ru")
     override val tutorial: List<TutorialFrame> by lazy {
@@ -55,7 +41,6 @@ object RussianWordWheel : PuzzleType by WordWheel {
     override val keyboardHelp get() = listOf(text("puzzle.wordwheel_ru.keyboard"))
     internal fun generateVerified(seed: Long, difficulty: Difficulty): WordWheelState? = WordWheelLogic.generateVerified(seed, difficulty, "ru")
     override fun generate(seed: Long, difficulty: Difficulty): WordWheelState = generateVerified(seed, difficulty) ?: WordWheelLogic.lastResort(difficulty, "ru")
-    @Composable override fun Preview(modifier: Modifier) = RussianWordMotif(modifier, listOf("САЛ", "ОНС", "ЛОВ"))
 
     internal fun tutorialBoard() = WordWheelState(
         wheel = "лноса", width = 5, height = 4,
@@ -90,7 +75,6 @@ object RussianDwindle : PuzzleType by Dwindle {
     override val keyboardHelp get() = listOf(text("puzzle.wordwheel_ru.keyboard"))
     internal fun generateVerified(seed: Long, difficulty: Difficulty): DwindleState? = DwindleLogic.generateVerified(seed, difficulty, "ru")
     override fun generate(seed: Long, difficulty: Difficulty): DwindleState = generateVerified(seed, difficulty) ?: DwindleLogic.lastResort(difficulty, "ru")
-    @Composable override fun Preview(modifier: Modifier) = RussianWordMotif(modifier, listOf("СИП", "ОЛЕ", "ВАН"))
 
     internal fun tutorialBoard() = DwindleState(
         width = 3, height = 3, letters = "сиполеван",
@@ -123,7 +107,6 @@ object RussianHexwords : PuzzleType by Hexwords {
     override val keyboardHelp get() = listOf(text("puzzle.hexwords_ru.keyboard"))
     internal fun generateVerified(seed: Long, difficulty: Difficulty): HexwordsState? = HexLogic.generateVerified(seed, difficulty, "ru")
     override fun generate(seed: Long, difficulty: Difficulty): HexwordsState = generateVerified(seed, difficulty) ?: HexLogic.lastResort(difficulty, "ru")
-    @Composable override fun Preview(modifier: Modifier) = RussianWordMotif(modifier, listOf("КОТ", "ЛИС", "АДУ"))
 
     internal fun tutorialBoard() = HexwordsState(rows = listOf(3, 4, 3), letters = "котлисадуб", target = 11, contentLanguage = "ru")
     override val tutorial: List<TutorialFrame> by lazy {
@@ -136,17 +119,5 @@ object RussianHexwords : PuzzleType by Hexwords {
                 retry = message("puzzle.hexwords_ru.tutorial.retry"), done = message("puzzle.hexwords_ru.tutorial.done")),
             TutorialFrame(first, message("puzzle.hexwords_ru.tutorial.play"), freePlay = true),
         )
-    }
-}
-
-/** A static Russian-letter motif; a home preview never runs a generator. */
-@Composable
-private fun RussianWordMotif(modifier: Modifier, rows: List<String>) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            for (row in rows) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (letter in row) Text(letter.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-        }
     }
 }

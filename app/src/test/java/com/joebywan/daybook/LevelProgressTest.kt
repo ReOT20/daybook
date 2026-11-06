@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -138,5 +139,51 @@ class LevelProgressTest {
         val size = Levels.POOL.size
         val d = Levels.LATEST
         assertEquals(setOf("1|$size|$d", "2|$size|$d", "3|$size|$d"), kv.sets.value["levels"])
+    }
+
+    @Test
+    fun `language lanes keep independent progress and leave previous levels untouched`() = runBlocking {
+        val kv = MemoryStore()
+        val previousPlan = Levels.plan(1)
+        val previousSolves = previousPlan.take(2).map { LevelSolve(1, it.puzzleId, 60, 0).encode() }.toSet()
+        kv.sets.value = mapOf("levels" to setOf("1|${Levels.POOL.size}|${Levels.LATEST}"), "level_solves" to previousSolves)
+        val previousData = kv.sets.value
+        val store = ProgressStore(kv)
+
+        val english = store.openLevel(1, "en-GB")
+        val russian = store.openLevel(1, "ru-RU")
+        assertEquals(Levels.planForLanguage(1, languageTag = "en"), english)
+        assertEquals(Levels.planForLanguage(1, languageTag = "ru"), russian)
+        assertEquals(setOf("1|33|${Levels.LATEST}"), kv.sets.value["levels_en"])
+        assertEquals(setOf("1|33|${Levels.LATEST}"), kv.sets.value["levels_ru"])
+        assertEquals(previousData["levels"], kv.sets.value["levels"])
+        assertEquals(previousData["level_solves"], kv.sets.value["level_solves"])
+        assertEquals(previousPlan, store.levelProgress.first().plan(1))
+        assertEquals(previousSolves, store.levelProgress.first().solves[1]!!.map { it.encode() }.toSet())
+
+        val solve = LevelSolve(1, english.first().puzzleId, 61, 1)
+        assertTrue(store.recordLevelSolve(solve, "en"))
+        assertFalse(store.recordLevelSolve(solve, "en-GB"))
+        assertEquals(setOf(solve.puzzleId), store.levelProgress("en").first().solved(1))
+        assertTrue(store.levelProgress("ru").first().solved(1).isEmpty())
+        russian.forEach { assertTrue(store.recordLevelSolve(LevelSolve(1, it.puzzleId, 62, 0), "ru")) }
+        assertEquals(setOf(1), store.levelProgress("ru-RU").first().done)
+        assertEquals(2, store.levelProgress("ru").first().current)
+        assertEquals(1, store.levelProgress("en").first().current)
+        assertEquals(1, store.levelProgress.first().current)
+        assertEquals(previousData["levels"], kv.sets.value["levels"])
+        assertEquals(previousData["level_solves"], kv.sets.value["level_solves"])
+        english.zip(russian).filter { (en, ru) -> en.puzzleId == ru.puzzleId }.forEach { (en, ru) ->
+            assertNotEquals(en.seed, ru.seed)
+        }
+    }
+
+    @Test
+    fun `a language lane rejects old mixed pools and malformed ranked prefixes`() {
+        val progress = LevelProgress.of(setOf("1|40|3", "2|25|3", "3|31|3"), emptySet(), "ru-RU")
+        assertEquals(mapOf(3 to 31), progress.opened)
+        assertEquals("ru", progress.languageTag)
+        assertEquals(33, progress.poolSize(4))
+        assertEquals(Levels.planForLanguage(3, 31, 3, "ru"), progress.plan(3))
     }
 }

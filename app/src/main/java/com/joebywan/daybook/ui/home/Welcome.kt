@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.PuzzleRegistry
+import com.joebywan.daybook.platform.platformLanguage
 import com.joebywan.daybook.ui.stats.MedalIcon
 
 /**
@@ -63,7 +64,7 @@ internal fun Welcome(onStart: () -> Unit) {
                     Text(text("ui.welcome.welcome_to_daybook"), style = MaterialTheme.typography.headlineSmall, color = scheme.onBackground)
                 }
                 Text(
-                    text("welcome.intro", "count" to (PuzzleRegistry.all.size)),
+                    text("welcome.intro", "count" to (PuzzleRegistry.forLanguage(platformLanguage()).size)),
                     style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onBackground,
                 )

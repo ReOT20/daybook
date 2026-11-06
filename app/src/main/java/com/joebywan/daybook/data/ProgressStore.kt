@@ -4,6 +4,8 @@ import com.joebywan.daybook.core.DailySeed
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.LevelBoard
 import com.joebywan.daybook.core.Levels
+import com.joebywan.daybook.core.LevelSpread
+import com.joebywan.daybook.core.i18n.catalogLanguage
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.Streak
 import com.joebywan.daybook.core.praisedTechniquesOf
@@ -114,11 +116,14 @@ data class LevelProgress(
      * repeat some puzzles in levels 1-5 and skip others, so a player who opened a level before deal 2 keeps deal 1.
      */
     val deal: Int = Levels.LATEST,
+    /** Null is the original, mixed-catalog levels; new menu languages have independent progress. */
+    val languageTag: String? = null,
 ) {
     /** The pool size [level] plans with: the stored one once opened, the whole pool before. */
-    fun poolSize(level: Int): Int = opened[level] ?: Levels.POOL.size
+    fun poolSize(level: Int): Int = opened[level] ?: if (languageTag == null) Levels.POOL.size else Levels.LANGUAGE_POOL_SIZE
 
-    fun plan(level: Int): List<LevelBoard> = Levels.plan(level, poolSize(level), deal)
+    fun plan(level: Int): List<LevelBoard> = if (languageTag == null) Levels.plan(level, poolSize(level), deal)
+        else Levels.planForLanguage(level, poolSize(level), deal, languageTag)
 
     fun solved(level: Int): Set<String> = solves[level].orEmpty().map { it.puzzleId }.toSet()
 
@@ -136,15 +141,18 @@ data class LevelProgress(
          * From the raw `levels` (`"n|poolSize"`, or `"n|poolSize|deal"` since deal 2) and `level_solves` sets;
          * malformed entries are skipped. The deal is the lowest stored, so any entry from before deal 2 means deal 1.
          */
-        fun of(levels: Set<String>, levelSolves: Set<String>): LevelProgress {
+        fun of(levels: Set<String>, levelSolves: Set<String>, languageTag: String? = null): LevelProgress {
+            val language = languageTag?.let(::catalogLanguage)
+            val pool = if (language == null) Levels.POOL.size else Levels.LANGUAGE_POOL_SIZE
             val opened = HashMap<Int, Int>()
             var deal: Int? = null
             for (raw in levels) {
                 val parts = raw.split("|")
                 if (parts.size !in 2..3) continue
                 val n = parts[0].toIntOrNull()?.takeIf { it in Levels.LEVELS } ?: continue
-                val size = parts[1].toIntOrNull()?.takeIf { it in Levels.STARTER..Levels.POOL.size } ?: continue
+                val size = parts[1].toIntOrNull()?.takeIf { it in Levels.STARTER..pool } ?: continue
                 val d = (if (parts.size == 2) 1 else parts[2].toIntOrNull())?.takeIf { it in 1..Levels.LATEST } ?: continue
+                if (language != null && d == 3 && size < LevelSpread.RANKED) continue
                 opened[n] = minOf(size, opened[n] ?: size)
                 deal = minOf(d, deal ?: d)
             }
@@ -152,11 +160,13 @@ data class LevelProgress(
             val solves = levelSolves.mapNotNull(LevelSolve::decode).groupBy { it.level }
             fun isDone(n: Int): Boolean {
                 val solved = solves[n].orEmpty().map { it.puzzleId }.toSet()
-                return Levels.plan(n, opened[n] ?: Levels.POOL.size, playerDeal).all { levelBoardDone(it.puzzleId, solved) }
+                val plan = if (language == null) Levels.plan(n, opened[n] ?: pool, playerDeal)
+                    else Levels.planForLanguage(n, opened[n] ?: pool, playerDeal, language)
+                return plan.all { levelBoardDone(it.puzzleId, solved) }
             }
             val done = (opened.keys + solves.keys).filter(::isDone).toSet()
             val current = opened.keys.filter { it !in done }.minOrNull() ?: ((done.maxOrNull() ?: 0) + 1).coerceAtMost(Levels.LEVELS.last)
-            return LevelProgress(current, opened, solves, done, playerDeal)
+            return LevelProgress(current, opened, solves, done, playerDeal, language)
         }
     }
 }
@@ -355,23 +365,33 @@ class ProgressStore(private val store: KeyValueStore) {
 
     /** Where the player stands in the levels; see [LevelProgress]. */
     val levelProgress: Flow<LevelProgress> =
-        combine(store.stringSet(KEY_LEVELS), store.stringSet(KEY_LEVEL_SOLVES), LevelProgress::of)
+        levelProgress(null)
+
+    fun levelProgress(languageTag: String?): Flow<LevelProgress> {
+        val language = languageTag?.let(::catalogLanguage)
+        val suffix = language?.let { "_$it" }.orEmpty()
+        return combine(store.stringSet(KEY_LEVELS + suffix), store.stringSet(KEY_LEVEL_SOLVES + suffix)) { levels, solves ->
+            LevelProgress.of(levels, solves, language)
+        }
+    }
 
     /**
      * Records that [level] was opened, with today's pool size and the player's deal unless it was opened before,
      * and returns the plan it must use from now on, so adding a puzzle or a deal never changes a level already
      * started. A first level opened gets `Levels.LATEST`; every later one the deal already stored.
      */
-    suspend fun openLevel(level: Int): List<LevelBoard> {
+    suspend fun openLevel(level: Int, languageTag: String? = null): List<LevelBoard> {
+        val language = languageTag?.let(::catalogLanguage)
+        val suffix = language?.let { "_$it" }.orEmpty()
         var plan = emptyList<LevelBoard>()
-        store.updateStringSet(KEY_LEVELS) { existing ->
-            val p = LevelProgress.of(existing, emptySet())
+        store.updateStringSet(KEY_LEVELS + suffix) { existing ->
+            val p = LevelProgress.of(existing, emptySet(), language)
             val known = level in p.opened
             plan = p.plan(level)
             when {
                 known -> existing
-                p.deal == 1 -> existing + "$level|${Levels.POOL.size}"
-                else -> existing + "$level|${Levels.POOL.size}|${p.deal}"
+                p.deal == 1 -> existing + "$level|${p.poolSize(level)}"
+                else -> existing + "$level|${p.poolSize(level)}|${p.deal}"
             }
         }
         return plan
@@ -382,9 +402,10 @@ class ProgressStore(private val store: KeyValueStore) {
      * solved before, so a replay of a finished level records nothing new for it. The caller records the
      * solve as a practice [Completion] (`day = null`) as well, for totals and best times.
      */
-    suspend fun recordLevelSolve(solve: LevelSolve): Boolean {
+    suspend fun recordLevelSolve(solve: LevelSolve, languageTag: String? = null): Boolean {
+        val suffix = languageTag?.let { "_${catalogLanguage(it)}" }.orEmpty()
         var added = false
-        store.updateStringSet(KEY_LEVEL_SOLVES) { existing ->
+        store.updateStringSet(KEY_LEVEL_SOLVES + suffix) { existing ->
             val seen = existing.any { raw ->
                 LevelSolve.decode(raw)?.let { it.level == solve.level && it.puzzleId == solve.puzzleId } == true
             }
@@ -548,7 +569,7 @@ object PuzzleOrder {
 
     /** [ids] in [GENTLEST]'s order; an id it does not name (a puzzle added since) goes last, in [ids]' order. */
     fun gentlest(ids: List<String>): List<String> =
-        ids.sortedBy { id -> GENTLEST.indexOf(id).takeIf { it >= 0 } ?: GENTLEST.size }
+        ids.sortedBy { id -> GENTLEST.indexOf(com.joebywan.daybook.core.puzzleFamilyId(id)).takeIf { it >= 0 } ?: GENTLEST.size }
 
     /**
      * [ids] with the most solved first: dailies of the last [WINDOW_DAYS] days, plus every practice game (they carry no
@@ -572,6 +593,14 @@ object PuzzleOrder {
      */
     fun arranged(stored: List<String>, ids: List<String>): List<String> =
         stored.filter { it in ids }.distinct() + ids.filterNot { it in stored }
+
+    /** Reorder the visible slots without discarding the hidden editions' saved positions. */
+    fun mergeVisible(fullOrder: List<String>, visibleOrder: List<String>): List<String> {
+        val visible = visibleOrder.toSet()
+        require(visible.size == visibleOrder.size && fullOrder.containsAll(visible))
+        val next = visibleOrder.iterator()
+        return fullOrder.map { if (it in visible) next.next() else it }
+    }
 
     /** [order] with the puzzle at [from] taken out and put back at [to]: one drop on the home grid. */
     fun moved(order: List<String>, from: Int, to: Int): List<String> =

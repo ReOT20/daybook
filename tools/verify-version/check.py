@@ -20,6 +20,8 @@ import android
 REPO = Path(__file__).resolve().parents[2]
 SIGNING_ENV = ("DAYBOOK_KEYSTORE", "DAYBOOK_KEYSTORE_PASSWORD", "DAYBOOK_KEY_ALIAS", "DAYBOOK_KEY_PASSWORD")
 TESTS = ("*Catalog*Test", "*Language*Test", "*LocalizationTest", "*BoardPinTest", "*SaveCompatibilityTest",
+         "*HomeOrderTest", "*HomeTrainingModeTest", "*TodaysThreeTest", "*NextStepsTest",
+         "*LevelsTest", "*LevelProgressTest", "*LevelsUiTest",
          "*StateSerializationTest", "*ShareCardTest", "*GuideTest", "*TierNotesTest", "*AchievementsTest", "*FinishPraiseTest", "*BoardTextSizeTest",
          "*RussianWordsTest", "*RussianWordGamesTest", "*RussianCrosswordRulesTest", "*RussianCrosswordTutorialTest")
 

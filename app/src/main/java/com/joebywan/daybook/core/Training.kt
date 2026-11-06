@@ -223,8 +223,8 @@ object Training {
 
     fun of(puzzleId: String?): Course? = COURSES.firstOrNull { it.id == puzzleId }
 
-    fun tally(record: Set<String>) =
-        TrainingTally(COURSES.count { it.graduated(record) }, COURSES.size, COURSES.sumOf { it.passedCount(record) })
+    fun tally(record: Set<String>, courses: List<Course> = COURSES) =
+        TrainingTally(courses.count { it.graduated(record) }, courses.size, courses.sumOf { it.passedCount(record) })
 }
 
 /** The tier for [technique] at its index in [course]: Standard below [hard], Hard below [expert], then Expert. */

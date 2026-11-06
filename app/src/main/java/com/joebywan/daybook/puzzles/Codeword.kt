@@ -183,16 +183,18 @@ object Codeword : PuzzleType {
 
     /** The walkthrough's grid with three of its letters found: a legal moment of a real board. */
     @Composable
-    override fun Preview(modifier: Modifier) {
+    override fun Preview(modifier: Modifier) = Preview(modifier, tutorialBoard(placed = PREVIEW_PLACED), PREVIEW_PICK)
+
+    @Composable
+    internal fun Preview(modifier: Modifier, s: CodewordState, pick: Int) {
         val scheme = MaterialTheme.colorScheme
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val s = tutorialBoard(placed = PREVIEW_PLACED)
             val square = minOf(maxWidth, maxHeight) / s.size
             val dark = BoardHues.isDark(scheme)
             val (hueA, hueB) = BoardHues.HUE_PAIRS[1]
             Grid(
                 s, square,
-                tint = { i -> if (s.numbers[i] == PREVIEW_PICK) BoardHues.mark(hueA).copy(alpha = if (dark) 0.55f else 0.4f).compositeOver(scheme.surfaceVariant) else scheme.surfaceVariant },
+                tint = { i -> if (s.numbers[i] == pick) BoardHues.mark(hueA).copy(alpha = if (dark) 0.55f else 0.4f).compositeOver(scheme.surfaceVariant) else scheme.surfaceVariant },
                 letterColour = { n -> if (n in s.given) scheme.onSurface else BoardHues.ink(hueB, dark) },
             )
         }

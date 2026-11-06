@@ -164,13 +164,17 @@ fun LevelsScreen(
     onSelect: (Int) -> Unit,
     onPlay: (level: Int, puzzleId: String?) -> Unit,
     onBack: () -> Unit,
+    onPreviousLevels: (() -> Unit)? = null,
+    onLanguageLevels: (() -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     val current = progress.current
     val level = selected?.takeIf(progress::isUnlocked)
     TitledScreen(
-        if (level == null) text("ui.launch_options.levels") else text("ui.levels_screen.level", "level" to (level)),
-        if (level == null) text("ui.levels_screen.finish_all_five_boards_to_open") else levelLine(progress, level),
+        if (level != null) text("ui.levels_screen.level", "level" to (level))
+            else text(if (progress.languageTag == null) "ui.levels_screen.previous_levels" else "ui.launch_options.levels"),
+        if (level != null) levelLine(progress, level)
+            else text(if (progress.languageTag == null) "ui.levels_screen.previous_levels_note" else "ui.levels_screen.finish_all_five_boards_to_open"),
         onBack,
     ) {
         if (level != null) {
@@ -204,6 +208,23 @@ fun LevelsScreen(
                         formatClock(progress.solves[n].orEmpty().sumOf { it.seconds }),
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.onSurfaceVariant,
+                    )
+                }
+            }
+            onPreviousLevels?.let { open ->
+                item {
+                    Column(Modifier.fillMaxWidth().card(scheme.surface).clickable(onClick = open).padding(14.dp)) {
+                        Text(text("ui.levels_screen.previous_levels"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+                        Spacer(Modifier.height(6.dp))
+                        Text(text("ui.levels_screen.previous_levels_note"), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                    }
+                }
+            }
+            onLanguageLevels?.let { open ->
+                item {
+                    Text(
+                        text("ui.levels_screen.current_language_levels"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface,
+                        modifier = Modifier.fillMaxWidth().card(scheme.surface).clickable(onClick = open).padding(14.dp),
                     )
                 }
             }

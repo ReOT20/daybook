@@ -2,6 +2,9 @@
 package com.joebywan.daybook.core.i18n
 
 internal fun catalog_ru_31(): Map<String, CatalogEntry> = mapOf(
+    "ui.share_card.all_three_done_a_tidy_day" to CatalogEntry(mapOf("other" to "Все три решены. Отличная работа за день.")),
+    "ui.share_card.daybook_level" to CatalogEntry(mapOf("other" to "Daybook · Уровень {level} · {puzzle_displayName} · {tier_label}{suffix}")),
+    "ui.share_card.daybook_level_9b9efb" to CatalogEntry(mapOf("other" to "Daybook · Уровень {level} · {got_size}/{plan_size}")),
     "ui.share_card.daybook_today_s_dailies" to CatalogEntry(mapOf("other" to "Daybook · {date} · ежедневные задачи")),
     "ui.share_card.daybook_today_s_three" to CatalogEntry(mapOf("other" to "Daybook · {date} · Тройка дня · {tier_label}")),
     "ui.share_card.every_board_your_own_work" to CatalogEntry(mapOf("other" to "Каждое поле решено своими силами.")),
@@ -99,7 +102,4 @@ internal fun catalog_ru_31(): Map<String, CatalogEntry> = mapOf(
     "ui.tutorial_runner.next" to CatalogEntry(mapOf("other" to "Далее")),
     "ui.tutorial_runner.of" to CatalogEntry(mapOf("other" to "{index_1} из {frames_size}")),
     "ui.tutorial_runner.rules" to CatalogEntry(mapOf("other" to "Правила")),
-    "ui.tutorial_runner.skip" to CatalogEntry(mapOf("other" to "Пропустить")),
-    "ui.web_platform.a_browser_cannot_see_your_phone" to CatalogEntry(mapOf("other" to "Браузер не определяет беззвучный режим телефона. Отключите звук здесь, если нужна тишина.")),
-    "ui.web_platform.add_daybook_to_your_home_screen" to CatalogEntry(mapOf("other" to "Добавить Daybook на экран «Домой»")),
 )

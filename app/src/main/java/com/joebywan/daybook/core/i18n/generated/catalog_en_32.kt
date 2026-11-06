@@ -2,6 +2,9 @@
 package com.joebywan.daybook.core.i18n
 
 internal fun catalog_en_32(): Map<String, CatalogEntry> = mapOf(
+    "ui.tutorial_runner.skip" to CatalogEntry(mapOf("other" to "Skip")),
+    "ui.web_platform.a_browser_cannot_see_your_phone" to CatalogEntry(mapOf("other" to "A browser cannot see your phone's silent switch, so turn this off if you want it quiet.")),
+    "ui.web_platform.add_daybook_to_your_home_screen" to CatalogEntry(mapOf("other" to "Add Daybook to your Home Screen")),
     "ui.web_platform.backup" to CatalogEntry(mapOf("other" to "Backup")),
     "ui.web_platform.cancel" to CatalogEntry(mapOf("other" to "Cancel")),
     "ui.web_platform.copied" to CatalogEntry(mapOf("other" to "Copied")),
@@ -99,7 +102,4 @@ internal fun catalog_en_32(): Map<String, CatalogEntry> = mapOf(
     "whoswho.noun.house" to CatalogEntry(mapOf("other" to "house")),
     "whoswho.noun.job" to CatalogEntry(mapOf("other" to "job")),
     "whoswho.noun.music" to CatalogEntry(mapOf("other" to "instrument")),
-    "whoswho.noun.pet" to CatalogEntry(mapOf("other" to "pet")),
-    "whoswho.player.0" to CatalogEntry(mapOf("other" to "the pianist")),
-    "whoswho.player.1" to CatalogEntry(mapOf("other" to "the violinist")),
 )

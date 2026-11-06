@@ -218,7 +218,8 @@ fun HomeScreen(
             .toSet()
     }
     val streak = remember(completions, today) { Stats.streak(completions, today) }
-    val tally = remember(trained) { Training.tally(trained) }
+    val courses = remember(puzzles) { Training.COURSES.filter { c -> puzzles.any { it.id == c.id } } }
+    val tally = remember(trained, courses) { Training.tally(trained, courses) }
 
     // What the header and the pinned rows take, so the grid knows the height left for its tiles (homeColumns).
     var headerHeight by remember { mutableStateOf(0) }
