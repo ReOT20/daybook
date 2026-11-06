@@ -131,20 +131,44 @@ Use `tools/render/render.py --locale ru-RU` (its default is `en-US`). The glyph-
 locale after its output and distribution directories. Do not re-pin boards or rewrite save fixtures
 to make a translation pass.
 
-### Validation on 2026-11-05
+### Validation on 2026-11-06
 
-Headless Chromium 156 and WebKit 27.2 covered 72 distinct locale/layout cases across Russian and
-English: welcome/Start, daily/levels/training home modes, settings through the lower controls,
-archives, populated statistics, hints, walkthrough, training celebration, finish/share and tablet play.
-Sizes included 375x537, 360x640, 390x844, 844x390, 768x1024 and 1024x768, both themes and 2x text.
-The shortest 375x537 viewport was also checked at 2x for archive, welcome and share. Targeted reruns
-verified the fixes found during review, including deep per-puzzle statistics and English comparisons.
+Final isolated Chromium/WebKit checks pass under both English and Russian system locales: live
+picker changes, persisted overrides, return to system, service-worker cache contents, actual offline
+reloads and home/archive/statistics/share navigation. All seven Russian boards keep their content and
+saved progress when the interface changes; Cyrillic key-down input, physical-layout codes and Ё
+normalization are exercised alongside unchanged English input. All eleven bundled font files are
+cached before disconnecting, with no incomplete font bodies, font failures, page errors or external
+requests. No personal browser profile or account was used.
 
-Every case blocked external page requests, loaded all four Cyrillic weights locally for Russian
-(none for English), and redrew after going offline. No page errors, font failures or external requests
-were observed. The existing glyph harness also passed all 32 language/browser/screen combinations.
-Only isolated browser contexts were used, with service workers blocked and no personal profile.
+The Russian 40-game guidance checks cover all 160 cases per engine at 375×537, dark theme and 2× text:
+WebKit passed its original matrix; Chromium combines 159 original passes with a reviewed focused
+Who's Who rules rerun after that case timed out. The original timeout remains in the evidence.
+Another 32 focused screenshots were visually reviewed without findings, covering short-screen hint
+actions and tall-screen Mini/Lexicon keyboards in both languages/engines at 1×/2×. Tutorial prose
+scrolling, landscape, temporary zero-room resizing and portrait recovery also pass. Earlier shell
+coverage includes both themes, tablet layouts, training, achievements and populated sharing/statistics.
+The evidence and full acceptance ledger are in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
 
-Android compilation, 33 focused tests and final unsigned release assembly passed alongside the Wasm
-distribution. Native Android visual checks, real-device Safari and the full unit suite were not run.
-Headless Linux WebKit is an approximation of Safari, as described in `AGENTS.md`.
+Annual JVM/Chromium/WebKit parity passes 45,625 boards per engine: all 40 puzzles for 365 days at
+three tiers, plus 365 five-board levels. Fresh CI `web-parity` confirms the same comparison on PR merge
+`63ddffed`, containing source `55c79d98`. Original English pins and frozen saves remain unchanged.
+Russian hint walks finish all 7,665 sampled boards without mistakes, stalls or losses; their measured
+fallback rates remain separate in [TEACHING.md](TEACHING.md). Catalog/font checks pass 10 tests,
+including ten-language generation, and verifier self-checks pass 8. Only English and Russian ship.
+
+Combined JVM evidence accounts for 227 classes / 1,486 methods: 1,471 passes and 15 opt-in assumption
+skips, with no unresolved failures. It combines checkpoints and changed-class reruns; it is not a fresh
+full-suite run. The minified local-test APK for source `55c79d98` builds with the persistent local test
+certificate and passes signature, artifact and 16 KiB alignment checks. It is not production signed.
+
+The KVM workflow passed native APK installation/artifact checks and API 34 language/restart/reinstall
+verification on PR merge `63ddffed`: all 144 frozen saves loaded unchanged, with zero lost/changed;
+all 14 mixed English/Russian identities survived eight lifecycle cases. Its targeted JVM stage reported
+137 tests with four skips and no failures/errors. All six Settings screenshots were reviewed without
+clipping or malformed Cyrillic. This native pass is separate from the overall workflow, which failed
+later in the old browser font-timing check.
+
+Fresh full CI `build` and the corrected end-to-end verifier remain pending. The API 34 pass does not
+prove the older Android preference/migration path. Physical devices and real Safari were not used;
+Linux WebKit is the documented approximation in `AGENTS.md`.
