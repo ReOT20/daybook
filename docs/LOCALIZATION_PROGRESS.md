@@ -1,10 +1,11 @@
 # Localization implementation and acceptance
 
-The active work extends the initial shell translation on `feat/russian-localization`, based on
-`chore/shared-agent-guidance`. Neither the initial pass nor an individual green check completes this work.
-The existing guidance in `AGENTS.md`, puzzle standards, saved-state contracts and original English pins apply.
+Completed on 2026-11-06 on `feat/russian-localization`, based on `chore/shared-agent-guidance`.
+The existing `AGENTS.md` guidance, puzzle standards, saved-state contracts and original English pins
+are preserved. [PR2](https://github.com/ReOT20/daybook/pull/2) remains a draft stacked on the guidance
+branch. The verified source and harness are `2327ad6b`; the closing follow-up changes documentation only.
 
-Required before completion:
+Acceptance:
 
 - [x] Android system per-app language and in-app language picker, plus web picker, persistence, restarts,
   return to system language, and switching without losing navigation or progress.
@@ -20,13 +21,12 @@ Required before completion:
   frozen saves, language lifecycle, isolated Chromium/WebKit, and actual service-worker offline reloads.
 - [x] Render and review changed screens, RU variants, hints and long text at narrow/short, tall, landscape,
   tablet and large-text settings, with bundled glyphs and no external requests.
-- [ ] Full relevant JVM contracts and web comparison green; original English pins and old saves unchanged.
-- [ ] Commit and push coherent changes on the existing fork branch; update draft PR2 and documentation;
+- [x] Full relevant JVM contracts and web comparison green; original English pins and old saves unchanged.
+- [x] Commit and push coherent changes on the existing fork branch; update draft PR2 and documentation;
   provide an installable APK using the same persistent local test certificate as the installed build.
 
-Source implementation, native API 34 verification, the full CI build and the corrected end-to-end
-workflow pass on `f90c9a5f`. The final annual comparison needs a rerun after two still-progressing
-WebKit pages reached the tester's 15-minute deadline. The implementation includes
+Native API 34 verification, the full CI build, annual parity and the complete end-to-end workflow pass
+on `2327ad6b`. The implementation includes
 shared catalogs; language picker/native LocaleManager; calendar metadata; all game
 names/rules/walkthroughs/teachers; training and achievement prose;
 retained-language celebrations/share cards; attributed Russian vocabulary; seven registered Russian editions;
@@ -45,15 +45,15 @@ Constraints and evidence:
   account session, or physical device was used. Local test signing key is outside the checkout.
 - Verification uses Java 17, Android SDK 37/build-tools 36 and build-time Babel 2.17; no app runtime
   dependency was added. Reproduction instructions are in `VERIFY_VERSION.md`.
-- The complete [KVM workflow](https://github.com/ReOT20/daybook/actions/runs/42153038123)
-  passed all nine stages on PR merge `92884f3f`, containing source `f90c9a5f`.
+- The complete [KVM workflow](https://github.com/ReOT20/daybook/actions/runs/42159833649)
+  passed all nine stages on clean PR merge `35597233`, containing source `2327ad6b`.
   Its minified APK loaded all 144 frozen saves unchanged,
   with zero lost/changed. All 14 mixed English/Russian saved identities survived eight API 34 language,
   restart and in-place reinstall cases. All six native Settings screenshots were reviewed without
   clipping or malformed Cyrillic. Its targeted JVM stage reported 137 tests with four skips and zero
   failures/errors. All four Chromium/WebKit × English/Russian cases passed actual offline checks,
   with eleven cached fonts per case and no page errors or external requests. Evidence:
-  `/tmp/daybook-ci-f90-native/report.json`, `android-save-check.log` and `web/results.json`.
+  `/tmp/daybook-ci2327-native/report.json`, `android-save-check.log` and `web/results.json`.
   The pinned-date native home capture is reviewed and replaces `docs/screenshots/home.png` at 540×1200.
 - Python catalog/source/font checks pass (10 tests), including ten-language generation and service-worker
   precaching of all eleven bundled fonts; verifier self-checks pass (8 tests). The shipped English and
@@ -69,20 +69,17 @@ Constraints and evidence:
 - Annual JVM/browser parity passes in Chromium and WebKit: 45,625 identical boards in each engine,
   covering all 40 puzzles at three tiers for 365 days and 365 five-board levels. Evidence:
   `/tmp/daybook-final-year-parity/jvm.txt`, `browsers.log` and `browsers-webkit.log`.
-  Fresh CI confirms the same comparison for PR merge `63ddffed`:
-  [web-parity job 127665389869](https://github.com/ReOT20/daybook/actions/runs/42148317779/job/127665389869).
-  The later `f90c9a5f` comparison passed Chromium but reached the absolute 900-second page deadline
-  in WebKit on `wordwheel-ru` (961/1,095 boards) and `dwindle-ru` (805/1,095). Both were still
-  producing boards; no mismatch was reported. The full comparison must pass with the corrected
-  bounded timeout before closing this ledger.
+  Fresh CI confirms the same full comparison on clean PR merge `35597233`, containing `2327ad6b`:
+  [web-parity job 127702631901](https://github.com/ReOT20/daybook/actions/runs/42159833645/job/127702631901).
+  Its complete log is `/tmp/daybook-ci2327-native/parity-full-job.log`: all 41 pages pass in each engine.
 - Combined JVM evidence accounts for 227 classes / 1,486 methods: 1,471 passes, 15 opt-in assumption
   skips and no unresolved failures. It covers retained-language/share behavior, English share goldens,
   Russian proofs/generators/walkthroughs, historical achievements, levels, pins, serialization and saves.
   This combines immutable checkpoints and changed-class reruns, not one fresh full-suite invocation.
   Evidence: `/tmp/daybook-localization-review/jvm-broad-119/combined-coverage/coverage.json`.
-  Separately, the fresh [CI build on `f90c9a5f`](https://github.com/ReOT20/daybook/actions/runs/42153038121/job/127680570216)
+  Separately, the fresh [CI build on `2327ad6b`](https://github.com/ReOT20/daybook/actions/runs/42159833645/job/127702631641)
   executed the complete JVM suite and passed the player-guide and release builds. Its test task was
-  not restored from cache; log: `/tmp/daybook-ci-f90-native/build-f90-full-job.log`.
+  not restored from cache; log: `/tmp/daybook-ci2327-native/build-full-job.log`.
 - Final browser acceptance passes all four Chromium/WebKit × English/Russian cases, with actual offline
   reloads/navigation, picker persistence, seven Russian boards, Cyrillic keyboard input, and saved-board
   retention across UI-language changes. All eleven font files are cached before disconnecting; every
@@ -101,16 +98,13 @@ Constraints and evidence:
 - The R8-minified local-test APK builds and passes signature, 16 KiB ZIP/arm64 alignment and artifact
   checks. Version `1.39.2` / code `2`, source `55c79d98`; SHA-256
   `ac391f805d1dc2370dee2dd6b0469130efe7c48760f05c41fca871ca6acd0fc5`.
+  App code, resources, web, catalogs, Gradle inputs and version are unchanged through verified `2327ad6b`.
   It uses the same persistent local test certificate as the earlier test build, not the production key.
   Evidence: `/tmp/daybook-final-artifact-verification.json`; APK:
   `app/build/outputs/apk/local-test/daybook-russian-1.39.2-local-test.apk`.
 
 The parity helper now allows 1,800 seconds per page and the CI job 90 minutes, retaining all boards,
-comparisons and failure checks. Still required: pass the complete annual comparison with these bounds.
-The API 34 native pass does not establish runtime behavior on
-older Android. No physical-device or real Safari claim is made; Linux WebKit is the documented browser
-approximation. Keep the remaining gates open until their evidence passes. External player-guide
-prose remains English, as stated in `LOCALIZATION.md`.
-
-This file is a working acceptance ledger. Replace this progress section with final evidence when every
-required item is complete; do not weaken the requirements to match partial implementation.
+comparisons and failure checks. The complete annual comparison passes with these bounds.
+The API 34 native pass does not establish runtime behavior on older Android or a physical Android 17
+device. No physical-device or real Safari claim is made; Linux WebKit is the documented browser
+approximation. External player-guide prose remains English, as stated in `LOCALIZATION.md`.

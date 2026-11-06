@@ -1,11 +1,5 @@
 # Daybook TODO
 
-## Localization acceptance
-
-The app, full JVM/release build and device-free verifier pass. The last annual comparison hit
-its page deadline while two Russian word-game pages were still progressing in WebKit. Pass the
-full rerun with the bounded-timeout correction tracked in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
-
 ## Arcade: the rest of the boards
 
 Six boards are fully converted (`docs/COLOUR.md`, top). The other 25 are on the lighter look, so the app is uneven until they are done. Also owed:
@@ -126,8 +120,8 @@ Nothing below can be verified from a desktop browser. The tester has the device.
   WebKit dropped Compose's first frame until a touch. If real Safari does not need it, remove it.
 - [ ] **Repaint after screen changes.** Headless WebKit did not redraw after a screen change until something
   prompted a frame; the test harness nudges it. Confirm real Safari repaints on its own.
-- [ ] **Offline and Add to Home Screen.** The service worker was proven offline on the shell branch in desktop
-  browsers, but not re-run after the integration merge, and never on iOS. Check: install to home
+- [ ] **Offline and Add to Home Screen.** Fresh Chromium/WebKit checks prove service-worker offline reloads
+  and navigation in English and Russian (`docs/LOCALIZATION_PROGRESS.md`), but iOS remains unchecked. Check: install to home
   screen, go offline, open, play, solve; and that a new deploy replaces the old copy.
 - [ ] **Speed on a real phone.** All timings are desktop WebKit/Chromium. Check LITS Expert, Snap and Mosaic
   Expert board creation on the phone.

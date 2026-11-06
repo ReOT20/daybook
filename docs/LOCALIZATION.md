@@ -1,6 +1,6 @@
 # Languages and Russian word puzzles
 
-Implementation and final acceptance are tracked in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
+Completed implementation and acceptance evidence are in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
 The shared catalogs cover interface text, game names, rules, hints, walkthroughs, techniques, training,
 achievements, sharing and reminders. Display language and puzzle vocabulary are separate choices.
 
@@ -151,29 +151,30 @@ coverage includes both themes, tablet layouts, training, achievements and popula
 The evidence and full acceptance ledger are in [LOCALIZATION_PROGRESS.md](LOCALIZATION_PROGRESS.md).
 
 Annual JVM/Chromium/WebKit parity passes 45,625 boards per engine: all 40 puzzles for 365 days at
-three tiers, plus 365 five-board levels. Fresh CI `web-parity` confirms the same comparison on PR merge
-`63ddffed`, containing source `55c79d98`. Original English pins and frozen saves remain unchanged.
+three tiers, plus 365 five-board levels. Fresh [CI web-parity](https://github.com/ReOT20/daybook/actions/runs/42159833645/job/127702631901)
+confirms the full comparison on clean PR merge `35597233`, containing source `2327ad6b`.
+Original English pins and frozen saves remain unchanged.
 Russian hint walks finish all 7,665 sampled boards without mistakes, stalls or losses; their measured
 fallback rates remain separate in [TEACHING.md](TEACHING.md). Catalog/font checks pass 10 tests,
 including ten-language generation, and verifier self-checks pass 8. Only English and Russian ship.
 
-The fresh CI build on `f90c9a5f` executed the full JVM suite and passed the guide and release builds.
+The fresh [CI build on `2327ad6b`](https://github.com/ReOT20/daybook/actions/runs/42159833645/job/127702631641)
+executed the full JVM suite and passed the guide and release builds.
 Earlier combined JVM evidence accounts for 227 classes / 1,486 methods, with no unresolved failures;
 that separate coverage map combines checkpoints and changed-class reruns. The minified local-test
-APK for source `55c79d98` builds with the persistent local test
-certificate and passes signature, artifact and 16 KiB alignment checks. It is not production signed.
+APK `1.39.2` for source `55c79d98` builds with the persistent local test certificate and passes
+signature, artifact and 16 KiB alignment checks. App code/resources and build inputs are unchanged
+through verified `2327ad6b`; its closing follow-up changes documentation only. It is not production signed.
 
-The complete [KVM workflow](https://github.com/ReOT20/daybook/actions/runs/42153038123) passed all
-nine stages on PR merge `92884f3f`, containing `f90c9a5f`: all 144 frozen saves loaded unchanged;
+The complete [KVM workflow](https://github.com/ReOT20/daybook/actions/runs/42159833649) passed all
+nine stages on clean PR merge `35597233`, containing `2327ad6b`: all 144 frozen saves loaded unchanged;
 all 14 mixed English/Russian identities survived eight lifecycle cases. Its targeted JVM stage reported
 137 tests with four skips and no failures/errors. All six Settings screenshots were reviewed without
 clipping or malformed Cyrillic. All four Chromium/WebKit × English/Russian offline cases also passed,
 with all eleven fonts cached and no page errors or external requests. The native home capture is
 reviewed and checked in at the required half scale.
 
-The later annual parity run passed Chromium but timed out two still-progressing WebKit word-game
-pages at 900 seconds, without reporting a board mismatch. A full rerun with a larger bounded page
-timeout remains required; the earlier two-engine annual pass remains separate evidence.
-The API 34 pass does not
-prove the older Android preference/migration path. Physical devices and real Safari were not used;
-Linux WebKit is the documented approximation in `AGENTS.md`.
+The complete annual comparison passes with the bounded 1,800-second page and 90-minute CI job limits;
+coverage and comparisons are unchanged. The API 34 pass does not prove the older Android
+preference/migration path or a physical Android 17 device. Physical devices and real Safari were not
+used; Linux WebKit is the documented approximation in `AGENTS.md`.
