@@ -1,4 +1,4 @@
-# Russian Codeword
+# Codeword
 > Give every number its Russian letter.
 
 ## How to play

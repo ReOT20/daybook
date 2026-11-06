@@ -90,7 +90,7 @@ internal fun catalog_ru_5(): Map<String, CatalogEntry> = mapOf(
     "puzzle.mini.tutorial.5.caption" to CatalogEntry(mapOf("other" to "Теперь вы: заполните остальные клетки. Если застрянете, подсказка объяснит следующий шаг.")),
     "puzzle.mini.tutorial.5.done" to CatalogEntry(mapOf("other" to "Решено: {value1}.")),
     "puzzle.mini_ru.keyboard" to CatalogEntry(mapOf("other" to "Вводите русские буквы. Backspace стирает, стрелки перемещают курсор, пробел меняет направление между горизонталью и вертикалью.")),
-    "puzzle.mini_ru.name" to CatalogEntry(mapOf("other" to "Русский кроссворд")),
+    "puzzle.mini_ru.name" to CatalogEntry(mapOf("other" to "Кроссворд")),
     "puzzle.mini_ru.rule.words" to CatalogEntry(mapOf("other" to "Заполняйте поле русскими словами по русским подсказкам. У этой игры свои задания, отдельные от английского кроссворда.")),
     "puzzle.mini_ru.tagline" to CatalogEntry(mapOf("other" to "Русские слова на маленьком поле.")),
     "puzzle.mini_ru.tier.1" to CatalogEntry(mapOf("other" to "5×5; пересечения дают большинство букв")),

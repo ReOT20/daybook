@@ -90,7 +90,7 @@ internal fun catalog_en_5(): Map<String, CatalogEntry> = mapOf(
     "puzzle.mini.tutorial.5.caption" to CatalogEntry(mapOf("other" to "Your turn: fill the rest. Stuck? Hint shows you why.")),
     "puzzle.mini.tutorial.5.done" to CatalogEntry(mapOf("other" to "Solved: {value1}.")),
     "puzzle.mini_ru.keyboard" to CatalogEntry(mapOf("other" to "Type Russian letters; Backspace clears. Arrows move; Space changes between Across and Down.")),
-    "puzzle.mini_ru.name" to CatalogEntry(mapOf("other" to "Russian Mini")),
+    "puzzle.mini_ru.name" to CatalogEntry(mapOf("other" to "Mini")),
     "puzzle.mini_ru.rule.words" to CatalogEntry(mapOf("other" to "Fill the grid with Russian words using Russian clues. This is a separate puzzle from the English Mini.")),
     "puzzle.mini_ru.tagline" to CatalogEntry(mapOf("other" to "Russian words, one small crossword.")),
     "puzzle.mini_ru.tier.1" to CatalogEntry(mapOf("other" to "5×5; crossings supply most letters")),

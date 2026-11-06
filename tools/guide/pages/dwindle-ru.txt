@@ -1,4 +1,4 @@
-# Dwindle · RU
+# Dwindle
 > Russian words that clear the tiles
 
 ## How to play

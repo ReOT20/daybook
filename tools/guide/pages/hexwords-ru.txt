@@ -1,4 +1,4 @@
-# Hexwords · RU
+# Hexwords
 > Russian words to reach the target
 
 ## How to play

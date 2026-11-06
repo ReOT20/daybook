@@ -253,7 +253,7 @@ def check(device, apk, repo):
     device.app_language("ru")
     device.screenshot("explicit-ru")
     device.call("shell", "input", "keyevent", "KEYCODE_BACK")
-    device.wait("Лексикон · RU")
+    device.wait("Лексикон")
     device.screenshot("home-ru")
     device.settings(True)
     device.start()

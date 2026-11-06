@@ -94,7 +94,7 @@ internal fun catalog_ru_1(): Map<String, CatalogEntry> = mapOf(
     "puzzle.cipher.tutorial.5.caption" to CatalogEntry(mapOf("other" to "Теперь вы: завершите сложение. Если застрянете, подсказка объяснит следующий шаг.")),
     "puzzle.cipher.tutorial.5.done" to CatalogEntry(mapOf("other" to "Решено: 21 + 81 = 102.")),
     "puzzle.cipher_ru.keyboard" to CatalogEntry(mapOf("other" to "Введите русскую букву, чтобы выбрать её, затем цифру. Backspace стирает, стрелки переключают буквы.")),
-    "puzzle.cipher_ru.name" to CatalogEntry(mapOf("other" to "Русский шифр")),
+    "puzzle.cipher_ru.name" to CatalogEntry(mapOf("other" to "Шифр")),
     "puzzle.cipher_ru.rule.words" to CatalogEntry(mapOf("other" to "В сумме записаны русские слова кириллицей. Каждая буква обозначает обычную десятичную цифру.")),
     "puzzle.cipher_ru.tagline" to CatalogEntry(mapOf("other" to "Сумма русских слов со скрытыми цифрами.")),
     "puzzle.cipher_ru.tutorial.done" to CatalogEntry(mapOf("other" to "Русская буквенная сумма решена.")),

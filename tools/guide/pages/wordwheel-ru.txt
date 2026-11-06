@@ -1,4 +1,4 @@
-# Word Wheel · RU
+# Word Wheel
 > Russian words from a circle of letters
 
 ## How to play

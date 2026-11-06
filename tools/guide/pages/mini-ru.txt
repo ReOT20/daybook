@@ -1,4 +1,4 @@
-# Russian Mini
+# Mini
 > Russian words, one small crossword.
 
 ## How to play

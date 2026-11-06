@@ -1,4 +1,4 @@
-# Russian Cipher
+# Cipher
 > A sum of Russian words, with digits hidden.
 
 ## How to play

@@ -1,4 +1,4 @@
-# Lexicon · RU
+# Lexicon
 > Find the hidden Russian word
 
 ## How to play

@@ -76,6 +76,7 @@ use that selection too. The full registry stays available for saved-board lookup
 Hidden editions keep their saves and custom-order positions and reappear when switching back.
 Coverage achievements accept either edition of each word family; puzzle-specific records remain separate.
 Home previews reuse each family's real motif, with fixed Russian positions for letter-based diagrams.
+Game names omit language labels; permanent edition IDs continue to distinguish their content and saves.
 
 New Levels also select matching word editions. English and Russian keep separate progress and saved
 boards, including language-neutral puzzles. Plans deal the frozen 33-family prefix before choosing an

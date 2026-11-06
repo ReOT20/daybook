@@ -35,7 +35,7 @@ internal fun catalog_en_2(): Map<String, CatalogEntry> = mapOf(
     "puzzle.codeword.tutorial.5.caption" to CatalogEntry(mapOf("other" to "Your turn: crack the rest. Stuck? Hint shows you why.")),
     "puzzle.codeword.tutorial.5.done" to CatalogEntry(mapOf("other" to "Solved: ATE, PEAT, EXTRA, TEEN and NET.")),
     "puzzle.codeword_ru.keyboard" to CatalogEntry(mapOf("other" to "With a number selected, type its Russian letter; type it again to clear. Backspace clears; arrows move between numbers.")),
-    "puzzle.codeword_ru.name" to CatalogEntry(mapOf("other" to "Russian Codeword")),
+    "puzzle.codeword_ru.name" to CatalogEntry(mapOf("other" to "Codeword")),
     "puzzle.codeword_ru.rule.words" to CatalogEntry(mapOf("other" to "Every word across and down is Russian. The numbered letters use the Russian alphabet.")),
     "puzzle.codeword_ru.tagline" to CatalogEntry(mapOf("other" to "Give every number its Russian letter.")),
     "puzzle.codeword_ru.tutorial.done" to CatalogEntry(mapOf("other" to "Russian codeword complete.")),
