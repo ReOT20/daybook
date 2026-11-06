@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -98,20 +101,20 @@ data class TowerState(
 object Tower : PuzzleType {
 
     override val id = "tower"
-    override val displayName = "Codebreaker"
-    override val tagline = "Break the hidden colour code"
+    override val displayName get() = text("puzzle.tower.name")
+    override val tagline get() = text("puzzle.tower.tagline")
     override val accent = 0xFFAF7D4C
-    override val rules = listOf(
-        "A secret row of coloured pegs is hidden at the top.",
-        "Tap a colour to put it in the next empty slot, or tap a slot to put the chosen colour there. Submit a full row to score it.",
-        "A filled pip means one peg is the right colour in the right slot.",
-        "A hollow pip means one peg is the right colour in the wrong slot.",
-        "Pips are not aligned with the pegs — working out which is which is the puzzle.",
-        "Colours may repeat in the secret.",
+    override val rules get() = listOf(
+        text("puzzle.tower.rule.1"),
+        text("puzzle.tower.rule.2"),
+        text("puzzle.tower.rule.3"),
+        text("puzzle.tower.rule.4"),
+        text("puzzle.tower.rule.5"),
+        text("puzzle.tower.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Number keys fill the next peg with that colour, Backspace removes the last, Enter submits.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.tower.keyboard.1"),
     )
 
     /**
@@ -320,20 +323,17 @@ object Tower : PuzzleType {
         listOf(
             TutorialFrame(
                 state = tutorialBoard(2),
-                caption = "A code of three pegs is hidden. Each guess scores a filled pip per peg in the " +
-                    "right colour and slot, and a hollow pip per right colour in the wrong slot.",
+                caption = message("puzzle.tower.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(p + 0, p + 1)),
             ),
             TutorialFrame(
                 state = tutorialBoard(2),
-                caption = "Guess 1 was all teal and scored nothing, so teal isn't in the code. " +
-                    "Guess 2 has two filled pips, but pips never say which pegs earned them.",
+                caption = message("puzzle.tower.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = row(0) + (p + 0), soft = setOf(p + 1)),
             ),
             TutorialFrame(
                 state = tutorialBoard(2, copied),
-                caption = "Your row copies guess 2. Change only slot 1 and score it, and the new score tells you " +
-                    "about that slot alone. Tap gold, then the glowing slot, then Submit.",
+                caption = message("puzzle.tower.tutorial.3.caption"),
                 // Gold and slot 1 glow until the peg is in, then Submit.
                 glow = { b ->
                     if ((b as TowerState).current == changed) BoardHighlight(strong = setOf(TowerTeacher.SUBMIT_BUTTON))
@@ -346,26 +346,25 @@ object Tower : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Tap gold below first, then the glowing slot, then Submit.",
-                done = "Scored: two filled pips again.",
+                retry = message("puzzle.tower.tutorial.3.retry"),
+                done = message("puzzle.tower.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(3),
-                caption = "Guesses 2 and 3 differ only in slot 1 and scored the same, so slot 1 is neither " +
-                    "blue nor gold. Teal is out, so it's brown. Tap brown: it fills the first empty slot.",
+                caption = message("puzzle.tower.tutorial.4.caption"),
                 highlight = BoardHighlight(
                     strong = setOf(sw + 2, c + 0),
                     soft = setOf(TowerTeacher.peg(TUTORIAL_SLOTS, 1, 0), TowerTeacher.peg(TUTORIAL_SLOTS, 2, 0)),
                 ),
                 accepts = only(3, brown),
-                retry = "Tap brown below.",
-                done = "Slot 1 is brown.",
+                retry = message("puzzle.tower.tutorial.4.retry"),
+                done = message("puzzle.tower.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(3, brown),
-                caption = "Your turn: finish the code and submit it. Stuck? Hint shows you why.",
+                caption = message("puzzle.tower.tutorial.5.caption"),
                 freePlay = true,
-                done = "Cracked. That's all there is to it.",
+                done = message("puzzle.tower.tutorial.5.done"),
             ),
         )
     }
@@ -442,7 +441,7 @@ object Tower : PuzzleType {
         ) {
 
             Text(
-                "${s.maxGuesses - s.guesses.size} guesses left",
+                text("puzzle.tower.board.remaining", "count" to (s.maxGuesses - s.guesses.size)),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 8.dp),
@@ -494,7 +493,7 @@ object Tower : PuzzleType {
                     // Capped: at 2x "Submit" wrapped to two lines.
                     CappedFontScale {
                         Text(
-                            "Submit",
+                            text("puzzle.tower.board.submit"),
                             style = MaterialTheme.typography.labelLarge,
                             color = if (s.ready) scheme.primary else scheme.outline,
                             modifier = Modifier
@@ -540,7 +539,7 @@ object Tower : PuzzleType {
 
             if (s.failed) {
                 Text(
-                    "Out of guesses. The code was:",
+                    text("puzzle.tower.board.lost"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = scheme.error,
                     modifier = Modifier.padding(top = 8.dp, bottom = 6.dp),

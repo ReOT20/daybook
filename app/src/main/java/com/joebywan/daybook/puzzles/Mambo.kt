@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -121,8 +124,8 @@ data class MamboState(
 object Mambo : PuzzleType {
 
     override val id = "mambo"
-    override val displayName = "Sun & Moon"
-    override val tagline = "Balance two symbols, never three alike in a line"
+    override val displayName get() = text("puzzle.mambo.name")
+    override val tagline get() = text("puzzle.mambo.tagline")
     override val accent = 0xFF8C79E0
 
     /**
@@ -131,17 +134,17 @@ object Mambo : PuzzleType {
      * negation had scope over the wrong word. Stating the limit as a count of how many may sit
      * together leaves nothing for "identical" to attach itself to wrongly.
      */
-    override val rules = listOf(
-        "Fill every square with a sun or a moon.",
-        "Each row and column holds equal numbers of suns and moons.",
-        "Never more than two of the same symbol side by side, in a row or column.",
-        "A = between two squares means they match; an x means they differ.",
-        "Tap a square to cycle moon, sun, empty.",
-        "Every puzzle can be solved by deduction alone.",
+    override val rules get() = listOf(
+        text("puzzle.mambo.rule.1"),
+        text("puzzle.mambo.rule.2"),
+        text("puzzle.mambo.rule.3"),
+        text("puzzle.mambo.rule.4"),
+        text("puzzle.mambo.rule.5"),
+        text("puzzle.mambo.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Space cycles, M puts a moon, S a sun, Backspace clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.mambo.keyboard.1"),
     )
 
     private fun sizeFor(difficulty: Difficulty) = when (difficulty) {
@@ -643,61 +646,55 @@ object Mambo : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Fill every square with a sun or a moon. Each row and each column holds " +
-                    "three of each, like the glowing row.",
+                caption = message("puzzle.mambo.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = (0 until TUTORIAL_N).toSet()),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Never more than two alike side by side. An = between two squares means " +
-                    "they match; an x means they differ.",
+                caption = message("puzzle.mambo.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(7, 8), soft = setOf(29, 35, 32, 33)),
             ),
             TutorialFrame(
                 state = start,
-                caption = "Two suns sit together in column 3, so the square above them must be a " +
-                    "moon, or there'd be three suns. Tap it once for a moon.",
+                caption = message("puzzle.mambo.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(2), soft = setOf(8, 14)),
                 accepts = only(start, 2, Sym.MOON),
-                retry = "Tap the glowing square once.",
-                done = "A moon.",
+                retry = message("puzzle.mambo.tutorial.3.retry"),
+                done = message("puzzle.mambo.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = capped,
-                caption = "The x says these two differ. The right one is a sun, so the glowing one is " +
-                    "a moon. Tap it once.",
+                caption = message("puzzle.mambo.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(7), soft = setOf(8)),
                 accepts = only(capped, 7, Sym.MOON),
-                retry = "Tap the glowing square once.",
-                done = "A moon.",
+                retry = message("puzzle.mambo.tutorial.4.retry"),
+                done = message("puzzle.mambo.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = linked,
-                caption = "In row 4, the gap between two moons must be a sun. A tap goes moon, then sun, then " +
-                    "empty: tap once and three moons ring red, then tap again for the sun.",
+                caption = message("puzzle.mambo.tutorial.5.caption"),
                 // The moons glow red once the passing moon makes three of them.
                 glow = { s ->
                     if (sun.stage(s) < 0) BoardHighlight(strong = setOf(22), soft = setOf(21, 23))
                     else BoardHighlight(strong = setOf(22), soft = setOf(21, 23), warning = true)
                 },
                 steps = sun.steps,
-                retry = "Tap the glowing square once, then once more.",
-                done = "A sun, and the red ring goes.",
+                retry = message("puzzle.mambo.tutorial.5.retry"),
+                done = message("puzzle.mambo.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = filled,
-                caption = "Column 3 now has its three suns, so its last square must be a moon. " +
-                    "Tap it once.",
+                caption = message("puzzle.mambo.tutorial.6.caption"),
                 highlight = BoardHighlight(strong = setOf(32), soft = setOf(8, 14, 26)),
                 accepts = only(filled, 32, Sym.MOON),
-                retry = "Tap the glowing square once.",
-                done = "A moon.",
+                retry = message("puzzle.mambo.tutorial.6.retry"),
+                done = message("puzzle.mambo.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = counted,
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.mambo.tutorial.7.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.mambo.tutorial.7.done"),
             ),
         )
     }
@@ -741,9 +738,9 @@ object Mambo : PuzzleType {
     fun captionFor(violations: List<Violation>): String =
         violations.map { it.rule }.distinct().joinToString(" · ") {
             when (it) {
-                Broken.TRIPLE -> "Three alike in a line"
-                Broken.BALANCE -> "A line is unbalanced"
-                Broken.LINK -> "A link is broken"
+                Broken.TRIPLE -> text("puzzle.mambo.board.triple")
+                Broken.BALANCE -> text("puzzle.mambo.board.balance")
+                Broken.LINK -> text("puzzle.mambo.board.link")
             }
         }
 

@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -105,19 +108,19 @@ data class SetsState(
 object Sets : PuzzleType {
 
     override val id = "sets"
-    override val displayName = "Sets"
-    override val tagline = "All alike or all different, four ways"
+    override val displayName get() = text("puzzle.sets.name")
+    override val tagline get() = text("puzzle.sets.tagline")
     override val accent = 0xFF997EB8
-    override val rules = listOf(
-        "Find sets of three cards where each trait is all the same or all different.",
-        "The four traits are count, shape, shading and colour. Two alike and one odd, on any trait, is not a set.",
-        "Tap three cards to claim a set. Find them all to finish.",
-        "Cards are never used up — a tinted card is one you have already used, and it is still in play.",
-        "Sets you have claimed sit above the board; tap one to light up its three cards again.",
+    override val rules get() = listOf(
+        text("puzzle.sets.rule.1"),
+        text("puzzle.sets.rule.2"),
+        text("puzzle.sets.rule.3"),
+        text("puzzle.sets.rule.4"),
+        text("puzzle.sets.rule.5"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Space or Enter picks a card.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.sets.keyboard.1"),
     )
 
     /**
@@ -443,18 +446,16 @@ object Sets : PuzzleType {
         listOf(
             TutorialFrame(
                 state = fresh,
-                caption = "Every card has four traits: shape (oval, diamond, rectangle), colour (amber, teal, violet), " +
-                    "shading (solid, striped, outlined) and number (one, two or three).",
+                caption = message("puzzle.sets.tutorial.1.caption"),
             ),
             TutorialFrame(
                 state = fresh,
-                caption = "Three cards are a set when each trait is all the same or all different. The glowing three " +
-                    "are all ovals, and differ in colour, shading and number.",
+                caption = message("puzzle.sets.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = TUTORIAL_SET.toSet()),
             ),
             TutorialFrame(
                 state = fresh,
-                caption = "Two alike and one odd is not a set. Tap the three glowing cards to see.",
+                caption = message("puzzle.sets.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = TUTORIAL_NEAR_MISS.toSet(), warning = true),
                 // Any order; the board clears the pick and flags it once the third card is in.
                 steps = { next ->
@@ -465,13 +466,12 @@ object Sets : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Tap the glowing cards.",
-                done = "Not a set: ${SetsTeacher.whyBroken(near, SetsTeacher.brokenTraits(near).single())}.",
+                retry = message("puzzle.sets.tutorial.3.retry"),
+                done = message("puzzle.sets.tutorial.3.done", "value1" to (SetsTeacher.whyBrokenMessage(near, SetsTeacher.brokenTraits(near).single()))),
             ),
             TutorialFrame(
                 state = fresh,
-                caption = "Tap a card to pick it, and tap it again to let it go. Follow the glow: pick two cards, " +
-                    "let one go, then pick another.",
+                caption = message("puzzle.sets.tutorial.4.caption"),
                 glow = { s -> BoardHighlight(strong = setOfNotNull(TUTORIAL_PICKS.getOrNull((s as SetsState).moves))) },
                 steps = { next ->
                     val i = (next as? SetsState)?.moves?.minus(1)
@@ -481,23 +481,22 @@ object Sets : PuzzleType {
                         else -> TutorialStep.PROGRESS
                     }
                 },
-                retry = "Tap the glowing card.",
-                done = "Any two cards point to exactly one third.",
+                retry = message("puzzle.sets.tutorial.4.retry"),
+                done = message("puzzle.sets.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(selected = listOf(a, b)),
-                caption = SetsTeacher.walkToThird(cards[a], cards[b]) + " Find it and tap it.",
+                caption = message("puzzle.sets.tutorial.5.caption", "value1" to (SetsTeacher.walkToThirdMessage(cards[a], cards[b]))),
                 highlight = BoardHighlight(soft = setOf(a, b)),
                 accepts = only(emptyList(), listOf(TUTORIAL_SET)),
-                retry = "Look for ${SetsTeacher.describe(cards[c])}.",
-                done = "A set! It moves to the strip above.",
+                retry = message("puzzle.sets.tutorial.5.retry", "value1" to (SetsTeacher.describeMessage(cards[c]))),
+                done = message("puzzle.sets.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = claimed,
-                caption = "Your turn: one set left, and it uses a tinted card: cards are never used up. " +
-                    "Stuck? Hint shows you why.",
+                caption = message("puzzle.sets.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.sets.tutorial.6.done"),
             ),
         )
     }
@@ -570,9 +569,9 @@ object Sets : PuzzleType {
             }.padding(horizontal = 16.dp),
         ) {
             Text(
-                "${s.found.size} of ${s.target} sets found" + when {
-                    s.lastWrong -> "   ·   not a set"
-                    s.lastRepeat -> "   ·   already found"
+                text("puzzle.sets.board.progress", "found" to (s.found.size), "target" to (s.target)) + when {
+                    s.lastWrong -> text("puzzle.sets.board.not_set")
+                    s.lastRepeat -> text("puzzle.sets.board.already_found")
                     else -> ""
                 },
                 style = MaterialTheme.typography.labelLarge,

@@ -1,0 +1,75 @@
+name: Verify version without a device
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'web/**'
+      - 'translations/**'
+      - 'tools/i18n/**'
+      - 'tools/verify-version/**'
+      - 'tools/render/**'
+      - 'tools/save-check/**'
+      - 'tools/verify-apk.sh'
+      - 'tools/apk-cert.py'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/actions/setup-build/**'
+      - '.github/workflows/verify-version.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-version-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version-verification:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-build
+
+      - name: Enable KVM for the private emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install the same emulator image as the release save gate
+        run: sdkmanager 'emulator' 'system-images;android-34;google_apis;x86_64'
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: verify-version-playwright-${{ runner.os }}-${{ hashFiles('tools/web-parity/requirements.txt') }}
+
+      - name: Install pinned browser drivers and engines
+        run: |
+          python3 -m venv "$RUNNER_TEMP/verify-env"
+          "$RUNNER_TEMP/verify-env/bin/pip" install -r tools/verify-version/requirements.txt
+          "$RUNNER_TEMP/verify-env/bin/python" -m playwright install --with-deps chromium webkit
+
+      - name: Verify the minified APK, saved boards, languages and offline browsers
+        run: >
+          "$RUNNER_TEMP/verify-env/bin/python" tools/verify-version/check.py
+          --out "$RUNNER_TEMP/version-verification"
+
+      - name: Keep evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: version-verification
+          path: |
+            ${{ runner.temp }}/version-verification/*.json
+            ${{ runner.temp }}/version-verification/*.log
+            ${{ runner.temp }}/version-verification/*.png
+            ${{ runner.temp }}/version-verification/web/*.json
+            ${{ runner.temp }}/version-verification/web/*.png
+          if-no-files-found: warn

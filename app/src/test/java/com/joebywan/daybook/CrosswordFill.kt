@@ -93,12 +93,12 @@ object CrosswordFill {
     }
 
     /** Words of one length, indexed by (place, letter) for the filler. */
-    class Index(val words: List<String>) {
+    class Index(val words: List<String>, private val alphabet: String = "abcdefghijklmnopqrstuvwxyz") {
         val length = words.firstOrNull()?.length ?: 0
-        private val at: Array<Array<BitSet>> = Array(length) { Array(26) { BitSet(words.size) } }
+        private val at: Array<Array<BitSet>> = Array(length) { Array(alphabet.length) { BitSet(words.size) } }
 
         init {
-            words.forEachIndexed { i, w -> w.forEachIndexed { p, ch -> at[p][ch - 'a'].set(i) } }
+            words.forEachIndexed { i, w -> w.forEachIndexed { p, ch -> at[p][alphabet.indexOf(ch)].set(i) } }
         }
 
         /** The words with [letters] (a letter or 0 per place) in their places, or null when no place is set. */
@@ -106,7 +106,7 @@ object CrosswordFill {
             var out: BitSet? = null
             for (p in letters.indices) {
                 if (letters[p] == 0.toChar()) continue
-                val b = at[p][letters[p] - 'a']
+                val b = at[p][alphabet.indexOf(letters[p])]
                 out = if (out == null) b.clone() as BitSet else out.apply { and(b) }
             }
             return out

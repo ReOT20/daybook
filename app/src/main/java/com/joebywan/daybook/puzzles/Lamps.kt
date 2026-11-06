@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -78,18 +81,18 @@ object Lamps : PuzzleType {
     private data class Pending(val cell: Int, val base: LampsState, val after: LampsState)
 
     override val id = "lamps"
-    override val displayName = "Lamps"
-    override val tagline = "Light every square, no lamp seeing another"
+    override val displayName get() = text("puzzle.lamps.name")
+    override val tagline get() = text("puzzle.lamps.tagline")
     override val accent = 0xFF737B39
-    override val rules = listOf(
-        "A lamp lights its own square and its whole row and column, up to a wall or the edge.",
-        "Light every white square. No lamp may light another lamp.",
-        "A number on a wall is how many lamps sit right beside it: above, below, left or right.",
-        "Tap a square for a cross (a note that no lamp goes there), tap again to clear it. Drag to lay crosses across squares. Double-tap or long-press for a lamp; tap a lamp to remove it.",
+    override val rules get() = listOf(
+        text("puzzle.lamps.rule.1"),
+        text("puzzle.lamps.rule.2"),
+        text("puzzle.lamps.rule.3"),
+        text("puzzle.lamps.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, L or Enter places a lamp, X or Space a cross, Backspace clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.lamps.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState = LampsLogic.generate(seed, difficulty)
@@ -123,38 +126,33 @@ object Lamps : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "A lamp lights its own square and its whole row and column, up to a wall. Light every white " +
-                    "square, and never let one lamp light another.",
+                caption = message("puzzle.lamps.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(17), soft = setOf(15, 16, 18, 19, 22)),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "A number on a wall is how many lamps sit right beside it: above, below, left or right. " +
-                    "This 2 has two.",
+                caption = message("puzzle.lamps.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0), soft = pair),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "The 0 has no lamps beside it. Tap the glowing square below it to cross it out: a note that no " +
-                    "lamp goes there.",
+                caption = message("puzzle.lamps.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(13), soft = setOf(8)),
                 accepts = { next -> next is LampsState && next.marks == crossed.marks },
-                retry = "Tap the glowing square once.",
-                done = "Crossed out. No lamp can go there.",
+                retry = message("puzzle.lamps.tutorial.3.retry"),
+                done = message("puzzle.lamps.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = crossed,
-                caption = "Its squares to the left and right are the same. Drag across the 0 from one glowing square to " +
-                    "the other to cross out both in one sweep.",
+                caption = message("puzzle.lamps.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(7, 9), soft = setOf(8)),
                 accepts = { next -> next is LampsState && next.marks == swept.marks },
-                retry = "Drag across the 0, from one glowing square to the other.",
-                done = "Swept: one drag crosses out a whole run.",
+                retry = message("puzzle.lamps.tutorial.4.retry"),
+                done = message("puzzle.lamps.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = swept,
-                caption = "The 2 in the corner has only two squares beside it, so both hold lamps. Double-tap or long-press each " +
-                    "glowing square to place one.",
+                caption = message("puzzle.lamps.tutorial.5.caption"),
                 glow = { s ->
                     BoardHighlight(strong = pair.filter { (s as LampsState).marks[it] != LampsLogic.LAMP_MARK }.toSet(), soft = setOf(0))
                 },
@@ -167,14 +165,14 @@ object Lamps : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Double-tap the glowing square (two quick taps), or press and hold it.",
-                done = "Two lamps, and their light fills their rows and columns.",
+                retry = message("puzzle.lamps.tutorial.5.retry"),
+                done = message("puzzle.lamps.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = lamps,
-                caption = "Your turn: light every square. Stuck? Hint shows you why.",
+                caption = message("puzzle.lamps.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. Every square lit, and no lamp sees another.",
+                done = message("puzzle.lamps.tutorial.6.done"),
             ),
         )
     }

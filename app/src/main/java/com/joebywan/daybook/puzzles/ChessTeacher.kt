@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
 import kotlin.math.abs
@@ -35,9 +44,15 @@ internal object ChessTeacher {
         val keys: List<Int>,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int>
             get() {
                 val squares = setOf(ChessRules.from(move), ChessRules.to(move))
@@ -46,15 +61,15 @@ internal object ChessTeacher {
             }
     }
 
-    private val KIND = listOf("", "pawn", "knight", "bishop", "rook", "queen", "king")
-    private fun side(white: Boolean) = if (white) "White" else "Black"
+    private val KIND = listOf("", message("teacher.chess.kind.1"), message("teacher.chess.kind.2"), message("teacher.chess.kind.3"), message("teacher.chess.kind.4"), message("teacher.chess.kind.5"), message("teacher.chess.kind.6"))
+    private fun side(white: Boolean) = if (white) message("teacher.chess.side.1") else message("teacher.chess.side.2")
     /** Black's moves are written "...Kg8"; White's plain. [p] is the position the move is made in. */
     private fun dots(p: ChessPosition) = if (p.whiteToMove) "" else "..."
 
     /** "Rd1", "pawn d4": a piece and its square, for naming what covers a square. */
-    private fun named(p: ChessPosition, s: Int): String {
+    private fun named(p: ChessPosition, s: Int): Message {
         val k = abs(p.pieceAt(s))
-        return if (k == 1) "pawn ${ChessRules.name(s)}" else "${ChessPosition.LETTERS[k]}${ChessRules.name(s)}"
+        return if (k == 1) message("teacher.chess.named.1", "ChessRules_name_s_" to (ChessRules.name(s))) else literalMessage("${ChessPosition.LETTERS[k]}${ChessRules.name(s)}")
     }
 
     // ---- replaying what the player has done ------------------------------------------------------------
@@ -126,17 +141,17 @@ internal object ChessTeacher {
         val san = ChessRules.san(before, l.bad)
         val who = side(!before.whiteToMove)
         val why = when {
-            ChessRules.isStalemate(after) -> "$san is stalemate: $who has no move but is not in check. Take it back."
-            l.movesLeftAfter <= 0 -> "$san was the last move allowed and it is not mate. Take it back."
+            ChessRules.isStalemate(after) -> message("teacher.chess.mistake.1", "san" to (san), "who" to (who))
+            l.movesLeftAfter <= 0 -> message("teacher.chess.mistake.2", "san" to (san))
             else -> {
                 val r = ChessRules.defence(after, l.movesLeftAfter)
-                val reply = if (r == null) "" else "after ${dots(after)}${ChessRules.san(after, r)} "
-                "$san lets $who escape: ${reply}there is no forced mate in ${l.movesLeftAfter}. Take it back."
+                val reply = if (r == null) "" else message("teacher.chess.mistake.3", "dots_after_" to (dots(after)), "ChessRules_san_after_r_" to (ChessRules.san(after, r)))
+                message("teacher.chess.mistake.4", "san" to (san), "who" to (who), "reply" to (reply), "l_movesLeftAfter" to (l.movesLeftAfter))
             }
         }
         val f = setOf(ChessRules.from(l.bad), ChessRules.to(l.bad))
         return Step(MISTAKE, l.bad, emptyList(), f, f,
-            "That move gives up the mate. Look at it again.", fit(why))
+            message("teacher.chess.mistake.5"), fit(why))
     }
 
     /**
@@ -151,27 +166,29 @@ internal object ChessTeacher {
             ?: res.keys.firstOrNull { ChessRules.inCheck(ChessRules.play(position, it)) } ?: res.keys.first()
         val c = ChessRules.play(position, key)
         val king = ChessRules.kingSq(c.sq, !white)
-        val piece = "${KIND[abs(position.pieceAt(ChessRules.from(key)))]} on ${ChessRules.name(ChessRules.from(key))}"
+        val piece = message("teacher.chess.deduce.1", "value1" to (KIND[abs(position.pieceAt(ChessRules.from(key)))]), "value2" to (ChessRules.name(ChessRules.from(key))))
         return if (res.inMoves == 1) {
             val cited = mutableSetOf(king)
             val text = mateText(position, key, c, king, cited)
             Step(MATE_IN_ONE, key, res.keys, setOf(king, ChessRules.from(key)), cited,
-                "One move ends it. Where can that king go?", fit(text))
+                message("teacher.chess.deduce.2"), fit(text))
         } else {
             val check = ChessRules.inCheck(c)
             val text = forcingText(position, key, c, res.inMoves - 1, check)
             Step(if (check) FORCING_KEY else QUIET_KEY, key, res.keys, setOf(ChessRules.from(key)), setOf(king, ChessRules.to(key)),
-                "Look at the $piece.", fit(text))
+                message("teacher.chess.deduce.3", "piece" to (piece)), fit(text))
         }
     }
 
     /** Never longer than the panel. */
-    private fun fit(t: String): String =
-        if (t.length <= MAX_EXPLANATION) t else t.take(MAX_EXPLANATION - 1).trimEnd() + "."
+    private fun fit(t: Message): Message =
+        if (t.length <= MAX_EXPLANATION) t else Message { language ->
+            if (language == "en") t.english.take(MAX_EXPLANATION - 1).trimEnd() + "." else t.resolve(language)
+        }
 
     // ---- why a move is mate ------------------------------------------------------------------------------
 
-    private fun mateText(p: ChessPosition, m: Int, c: ChessPosition, king: Int, cited: MutableSet<Int>): String {
+    private fun mateText(p: ChessPosition, m: Int, c: ChessPosition, king: Int, cited: MutableSet<Int>): Message {
         val white = p.whiteToMove
         val san = ChessRules.san(p, m)
         val ownSign = if (white) -1 else 1
@@ -185,24 +202,22 @@ internal object ChessTeacher {
             else ChessRules.attackers(bare, s, white).firstOrNull()?.let { covered.add(s to it) }
         }
         val checkers = ChessRules.attackers(c, king, white)
-        val end = if (checkers.size > 1) "a double check, so only the king could move"
-        else "nothing can capture the checker or block it"
+        val end = if (checkers.size > 1) message("teacher.chess.mate_text.1")
+        else message("teacher.chess.mate_text.2")
         cited.addAll(own); cited.addAll(covered.map { it.first }); cited.addAll(covered.map { it.second })
         cited.addAll(checkers)
-        val ownPart = if (own.isEmpty()) "" else "own pieces on ${own.joinToString(" ") { ChessRules.name(it) }}"
-        val covPart = covered.joinToString(", ") { "${ChessRules.name(it.first)} by ${named(c, it.second)}" }
-        val full = "$san is mate: check; " +
-            listOf(ownPart, covPart).filter { it.isNotEmpty() }.joinToString("; ") + "; $end."
+        val ownPart = if (own.isEmpty()) literalMessage("") else message("teacher.chess.mate_text.3", "value1" to (own.joinToString(" ") { ChessRules.name(it) }))
+        val covPart = covered.map { message("teacher.chess.mate_text.4", "value1" to (ChessRules.name(it.first)), "named_c_it_second_" to (named(c, it.second))) }.joinedMessages(", ")
+        val full = message("teacher.chess.mate_text.5", "san" to (san), "value2" to (listOf(ownPart, covPart).filter { it.isNotEmpty() }.joinedMessages("; ")), "end" to (end))
         if (full.length <= MAX_EXPLANATION) return full
-        val mid = "$san is mate: check, ${own.size} neighbouring squares blocked by its own pieces, " +
-            "${covered.size} covered, and $end."
+        val mid = message("teacher.chess.mate_text.6", "san" to (san), "own_size" to (own.size), "covered_size" to (covered.size), "end" to (end))
         if (mid.length <= MAX_EXPLANATION) return mid
-        return "$san is mate: the king is in check with no safe square, and $end."
+        return message("teacher.chess.mate_text.7", "san" to (san), "end" to (end))
     }
 
     // ---- why a key forces mate ---------------------------------------------------------------------------
 
-    private fun forcingText(p: ChessPosition, m: Int, c: ChessPosition, left: Int, check: Boolean): String {
+    private fun forcingText(p: ChessPosition, m: Int, c: ChessPosition, left: Int, check: Boolean): Message {
         val san = ChessRules.san(p, m)
         val replies = ChessRules.legalMoves(c)
         val who = side(c.whiteToMove)
@@ -214,14 +229,14 @@ internal object ChessTeacher {
             val d = ChessRules.play(c, r)
             val res = ChessRules.forcedMate(d, left, Int.MAX_VALUE) as? ChessRules.Mate.Forced ?: return@mapNotNull null
             val first = dots(c) + ChessRules.san(c, r)
-            if (res.inMoves == 1) "$first ${ChessRules.san(d, res.keys.first())}"
-            else "$first then mate in ${res.inMoves}"
+            if (res.inMoves == 1) literalMessage("$first ${ChessRules.san(d, res.keys.first())}")
+            else message("teacher.chess.forcing_text.1", "first" to (first), "res_inMoves" to (res.inMoves))
         }
         val n = replies.size
-        val head = (if (check) "$san is check" else "$san is quiet, not a check,") +
-            " and leaves $who ${if (n == 1) "1 reply" else "$n replies"}; " +
-            (if (n == 1) "it allows" else "each allows") +
-            if (left == 1) " mate next move" else " mate within $left more moves"
-        return head + if (shown.isEmpty()) "." else ", e.g. ${shown.joinToString(", ")}."
+        val head = (if (check) message("teacher.chess.forcing_text.2", "san" to (san)) else message("teacher.chess.forcing_text.3", "san" to (san))) +
+            message("teacher.chess.forcing_text.4", "who" to (who), "value2" to (if (n == 1) message("teacher.chess.forcing_text.extra.2") else message("teacher.chess.forcing_text.extra.3", "n" to (n)))) +
+            (if (n == 1) message("teacher.chess.forcing_text.5") else message("teacher.chess.forcing_text.6")) +
+            if (left == 1) message("teacher.chess.forcing_text.7") else message("teacher.chess.forcing_text.8", "left" to (left))
+        return head + if (shown.isEmpty()) literalMessage(".") else message("teacher.chess.forcing_text.9", "shown_joinToString_" to (shown.joinedMessages(", ")))
     }
 }

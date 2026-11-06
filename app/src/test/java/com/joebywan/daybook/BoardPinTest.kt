@@ -5,6 +5,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.ParityFingerprint
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.SeedHash
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.time.LocalDate
@@ -38,6 +39,7 @@ class BoardPinTest {
 
     @Test
     fun `the web route reaches the pinned boards`() {
+        val mismatches = mutableListOf<String>()
         for (type in PuzzleRegistry.all) {
             val lines = DATES.flatMap { date ->
                 Difficulty.entries.map { tier ->
@@ -46,8 +48,10 @@ class BoardPinTest {
                     ParityFingerprint.line(type, date.toString(), tier, seed)
                 }
             }
-            assertEquals(lines.joinToString("\n"), PINS[type.id], lines.map { it.hashCode() })
+            val hashes = lines.map { it.hashCode() }
+            if (hashes != PINS[type.id]) mismatches += "${type.id}: expected ${PINS[type.id]}, actual $hashes\n${lines.joinToString("\n")}"
         }
+        assertTrue(mismatches.joinToString("\n\n"), mismatches.isEmpty())
     }
 
     private companion object {
@@ -88,6 +92,13 @@ class BoardPinTest {
             "whoswho" to listOf(442362151, 1992391853, 1249930716, -1638168872, -1221809020, -393160183, -648383963, -1632276826, 1245495051),
             "dwindle" to listOf(778816766, 741131790, 86127230, 1848449206, -2066789074, -1850314859, 1502286003, 1302934949, -739966303),
             "mini" to listOf(1142610371, -224214227, -1806937990, -1820120763, -1911073970, 1815934677, -1788314554, 1657545317, -1426026216),
+            "words-ru" to listOf(687928494, -154718161, -1965820901, 1530682976, -1233652241, 1780301788, 891251158, -1246037208, -104608276),
+            "wordwheel-ru" to listOf(-661032164, -1316189605, -533695196, -1060634239, -1770161344, 1851766630, 1679306273, 1491127089, 743077832),
+            "mini-ru" to listOf(2092090237, 1307713703, -214218566, 596414372, -279765347, 333969524, -1445807280, 634207290, 2129380263),
+            "codeword-ru" to listOf(-1866489111, -1762581130, 512054338, -1510689771, 317718871, -1238112894, -317176023, -2052713091, 1457792478),
+            "hexwords-ru" to listOf(671585184, 517633672, 1197242405, 1582713613, -138223391, 1675470680, -1027273550, -552986201, -1436503513),
+            "dwindle-ru" to listOf(-1286569637, -412356715, 536191730, 1454410795, -654404107, 1582606710, 900162635, 762722198, -41368648),
+            "cipher-ru" to listOf(1243160565, 1010707273, 1846675437, 1355408773, 1804002298, 1715494559, 549422533, 645147416, 317160663),
         )
     }
 }

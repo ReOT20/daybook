@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.settings
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.card
 import com.joebywan.daybook.ui.CardText
 import androidx.compose.foundation.clickable
@@ -21,8 +23,8 @@ class RateLink(val title: String, val detail: String, val open: () -> Unit)
 
 /** Where no store takes ratings (F-Droid, a downloaded APK, the web): a star on GitHub, opened through [openUri]. */
 fun githubRateLink(openUri: (String) -> Unit) = RateLink(
-    title = "Star Daybook on GitHub",
-    detail = "Daybook is open source. If it has earned it, a star on GitHub helps other puzzlers find it.",
+    title = text("ui.rate_row.star_daybook_on_github"),
+    detail = text("ui.rate_row.daybook_is_open_source_if_it"),
     open = { openUri("https://github.com/joebywan/daybook") },
 )
 

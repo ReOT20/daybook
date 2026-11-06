@@ -25,7 +25,7 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
 - **Dates are `kotlinx.datetime.LocalDate`.** Nothing on disk stores a date object (completions hold
   an epoch-day number), so saves are untouched; `CompletionFormatTest` pins that. Tests keep writing
   `java.time` dates through `JavaDates.kt`. Formatting goes through the seam so Android keeps its
-  locale-aware `DateTimeFormatter`; the web spells out English names.
+  locale-aware `DateTimeFormatter`; the web uses the generated catalogs' calendar names.
 - **Storage is `data/KeyValueStore`.** Android: the same two DataStore files and keys as ever
   (`DataStoreKeyValueStore`). Web: `localStorage`, key `file.key`, sets as JSON arrays. The web
   backup (Stats screen, export/import) is every one of those entries, so it needs no change when a
@@ -35,8 +35,10 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   Android's `BackButton` draws nothing.
 - **Offline:** `sw.js` is network-first for unhashed files (page, `daybook.js`, manifest) and
   cache-first for the content-hashed `.wasm`; the page posts its resource list to the worker, since
-  the first visit loads before the worker controls it. `manifest.webmanifest` and the icons make it
-  installable to the home screen.
+  the first visit loads before the worker controls it. All eleven bundled fonts are explicitly precached during
+  worker installation: Cyrillic weights and symbol fallbacks remain available when the player switches language
+  offline, even if their first loads finish after the page's resource reports. `tools/i18n/test_fonts.py` checks
+  this list against the bundled files. `manifest.webmanifest` and the icons make it installable to the home screen.
   The player guide (`guide/`, `tools/guide/`) and the F-Droid repo (`fdroid/`) share the scope and are passed through untouched: `cacheKey` would store their pages, or an APK, as the app's.
 - **Favicon and link preview.** `favicon.svg` (the launcher mark simplified for a tab: no rays,
   bigger sun lifted clear of a wider book — a sun touching the book reads as a head), `favicon.ico`
@@ -89,6 +91,11 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   sheet) and `≠` (drawn as strokes in Dominoes) need no glyph. A new non-Latin-1 character in a drawn string
   needs the web fonts re-cut; check it by rendering it with the network logged. Board glyphs
   drawn with their own `TextStyle` (Sudoku, Snap, Nonogram, ...) name no family and are still the default font.
+  Russian text uses four additional Noto Sans subsets on both platforms, with Russian letters,
+  quotation marks and the Greek letters used in native word clues. `WithSymbolFonts` preloads both
+  text families so an in-app language switch works immediately offline. Fredoka and
+  the symbol subsets remain unchanged; source/version, regeneration and localization scope are in
+  `docs/LOCALIZATION.md`.
 - The Material icons: JetBrains' `material-icons-extended` (`libs.jb.compose.material.icons.extended`) costs 4.5 KB of wasm (<1 KB gzipped) over the
   core set, because Kotlin/Wasm drops every unreferenced icon.
 
@@ -116,12 +123,16 @@ Live at https://knowhowit.com.au/daybook/. Needs Safari 18.2+ / iOS 18.2+ for Wa
   (as LITS's generator changes were checked) is `DAYBOOK_PARITY_DAYS=730`.
 
   **CI runs the year.** `tools/web-parity/check.py --jvm <file>` does the comparison by hand above for
-  you: it serves the built dist, loads `?dump&range=N&puzzle=<id>` for all puzzles at once in
+  you: it serves the built dist, loads `?dump&range=N&puzzle=<id>` with at most four pages at once in
   Chromium then WebKit (Playwright, pinned in `tools/web-parity/requirements.txt`), strips `RANGE `,
   and diffs each puzzle against the JVM file (N is read from it), printing the first differences by
-  puzzle, date and tier. Exit 1 on any difference, missing line, page error or timeout. A full year
-  (12,045 boards) takes 30 s in Chromium and 40 s in WebKit on a 32-core machine, 36 s and 49 s pinned
-  to 4 cores, so there is no short-range variant. `WebParityDumpTest` takes `DAYBOOK_PARITY_DAYS`
+  puzzle, date and tier. Exit 1 on any difference, missing line, page error or timeout. Four pages
+  bound Wasm memory and CPU contention; the engines run sequentially. With 40 puzzles, a full year
+  compares 45,625 boards, including 365 original five-board level plans. Language-specific Levels
+  are covered separately by plan/seed contracts and browser save/retention checks. Runtime varies with the runner: Russian
+  word generators exceeded the old 900-second page deadline while still making progress. The default
+  page limit is now 1,800 seconds, with a 90-minute CI job budget; coverage and comparisons are unchanged.
+  CI always compares all 365 days. `WebParityDumpTest` takes `DAYBOOK_PARITY_DAYS`
   (default 365) for a quicker local look. CI wires it as the composite action
   `.github/actions/web-parity`, used twice: by the `web-parity` job in `ci.yml` (a required check beside `build`; it always runs, and passes at once when the change touches nothing that could alter a board: app/src/main, web/, Gradle files, the parity tools, `WebParityDumpTest` or ci.yml) and by `pages.yml`, between building the dist and uploading it, so a divergence that got past review stops the deploy. Renovate's dispatched CI runs post a `web-parity` commit status as they do `build`. The dump test must be run with
   `--rerun` (the env var is not a Gradle input; a cached test would write no file). Playwright's own

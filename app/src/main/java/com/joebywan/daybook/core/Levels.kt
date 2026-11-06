@@ -1,5 +1,8 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.text
+
+
 /** One board of a level: which puzzle, at which tier, from which seed. */
 data class LevelBoard(val puzzleId: String, val difficulty: Difficulty, val seed: Long)
 
@@ -47,6 +50,9 @@ object Levels {
 
     const val SIZE = 5
 
+    /** Frozen English-family pool before editions were appended; language lanes deal each family once. */
+    const val LANGUAGE_POOL_SIZE = 33
+
     /** Every level number the app plans or accepts from storage or a link; far past any player, and `SIZE * level` never overflows. */
     val LEVELS: IntRange = 1..10_000
 
@@ -65,6 +71,7 @@ object Levels {
         "mini",
         "hexwords",
         "dwindle",
+        "words-ru", "wordwheel-ru", "mini-ru", "codeword-ru", "hexwords-ru", "dwindle-ru", "cipher-ru",
     )
 
     /** Deck 0, levels 1-5: the first this many pool ids, every one with a walkthrough. Never change it. */
@@ -117,6 +124,15 @@ object Levels {
         return plan(level, POOL.take(poolSize), deal)
     }
 
+    /** Independent language lanes retain the frozen deal, then select one word edition per family. */
+    fun planForLanguage(level: Int, poolSize: Int = LANGUAGE_POOL_SIZE, deal: Int = LATEST, languageTag: String): List<LevelBoard> {
+        require(poolSize in (if (deal == 3) LevelSpread.RANKED else STARTER)..LANGUAGE_POOL_SIZE)
+        return plan(level, poolSize, deal).map { board ->
+            val id = PuzzleRegistry.localizedId(board.puzzleId, languageTag)
+            LevelBoard(id, board.difficulty, SeedHash.levelForLanguage(level, id, board.difficulty, languageTag))
+        }
+    }
+
     /** [plan] over any pool, so tests can append puzzles that do not exist yet. */
     internal fun plan(level: Int, pool: List<String>, deal: Int = LATEST): List<LevelBoard> {
         require(level in LEVELS) { "no level $level" }
@@ -144,13 +160,11 @@ object Levels {
     fun summary(boards: List<LevelBoard>): String {
         val counts = Difficulty.entries.map { t -> t to boards.count { it.difficulty == t } }.filter { it.second > 0 }
         val top = counts.maxByOrNull { it.second } ?: return ""
-        if (top.second == boards.size) return "All ${top.first.label}"
-        fun words(list: List<Pair<Difficulty, Int>>) = list.joinToString(", ") { "${NUMBERS[it.second]} ${it.first.label}" }
-        return if (top.second * 2 > boards.size) "Mostly ${top.first.label}, ${words(counts - top)}"
+        if (top.second == boards.size) return text("ui.levels.all", "top_first_label" to (top.first.label))
+        fun words(list: List<Pair<Difficulty, Int>>) = list.joinToString(", ") { text("level.tier_count", "number" to (text("number.small.${it.second}")), "tier" to (it.first.label)) }
+        return if (top.second * 2 > boards.size) text("ui.levels.mostly", "top_first_label" to (top.first.label), "words_counts_top_" to (words(counts - top)))
         else words(counts).replaceFirstChar { it.uppercaseChar() }
     }
-
-    private val NUMBERS = listOf("no", "one", "two", "three", "four", "five")
 
     private fun deckStart(k: Int, poolSize: Int): Int = if (k == 0) 0 else STARTER + (k - 1) * poolSize
 

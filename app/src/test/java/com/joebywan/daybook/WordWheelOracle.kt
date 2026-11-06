@@ -76,7 +76,7 @@ object WordWheelOracle {
             val need = slot.word.groupingBy { it }.eachCount()
             if (need.any { (ch, n) -> (wheelCount[ch] ?: 0) < n }) out += "${slot.word} is not on the wheel ${s.wheel}"
             if (slot.word.length < 3) out += "${slot.word} is too short"
-            if (slot.word !in WheelWords.grid(slot.word.length)) out += "${slot.word} is not a grid word"
+            if (slot.word !in WheelWords.grid(slot.word.length, s.contentLanguage)) out += "${slot.word} is not a grid word"
         }
         if (s.slots.map { it.word }.toSet().size != s.slots.size) out += "a word is used twice"
         if (s.slots.first().word.toList().sorted() != s.wheel.toList().sorted()) out += "slot 0 is not the wheel's own word"

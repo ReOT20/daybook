@@ -19,7 +19,7 @@ sealed interface HexKeyAction {
     data object NextTrace : HexKeyAction
 }
 
-fun hexKeyAction(key: Key): HexKeyAction? = letterKey(key)?.let { HexKeyAction.Letter(it) } ?: when {
+fun hexKeyAction(key: Key, contentLanguage: String = "en"): HexKeyAction? = (if (contentLanguage == "en") letterKey(key) else null)?.let { HexKeyAction.Letter(it) } ?: when {
     isEnterKey(key) -> HexKeyAction.Enter
     isEraseKey(key) -> HexKeyAction.Backspace
     key == Key.Escape -> HexKeyAction.Clear

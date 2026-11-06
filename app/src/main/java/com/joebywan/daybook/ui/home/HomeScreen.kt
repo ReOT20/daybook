@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.home
 
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
@@ -216,7 +218,8 @@ fun HomeScreen(
             .toSet()
     }
     val streak = remember(completions, today) { Stats.streak(completions, today) }
-    val tally = remember(trained) { Training.tally(trained) }
+    val courses = remember(puzzles) { Training.COURSES.filter { c -> puzzles.any { it.id == c.id } } }
+    val tally = remember(trained, courses) { Training.tally(trained, courses) }
 
     // What the header and the pinned rows take, so the grid knows the height left for its tiles (homeColumns).
     var headerHeight by remember { mutableStateOf(0) }
@@ -293,8 +296,8 @@ fun HomeScreen(
                 ) {
                     LaunchOptions(
                         difficulty, onDifficulty, mode, dayMode, onMode,
-                        levelLine = "Level ${levels.current}",
-                        trainingLine = "${tally.graduated} of ${tally.courses}",
+                        levelLine = text("ui.home_screen.level", "levels_current" to (levels.current)),
+                        trainingLine = text("ui.home_screen.of", "tally_graduated" to (tally.graduated), "tally_courses" to (tally.courses)),
                         levelStrip = { LevelStrip(levels, onLevels) },
                         trainingStrip = { TrainingStrip(tally) },
                         sideBySide = short,
@@ -342,7 +345,7 @@ fun HomeScreen(
             // welcome has said it already, and a first visit has enough to read.
             if (mode.tiered && !customOrder && completions.distinctBy { it.puzzleId }.size >= 3) item {
                 Text(
-                    "Press and hold a puzzle to move it.",
+                    text("ui.home_screen.press_and_hold_a_puzzle_to"),
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -377,7 +380,7 @@ private fun ContinueRow(puzzle: PuzzleType, tier: Difficulty, modifier: Modifier
         puzzle.Preview(Modifier.size(32.dp).clip(RoundedCornerShape(8.dp)).background(scheme.surface))
         Spacer(Modifier.width(12.dp))
         Text(
-            "Continue ${puzzle.displayName} · ${tier.label}",
+            text("ui.home_screen.continue", "puzzle_displayName" to (puzzle.displayName), "tier_label" to (tier.label)),
             style = MaterialTheme.typography.titleMedium,
             color = tile.ink,
             maxLines = 1,
@@ -423,9 +426,9 @@ private fun Header(
             // Each button's touch target is 48dp (Material's minimum) around its 36dp circle; neighbours overlap by
             // the 6dp between circles, and the offset puts the last circle back at the margin, so the title keeps its room at 360dp.
             Row(Modifier.offset(x = HeaderTouchInset), horizontalArrangement = Arrangement.spacedBy(-HeaderTouchInset)) {
-                HeaderButton("Archive", onArchive) { Icon(Icons.Default.History, it, tint = scheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) }
-                HeaderButton("Achievements", onAchievements) { MedalIcon(Modifier.size(22.dp), scheme.onSurfaceVariant, it) }
-                HeaderButton("Settings", onSettings) { Icon(Icons.Default.Settings, it, tint = scheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) }
+                HeaderButton(text("ui.archive_screen.archive_66f480"), onArchive) { Icon(Icons.Default.History, it, tint = scheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) }
+                HeaderButton(text("ui.home_screen.achievements"), onAchievements) { MedalIcon(Modifier.size(22.dp), scheme.onSurfaceVariant, it) }
+                HeaderButton(text("ui.home_screen.settings"), onSettings) { Icon(Icons.Default.Settings, it, tint = scheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) }
             }
         }
         if (!compact) Row(
@@ -484,7 +487,7 @@ private fun StreakBadge(streak: Streak, onStats: () -> Unit) {
         Modifier
             .clip(RoundedCornerShape(50))
             .background(scheme.surface)
-            .clickable(onClickLabel = "Statistics", onClick = onStats)
+            .clickable(onClickLabel = text("ui.home_screen.statistics"), onClick = onStats)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -495,7 +498,7 @@ private fun StreakBadge(streak: Streak, onStats: () -> Unit) {
         if (!streak.alive) {
             Text("0", style = MaterialTheme.typography.titleMedium, modifier = Modifier.width(0.dp).alpha(0f).clearAndSetSemantics { })
             Text(
-                if (streak.lapsed) "Welcome back" else "Day one awaits",
+                if (streak.lapsed) text("ui.home_screen.welcome_back") else text("ui.home_screen.day_one_awaits"),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurfaceVariant,
             )
@@ -506,7 +509,7 @@ private fun StreakBadge(streak: Streak, onStats: () -> Unit) {
                 color = scheme.secondary,
             )
             Spacer(Modifier.width(6.dp))
-            Text("day streak", style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
+            Text(text("home.streak.caption", "count" to (streak.current)), style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
         }
     }
 }
@@ -639,10 +642,10 @@ private fun PuzzleGrid(
                                 // The drag's twin for a screen reader, which cannot press and drag.
                                 .semantics {
                                     customActions = listOfNotNull(
-                                        if (index > 0) CustomAccessibilityAction("Move earlier") {
+                                        if (index > 0) CustomAccessibilityAction(text("ui.home_screen.move_earlier")) {
                                             onOrder(PuzzleOrder.moved(ids, index, index - 1)); true
                                         } else null,
-                                        if (index < ids.lastIndex) CustomAccessibilityAction("Move later") {
+                                        if (index < ids.lastIndex) CustomAccessibilityAction(text("ui.home_screen.move_later")) {
                                             onOrder(PuzzleOrder.moved(ids, index, index + 1)); true
                                         } else null,
                                     )
@@ -855,7 +858,7 @@ internal fun HomeTile(
                     Modifier.size(16.dp).graphicsLayer { scaleX = pop.value; scaleY = pop.value }.clip(CircleShape).background(scheme.surface),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(Icons.Default.Check, "Solved", tint = tick, modifier = Modifier.size(11.dp))
+                    Icon(Icons.Default.Check, text("ui.archive_screen.solved"), tint = tick, modifier = Modifier.size(11.dp))
                 }
             }
         }
@@ -927,7 +930,7 @@ internal fun TierDots(accent: Color, selected: Difficulty?, cleared: (Difficulty
                 if (cleared(tier)) {
                     Box(dot.size(if (isSelected) 12.dp else 10.dp).background(fill), contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Check, "Solved",
+                            Icons.Default.Check, text("ui.archive_screen.solved"),
                             tint = if (fill.luminance() < .5f) Color.White else Color.Black,
                             modifier = Modifier.fillMaxSize(),
                         )

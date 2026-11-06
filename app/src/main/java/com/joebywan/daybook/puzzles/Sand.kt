@@ -1,5 +1,9 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -113,18 +117,18 @@ data class SandState(
 object Sand : PuzzleType {
 
     override val id = "sand"
-    override val displayName = "Sand"
-    override val tagline = "Pour every colour into a tube of its own"
+    override val displayName get() = text("puzzle.sand.name")
+    override val tagline get() = text("puzzle.sand.tagline")
     override val accent = 0xFF8A8C34
-    override val rules = listOf(
-        "Sort the sand: finish with every tube holding one colour, or nothing.",
-        "Tap a tube to lift it, then tap another to pour into it. Tap the lifted tube again to put it down.",
-        "A pour moves the colour on top, all of it or as much as fits, onto the same colour or into an empty tube.",
-        "Every colour has its own symbol. There is no move limit, and Undo takes a pour back.",
+    override val rules get() = listOf(
+        text("puzzle.sand.rule.1"),
+        text("puzzle.sand.rule.2"),
+        text("puzzle.sand.rule.3"),
+        text("puzzle.sand.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Keys 1 to 9 and 0 pick tubes 1 to 10: the first lifts, the second pours. Escape puts the tube down.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.sand.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -148,6 +152,12 @@ object Sand : PuzzleType {
 
     /** What the hints call each colour. */
     val colourNames = listOf("brown", "cream", "lilac", "violet", "wine", "mint", "teal", "orange")
+
+    internal fun colourNameMessage(colour: Int): Message = message(colourNameKeys[colour])
+
+    private val colourNameKeys = listOf(
+        "puzzle.sand.colour.0", "puzzle.sand.colour.1", "puzzle.sand.colour.2", "puzzle.sand.colour.3", "puzzle.sand.colour.4", "puzzle.sand.colour.5", "puzzle.sand.colour.6", "puzzle.sand.colour.7",
+    )
 
     // ---- drawing ------------------------------------------------------------------------------
 
@@ -483,7 +493,7 @@ object Sand : PuzzleType {
                 // One line under the tubes, always reserved, so the board never moves for it.
                 Box(Modifier.offset(y = boardH).width(boardW).height(captionH), contentAlignment = Alignment.Center) {
                     if (stuck) Text(
-                        "No pours left: undo a few",
+                        text("puzzle.sand.board.stuck"),
                         color = scheme.error,
                         fontSize = 14.sp,
                         maxLines = 1,
@@ -515,21 +525,20 @@ object Sand : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Sort the sand so each tube holds one colour (each has a symbol too). A pour moves the top colour, " +
-                    "as much as fits, onto the same colour or into an empty tube.",
+                caption = message("puzzle.sand.tutorial.1.caption"),
                 highlight = BoardHighlight(soft = (0 until 5).toSet()),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "Tubes 1 and 2 both have cream on top. Tap tube 1 to lift it, then tap tube 2 to pour.",
+                caption = message("puzzle.sand.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 1)),
                 accepts = makes(s1),
-                retry = "Tap the glowing tube 1, then tube 2.",
-                done = "The cream went onto the cream.",
+                retry = message("puzzle.sand.tutorial.2.retry"),
+                done = message("puzzle.sand.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "Tube 3's two brown sit on a cream. Pour them into the empty tube 5, then pour tube 2's two cream onto tube 3.",
+                caption = message("puzzle.sand.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(2, 4)),
                 steps = { next ->
                     when ((next as? SandState)?.tubes) {
@@ -539,14 +548,14 @@ object Sand : PuzzleType {
                     }
                 },
                 glow = { now -> BoardHighlight(strong = if ((now as? SandState)?.tubes == s2.tubes) setOf(1, 2) else setOf(2, 4)) },
-                retry = "Tap the glowing tubes, the one to pour from first.",
-                done = "Tube 3 is all cream: finished.",
+                retry = message("puzzle.sand.tutorial.3.retry"),
+                done = message("puzzle.sand.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = s3,
-                caption = "Your turn: sort the rest. Stuck? Hint shows you why.",
+                caption = message("puzzle.sand.tutorial.4.caption"),
                 freePlay = true,
-                done = "Sorted. That's all there is to it.",
+                done = message("puzzle.sand.tutorial.4.done"),
             ),
         )
     }

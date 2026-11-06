@@ -1,5 +1,9 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -170,20 +174,20 @@ data class KingsState(
 object Kings : PuzzleType {
 
     override val id = "kings"
-    override val displayName = "Kings"
-    override val tagline = "One crown per row, column and colour"
+    override val displayName get() = text("puzzle.kings.name")
+    override val tagline get() = text("puzzle.kings.tagline")
     override val accent = 0xFF94669F
-    override val rules = listOf(
-        "Place exactly one king in every row, every column and every coloured region.",
-        "No two kings may touch, not even diagonally.",
-        "Tap a square to pencil it out, and tap it again to rub the mark away.",
-        "Double-tap or long-press a square to crown a king there, or to take the crown back.",
-        "Drag across a run of squares to mark them all in one sweep.",
-        "Squares a king already rules out are crossed off for you.",
+    override val rules get() = listOf(
+        text("puzzle.kings.rule.1"),
+        text("puzzle.kings.rule.2"),
+        text("puzzle.kings.rule.3"),
+        text("puzzle.kings.rule.4"),
+        text("puzzle.kings.rule.5"),
+        text("puzzle.kings.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Space pencils a square out, K or Enter crowns it, Backspace empties it.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.kings.keyboard.1"),
     )
 
     /**
@@ -226,6 +230,14 @@ object Kings : PuzzleType {
     /** The name of the colour each region is painted in, as [regionPalette] paints it. */
     internal fun regionNames(n: Int, region: List<Int>): List<String> =
         regionPalette(n, region).map { colourNames[it % colourNames.size] }
+
+    /** Display descriptors; palette indices and canonical colour names stay unchanged. */
+    internal fun regionNameMessages(n: Int, region: List<Int>): List<Message> =
+        regionPalette(n, region).map { message(colourNameKeys[it % colourNameKeys.size]) }
+
+    private val colourNameKeys = listOf(
+        "puzzle.kings.colour.0", "puzzle.kings.colour.1", "puzzle.kings.colour.2", "puzzle.kings.colour.3", "puzzle.kings.colour.4", "puzzle.kings.colour.5", "puzzle.kings.colour.6", "puzzle.kings.colour.7", "puzzle.kings.colour.8",
+    )
 
     /**
      * How different two [regionColours] look, as the worst of CIEDE2000 for normal vision and for
@@ -621,54 +633,49 @@ object Kings : PuzzleType {
         val row3 = (10..14).toSet()
         val column2 = setOf(1, 6, 11, 16, 21)
         val secondCells = setOf(2, 7)
-        val names = regionNames(TUTORIAL_N, TUTORIAL_REGIONS)
+        val names = regionNameMessages(TUTORIAL_N, TUTORIAL_REGIONS)
         val first = names[0] // the corner region, one square once its neighbour is crossed out
         val second = names[1] // the two squares in column 3
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Every row, every column and every colour holds exactly one king. " +
-                    "Here are one row, one column and $second, each with its one king.",
+                caption = message("puzzle.kings.tutorial.1.caption", "second" to (second)),
                 highlight = BoardHighlight(strong = row3 + column2 + secondCells),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Kings can't touch, not even corner to corner. None of the eight squares " +
-                    "around a king can hold another.",
+                caption = message("puzzle.kings.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(7), soft = setOf(1, 2, 3, 6, 8, 11, 12, 13)),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "A king on the glowing square would share a row with one $second square and " +
-                    "touch the other, leaving $second nowhere. Tap it to cross it out.",
+                caption = message("puzzle.kings.tutorial.3.caption", "second" to (second)),
                 highlight = BoardHighlight(strong = setOf(1), soft = secondCells),
                 accepts = only(empty, mapOf(1 to Mark.BLOCKED)),
-                retry = "Tap the glowing square once.",
-                done = "Crossed out. That square can never hold a king.",
+                retry = message("puzzle.kings.tutorial.3.retry"),
+                done = message("puzzle.kings.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = cornerLeft,
-                caption = "${first.cap()} has only one square left, so its king must go there. " +
-                    "Double-tap or long-press it to crown it.",
+                caption = message("puzzle.kings.tutorial.4.caption", "first_cap_" to (first.cap())),
                 highlight = BoardHighlight(strong = setOf(0), soft = setOf(1)),
                 accepts = only(cornerLeft, mapOf(0 to Mark.KING)),
-                retry = "Double-tap the glowing square (two quick taps), or press and hold it.",
-                done = "Crowned. The board crosses off every square it rules out.",
+                retry = message("puzzle.kings.tutorial.4.retry"),
+                done = message("puzzle.kings.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = crowned,
-                caption = "${second.cap()} sits entirely in column 3, so column 3's king is $second. Drag down the " +
-                    "glowing squares to cross them all out in one sweep.",
+                caption = message("puzzle.kings.tutorial.5.caption", "second_cap_" to (second.cap()), "second" to (second)),
                 highlight = BoardHighlight(strong = setOf(12, 17, 22), soft = secondCells),
                 accepts = only(crowned, mapOf(12 to Mark.BLOCKED, 17 to Mark.BLOCKED, 22 to Mark.BLOCKED)),
-                retry = "Drag along all three glowing squares in one sweep.",
-                done = "Swept: one drag marks a whole run.",
+                retry = message("puzzle.kings.tutorial.5.retry"),
+                done = message("puzzle.kings.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = swept,
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.kings.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.kings.tutorial.6.done"),
             ),
         )
     }

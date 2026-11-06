@@ -65,6 +65,13 @@ class TechniqueNamesTest {
         "whoswho" to WhosWhoTeacher.TECHNIQUES,
         "mini" to MiniTeacher.TECHNIQUES,
         "hexwords" to com.joebywan.daybook.puzzles.HexwordsTeacher.TECHNIQUES,
+        "words-ru" to LexiconTeacher.TECHNIQUES,
+        "wordwheel-ru" to WordWheelTeacher.TECHNIQUES,
+        "mini-ru" to MiniTeacher.TECHNIQUES,
+        "codeword-ru" to CodewordTeacher.TECHNIQUES,
+        "hexwords-ru" to com.joebywan.daybook.puzzles.HexwordsTeacher.TECHNIQUES,
+        "dwindle-ru" to DwindleTeacher.TECHNIQUES,
+        "cipher-ru" to CipherTeacher.TECHNIQUES,
     )
     private val unnamed = setOf("mistake", "fallback")
 

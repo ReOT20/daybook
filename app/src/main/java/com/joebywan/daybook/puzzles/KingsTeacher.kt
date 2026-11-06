@@ -1,9 +1,15 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.listed
-import com.joebywan.daybook.core.numberWord
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.numberWordMessage
+import com.joebywan.daybook.core.substringBefore
 
 /**
  * Kings, reasoned the way a person reasons it, one named step at a time.
@@ -62,22 +68,28 @@ internal object KingsTeacher {
         val clears: List<Int> = emptyList(),
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         /** For [CONFINED]: how many colours and lines it ties together (two or more). */
         val width: Int = 0,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = (kings + crosses + clears).toSet()
     }
 
     private enum class Kind { REGION, ROW, COLUMN }
 
     /** A row, a column or a colour region: somewhere that needs exactly one king. */
-    private class House(val kind: Kind, val id: Int, val cells: List<Int>, colour: String = "") {
-        val name: String = when (kind) {
+    private class House(val kind: Kind, val id: Int, val cells: List<Int>, colour: Message = literalMessage("")) {
+        val name: Message = when (kind) {
             Kind.REGION -> colour
-            Kind.ROW -> "row ${id + 1}"
-            Kind.COLUMN -> "column ${id + 1}"
+            Kind.ROW -> message("teacher.kings.name.1", "id_1" to (id + 1))
+            Kind.COLUMN -> message("teacher.kings.name.2", "id_1" to (id + 1))
         }
     }
 
@@ -91,7 +103,7 @@ internal object KingsTeacher {
         val kings: List<Int>,
         val blocked: BooleanArray,
         /** Each region's colour, by name, as the board paints it. */
-        val names: List<String> = Kings.regionNames(n, region),
+        val names: List<Message> = Kings.regionNameMessages(n, region),
         /** `reach[x][c]`: a king on x rules out c. Worked out once a board and shared by [withKing]. */
         val reach: Array<BooleanArray> = Array(n * n) { x -> BooleanArray(n * n).also { r -> Kings.attacks(n, region, x).forEach { r[it] = true } } },
     ) {
@@ -157,12 +169,11 @@ internal object KingsTeacher {
                 clears = listOf(cross),
                 focus = setOf(cross),
                 cited = last?.cells?.toSet().orEmpty(),
-                nudge = "Check this cross.",
+                nudge = message("teacher.kings.mistake.1"),
                 explanation = if (last != null) {
-                    "This is the only square ${last.name} has left, so it can't be crossed out. " +
-                        "Tap it to clear the cross."
+                    message("teacher.kings.mistake.2", "last_name" to (last.name))
                 } else {
-                    "This cross doesn't belong. Tap it to clear it."
+                    message("teacher.kings.mistake.3")
                 },
             )
         }
@@ -177,9 +188,9 @@ internal object KingsTeacher {
         blocked: BooleanArray,
         wrong: Int,
     ): Step {
-        fun step(explanation: String, cited: Set<Int>) = Step(
+        fun step(explanation: Message, cited: Set<Int>) = Step(
             technique = MISTAKE, clears = listOf(wrong), focus = setOf(wrong),
-            cited = cited, nudge = "Check this king.", explanation = explanation,
+            cited = cited, nudge = message("teacher.kings.step.1"), explanation = explanation,
         )
         val wr = wrong / n
         val wc = wrong % n
@@ -187,30 +198,29 @@ internal object KingsTeacher {
         for (other in kings) {
             if (other == wrong) continue
             val why = when {
-                other / n == wr -> "shares a row with another king"
-                other % n == wc -> "shares a column with another king"
-                region[other] == region[wrong] -> "is the second king in ${Kings.regionNames(n, region)[region[wrong]]}"
+                other / n == wr -> message("teacher.kings.explain_wrong_king.1")
+                other % n == wc -> message("teacher.kings.explain_wrong_king.2")
+                region[other] == region[wrong] -> message("teacher.kings.explain_wrong_king.3", "value1" to (Kings.regionNameMessages(n, region)[region[wrong]]))
                 kotlin.math.abs(other / n - wr) <= 1 && kotlin.math.abs(other % n - wc) <= 1 ->
-                    "touches another king"
+                    message("teacher.kings.explain_wrong_king.4")
                 else -> null
             } ?: continue
-            return step("This king $why. Double-tap it to take it back.", setOf(other))
+            return step(message("teacher.kings.explain_wrong_king.5", "why" to (why)), setOf(other))
         }
         val chain = chainToEmpty(Sight(n, region, correct + wrong, blocked))
         if (chain != null) {
             val cited = chain.cited()
             return step(
                 if (chain.forced.isEmpty()) {
-                    "This king leaves ${chain.emptied.name} with no room for a king. Double-tap it to take it back."
+                    message("teacher.kings.explain_wrong_king.6", "chain_emptied_name" to (chain.emptied.name))
                 } else {
-                    "With this king, ${chain.forcedPhrase()}, and that leaves ${chain.emptied.name} " +
-                        "with no room. Double-tap it to take it back."
+                    message("teacher.kings.explain_wrong_king.7", "chain_forcedPhrase_" to (chain.forcedPhrase()), "chain_emptied_name" to (chain.emptied.name))
                 },
                 cited,
             )
         }
         return step(
-            "This king isn't part of the answer. Double-tap it to take it back, and look again.",
+            message("teacher.kings.explain_wrong_king.8"),
             emptySet(),
         )
     }
@@ -234,9 +244,8 @@ internal object KingsTeacher {
             kings = listOf(target),
             focus = home.cells.toSet(),
             cited = emptySet(),
-            nudge = "This one takes a longer chain. Look at ${home.name}.",
-            explanation = "This one needs a longer chain than a hint can walk through, " +
-                "so here's a square that holds a king.",
+            nudge = message("teacher.kings.fallback.1", "home_name" to (home.name)),
+            explanation = message("teacher.kings.fallback.2"),
         )
     }
 
@@ -320,9 +329,8 @@ internal object KingsTeacher {
                     kings = open,
                     focus = h.cells.toSet(),
                     cited = h.cells.toSet(),
-                    nudge = "Look at ${h.name}.",
-                    explanation = "${h.name.cap()} has only one square left that could hold a king, " +
-                        "so its king goes there.",
+                    nudge = message("teacher.kings.last_squares.1", "h_name" to (h.name)),
+                    explanation = message("teacher.kings.last_squares.2", "h_name_cap_" to (h.name.cap())),
                 ),
             )
         }
@@ -362,17 +370,15 @@ internal object KingsTeacher {
                     crosses = crosses,
                     focus = group.flatMap { it.cells }.toSet(),
                     cited = open.toSet(),
-                    nudge = if (k == 1) "Look at ${group[0].name}." else "Look at ${listed(group.map { it.name })} together.",
+                    nudge = if (k == 1) message("teacher.kings.confinements.1", "group_0_name" to (group[0].name)) else message("teacher.kings.confinements.2", "value1" to (listedMessage(group.map { it.name }))),
                     explanation = if (k == 1) {
                         val line = lineHouses[0].name
                         val kind = line.substringBefore(' ')
-                        "Every open square of ${group[0].name} is in $line, so that $kind's king must be " +
-                            "${group[0].name}. The rest of the $kind can be crossed out."
+                        message("teacher.kings.confinements.3", "group_0_name" to (group[0].name), "line" to (line), "kind" to (kind))
                     } else {
-                        val names = listed(group.map { it.name })
+                        val names = listedMessage(group.map { it.name })
                         val where = linesPhrase(lineKind, lines)
-                        "${names.cap()} only fit in $where, so those ${numberWord(k, upTo = 9)} kings are theirs. " +
-                            "Nothing else in those ${if (lineKind == Kind.ROW) "rows" else "columns"} can hold a king."
+                        message("teacher.kings.confinements.4", "names_cap_" to (names.cap()), "where" to (where), "numberWord_k_upTo_9_" to (numberWordMessage(k, upTo = 9)), "value4" to (if (lineKind == Kind.ROW) message("teacher.kings.confinements.extra.1") else message("teacher.kings.confinements.extra.2")))
                     },
                     width = if (k == 1) 0 else k,
                 ))
@@ -399,15 +405,13 @@ internal object KingsTeacher {
                     crosses = crosses,
                     focus = group.flatMap { it.cells }.toSet(),
                     cited = open.toSet(),
-                    nudge = if (k == 1) "Look at ${group[0].name}." else "Look at ${linesPhrase(lineKind, lines.sorted())} together.",
+                    nudge = if (k == 1) message("teacher.kings.confinements.5", "group_0_name" to (group[0].name)) else message("teacher.kings.confinements.6", "value1" to (linesPhrase(lineKind, lines.sorted()))),
                     explanation = if (k == 1) {
                         val line = group[0].name
-                        "Every open square in $line is ${colours[0]}, so ${colours[0]}'s king must be in " +
-                            "that ${line.substringBefore(' ')}. The rest of ${colours[0]} can be crossed out."
+                        message("teacher.kings.confinements.7", "line" to (line), "colours_0_" to (colours[0]), "line_substringBefore_" to (line.substringBefore(' ')))
                     } else {
                         val where = linesPhrase(lineKind, lines.sorted())
-                        "${where.cap()} only reach ${listed(colours)}, so those ${numberWord(k, upTo = 9)} colours' kings " +
-                            "are in them. The rest of ${listed(colours)} can be crossed out."
+                        message("teacher.kings.confinements.8", "where_cap_" to (where.cap()), "listed_colours_" to (listedMessage(colours)), "numberWord_k_upTo_9_" to (numberWordMessage(k, upTo = 9)))
                     },
                     width = if (k == 1) 0 else k,
                 ))
@@ -449,15 +453,14 @@ internal object KingsTeacher {
 
     private fun wouldEmptyStep(s: Sight, house: House, attackers: List<Int>): Step {
         val open = s.openIn(house)
-        val squares = if (attackers.size == 1) "a king here" else "a king on any glowing square"
+        val squares = if (attackers.size == 1) message("teacher.kings.would_empty_step.1") else message("teacher.kings.would_empty_step.2")
         return Step(
             technique = WOULD_EMPTY,
             crosses = attackers,
             focus = house.cells.toSet(),
             cited = open.toSet(),
-            nudge = "Look at ${house.name}.",
-            explanation = "${squares.cap()} would rule out every open square of ${house.name}, " +
-                "leaving it nowhere for a king. Cross ${if (attackers.size == 1) "it" else "them"} out.",
+            nudge = message("teacher.kings.would_empty_step.3", "house_name" to (house.name)),
+            explanation = message("teacher.kings.would_empty_step.4", "squares_cap_" to (squares.cap()), "house_name" to (house.name), "value3" to (if (attackers.size == 1) message("teacher.kings.would_empty_step.extra.1") else message("teacher.kings.would_empty_step.extra.2"))),
         )
     }
 
@@ -465,12 +468,12 @@ internal object KingsTeacher {
     private class Chain(val forced: List<Pair<House, Int>>, val emptied: House) {
         fun cited(): Set<Int> = (forced.map { it.second } + emptied.cells).toSet()
 
-        fun forcedPhrase(): String {
+        fun forcedPhrase(): Message {
             val names = forced.map { it.first.name }
             return if (names.size == 1) {
-                "${names[0]} would be down to one square"
+                message("teacher.kings.forced_phrase.1", "names_0_" to (names[0]))
             } else {
-                "${names.joinToString(" and then ")} would each be down to one square"
+                message("teacher.kings.forced_phrase.2", "value1" to (names.joinedMessages(message("teacher.kings.forced_phrase.extra.1"))))
             }
         }
     }
@@ -511,18 +514,17 @@ internal object KingsTeacher {
 
     private fun whatIfStep(x: Int, chain: Chain): Step {
         val tail = if (chain.forced.isEmpty()) {
-            "${chain.emptied.name} would have nowhere left"
+            message("teacher.kings.what_if_step.1", "chain_emptied_name" to (chain.emptied.name))
         } else {
-            "${chain.forcedPhrase()}, and the king${if (chain.forced.size == 1) " that forces" else "s those force"} " +
-                "would leave ${chain.emptied.name} with nowhere to go"
+            message("teacher.kings.what_if_step.2", "chain_forcedPhrase_" to (chain.forcedPhrase()), "value2" to (if (chain.forced.size == 1) message("teacher.kings.what_if_step.extra.1") else message("teacher.kings.what_if_step.extra.2")), "chain_emptied_name" to (chain.emptied.name))
         }
         return Step(
             technique = WHAT_IF,
             crosses = listOf(x),
             focus = setOf(x),
             cited = chain.cited(),
-            nudge = "What if a king went on the glowing square?",
-            explanation = "If a king went here, $tail. So it can be crossed out.",
+            nudge = message("teacher.kings.what_if_step.3"),
+            explanation = message("teacher.kings.what_if_step.4", "tail" to (tail)),
         )
     }
 
@@ -530,8 +532,8 @@ internal object KingsTeacher {
 
     private fun lineOf(n: Int, kind: Kind, cell: Int) = if (kind == Kind.ROW) cell / n else cell % n
 
-    private fun linesPhrase(kind: Kind, lines: List<Int>): String =
-        (if (kind == Kind.ROW) "rows " else "columns ") + listed(lines.map { (it + 1).toString() })
+    private fun linesPhrase(kind: Kind, lines: List<Int>): Message =
+        (if (kind == Kind.ROW) message("teacher.kings.lines_phrase.1") else message("teacher.kings.lines_phrase.2")) + listedMessage(lines.map { (it + 1).toString() })
 
     /** Every [k]-sized subset of [items], in lexicographic index order. */
     private fun <T> combinations(items: List<T>, k: Int): Sequence<List<T>> = sequence {

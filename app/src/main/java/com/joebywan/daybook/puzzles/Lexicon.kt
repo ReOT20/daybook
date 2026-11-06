@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +56,7 @@ import com.joebywan.daybook.core.BoardHighlight
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.boardKeys
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.core.TutorialFrame
 import com.joebywan.daybook.core.TutorialStep
@@ -83,21 +87,21 @@ import com.joebywan.daybook.ui.boardSp
 object Lexicon : PuzzleType {
 
     override val id = "words"
-    override val displayName = "Lexicon"
-    override val tagline = "Find the hidden word"
+    override val displayName get() = text("puzzle.words.name")
+    override val tagline get() = text("puzzle.words.tagline")
     override val accent = 0xFF278E8E
-    override val rules = listOf(
-        "A word is hidden. Type a real word and press Enter to guess it.",
-        "Green: the right letter in the right place.",
-        "Yellow: the letter is in the word, but somewhere else.",
-        "Grey: the word has no (more) of that letter.",
-        "A letter is marked only as many times as the word holds it, so a second E can be grey while the first is yellow.",
-        "The keys keep the best clue for each letter.",
-        "Four-letter words have more look-alikes than five.",
+    override val rules get() = listOf(
+        text("puzzle.words.rule.1"),
+        text("puzzle.words.rule.2"),
+        text("puzzle.words.rule.3"),
+        text("puzzle.words.rule.4"),
+        text("puzzle.words.rule.5"),
+        text("puzzle.words.rule.6"),
+        text("puzzle.words.rule.7"),
     )
 
-    override val keyboardHelp = listOf(
-        "Type letters, Backspace deletes, Enter submits.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.words.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty) = LexiconRules.newBoard(seed, difficulty)
@@ -239,39 +243,35 @@ object Lexicon : PuzzleType {
         listOf(
             TutorialFrame(
                 state = tutorialBoard(1),
-                caption = "A word is hidden, here one of four letters. Every guess must be a real " +
-                    "word, and each letter comes back marked. Green means right letter, right place.",
+                caption = message("puzzle.words.tutorial.1.caption"),
                 highlight = BoardHighlight(soft = tiles(0, 0, 1, 2, 3)),
             ),
             TutorialFrame(
                 state = tutorialBoard(1),
-                caption = "Yellow means the letter is in the word, but not there: T and A are in it. " +
-                    "Grey means the word has none of it: P and E are out.",
+                caption = message("puzzle.words.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = tiles(0, 0, 1), soft = tiles(0, 2, 3)),
             ),
             TutorialFrame(
                 state = tutorialBoard(1),
-                caption = "Use what you know: T and A are in the word, so move them. BOAT puts them in new " +
-                    "places. Type BOAT on the keyboard, then tap Enter to score it.",
+                caption = message("puzzle.words.tutorial.3.caption"),
                 glow = keyGlow(1),
                 steps = typeGuess(1),
-                retry = "Tap the glowing key.",
-                done = "Scored: the word ends in OAT.",
+                retry = message("puzzle.words.tutorial.3.retry"),
+                done = message("puzzle.words.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(2),
-                caption = "COAT, GOAT or MOAT: guess them in turn and it could take three. CLOG can't be the " +
-                    "word, but its C and G tell all three apart. Type CLOG and score it.",
+                caption = message("puzzle.words.tutorial.4.caption"),
                 glow = keyGlow(2),
                 steps = typeGuess(2),
-                retry = "Tap the glowing key.",
-                done = "C is green and G grey: only COAT is left.",
+                retry = message("puzzle.words.tutorial.4.retry"),
+                done = message("puzzle.words.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(3),
-                caption = "Your turn: find the word. Stuck? Hint shows you why.",
+                caption = message("puzzle.words.tutorial.5.caption"),
                 freePlay = true,
-                done = "Found it. That's all there is to it.",
+                done = message("puzzle.words.tutorial.5.done"),
             ),
         )
     }
@@ -286,7 +286,7 @@ object Lexicon : PuzzleType {
         val s = state as LexiconState
         if (!s.open) return null
         val marks = s.allMarks
-        val step = LexiconTeacher.teach(s.length, s.guesses, marks, s.current, s.opener) ?: return null
+        val step = LexiconTeacher.teach(s.length, s.guesses, marks, s.current, s.opener, s.contentLanguage) ?: return null
         val base = s
         fun fits(word: String) = LexiconRules.consistent(word, base.guesses, marks)
         fun newGuesses(now: LexiconState) = now.guesses.drop(base.guesses.size)
@@ -331,10 +331,10 @@ object Lexicon : PuzzleType {
 
     /** The best clue the board holds for each letter, a..z: a [LexiconMark], or -1 for a letter not yet tried. */
     private fun keyMarks(s: LexiconState): IntArray {
-        val best = IntArray(26) { -1 }
+        val best = IntArray(WordContent.alphabet(s.contentLanguage).length) { -1 }
         s.guesses.forEach { guess ->
             val marks = s.marks(guess)
-            guess.forEachIndexed { i, c -> if (marks[i] > best[c - 'a']) best[c - 'a'] = marks[i] }
+            guess.forEachIndexed { i, c -> val k = WordContent.index(c, s.contentLanguage); if (marks[i] > best[k]) best[k] = marks[i] }
         }
         return best
     }
@@ -344,6 +344,7 @@ object Lexicon : PuzzleType {
     @Composable
     override fun Board(state: PuzzleState, onState: (PuzzleState) -> Unit, interactive: Boolean) {
         val s = state as LexiconState
+        val keyRows = if (s.contentLanguage == "ru") listOf("йцукенгшщзхъ", "фывапролджэ", "ячсмитьбю") else keyRows
         val scheme = MaterialTheme.colorScheme
         val (highlight, glow, pulse) = rememberHintPaint()
         val tilesNamed = highlight.strong.any { it < LexiconTeacher.KEY } || highlight.soft.any { it < LexiconTeacher.KEY }
@@ -380,13 +381,21 @@ object Lexicon : PuzzleType {
         // either orientation keeps its exact look; at most 1.5 (keys about 63dp tall, tiles up to 96dp).
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val scale = minOf(maxWidth / MAX_KEYBOARD, maxHeight / SCALE_HEIGHT).coerceIn(1f, MAX_SCALE)
+            // Short teaching slots keep all keys and leave more room for the grid.
+            val keyHeight = if (maxHeight < 300.dp) 32.dp else KEY_HEIGHT * scale
             Column(
                 Modifier
                     .fillMaxSize()
                     .padding(horizontal = 12.dp)
-                    .boardKeys(playable) { key, _, repeat ->
+                    .boardKeys(playable, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                        val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                        if (letter != null && letter in WordContent.alphabet(s.contentLanguage)) {
+                            if (!repeat) press(LexiconKeyAction.Letter(letter))
+                            true
+                        } else false
+                    } else null) { key, _, repeat ->
                         // A held Backspace would eat the whole row, a held letter fill it.
-                        val action = lexiconKeyAction(key) ?: return@boardKeys false
+                        val action = lexiconKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                         if (!repeat) press(action)
                         true
                     },
@@ -395,8 +404,8 @@ object Lexicon : PuzzleType {
                 // One line, always laid out: the guesses left, or why Enter refused, or the word.
                 val line = when {
                     notice != null -> notice!!
-                    s.failed -> "Out of guesses. The word was ${s.answer.uppercase()}."
-                    else -> "${s.maxGuesses - s.guesses.size} guesses left"
+                    s.failed -> text("puzzle.words.board.lost", "word" to (s.answer.uppercase()))
+                    else -> text("puzzle.words.board.remaining", "count" to (s.maxGuesses - s.guesses.size))
                 }
                 Text(
                     line,
@@ -449,13 +458,13 @@ object Lexicon : PuzzleType {
                             // The nine-key row is centred under the ten above it.
                             if (r == 1) Spacer(Modifier.weight(0.5f))
                             if (r == 2) {
-                                KeyButton("Del", Modifier.weight(1.5f), playable, LexiconTeacher.DELETE, highlight, glow, pulse,
-                                    a.control.brush, a.control.ink, a.control.glow, null, small = true, scale) {
+                                KeyButton(text("puzzle.words.board.delete"), Modifier.weight(1.5f), playable, LexiconTeacher.DELETE, highlight, glow, pulse,
+                                    a.control.brush, a.control.ink, a.control.glow, null, small = true, scale, keyHeight) {
                                     press(LexiconKeyAction.Backspace)
                                 }
                             }
                             letters.forEach { c ->
-                                val mark = known[c - 'a']
+                                val mark = known[WordContent.index(c, s.contentLanguage)]
                                 val fill = when (mark) {
                                     -1 -> SolidColor(a.given)
                                     LexiconMark.ABSENT -> SolidColor(m.absent)
@@ -473,15 +482,15 @@ object Lexicon : PuzzleType {
                                     LexiconMark.PRESENT -> m.present.glow
                                     else -> null
                                 }
-                                KeyButton(c.uppercase(), Modifier.weight(1f), playable, LexiconTeacher.key(c), highlight, glow, pulse,
-                                    fill, text, lift, mark, small = false, scale) {
+                                KeyButton(c.uppercase(), Modifier.weight(1f), playable, LexiconTeacher.key(c, s.contentLanguage), highlight, glow, pulse,
+                                    fill, text, lift, mark, small = false, scale, keyHeight) {
                                     press(LexiconKeyAction.Letter(c))
                                 }
                             }
                             if (r == 1) Spacer(Modifier.weight(0.5f))
                             if (r == 2) {
-                                KeyButton("Enter", Modifier.weight(1.5f), playable, LexiconTeacher.ENTER, highlight, glow, pulse,
-                                    a.control.brush, a.control.ink, a.control.glow, null, small = true, scale) {
+                                KeyButton(text("puzzle.words.board.enter"), Modifier.weight(1.5f), playable, LexiconTeacher.ENTER, highlight, glow, pulse,
+                                    a.control.brush, a.control.ink, a.control.glow, null, small = true, scale, keyHeight) {
                                     press(LexiconKeyAction.Enter)
                                 }
                             }
@@ -583,12 +592,13 @@ object Lexicon : PuzzleType {
         mark: Int?,
         small: Boolean,
         scale: Float,
+        keyHeight: Dp,
         onClick: () -> Unit,
     ) {
         val shape = RoundedCornerShape(6.dp)
         Box(
             modifier
-                .height(KEY_HEIGHT * scale)
+                .height(keyHeight)
                 .highlightAnchor(index)
                 .ring(highlight.look(index, dims = false), glow, pulse, 6.dp, outside = true)
                 // Inside the keys' gap: a glow where dark gives one, else light's sticker edge.

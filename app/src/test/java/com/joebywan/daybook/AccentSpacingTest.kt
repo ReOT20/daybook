@@ -9,9 +9,12 @@ import com.joebywan.daybook.ColourDistance.prot
 import com.joebywan.daybook.ColourDistance.rgb
 import com.joebywan.daybook.ColourDistance.trit
 import com.joebywan.daybook.core.PuzzleRegistry
+import com.joebywan.daybook.core.puzzleFamilyId
 import com.joebywan.daybook.ui.theme.BoardHues.contrast
 import com.joebywan.daybook.ui.theme.DarkScheme
 import com.joebywan.daybook.ui.theme.LightScheme
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.atan2
@@ -26,7 +29,8 @@ import kotlin.math.hypot
  */
 class AccentSpacingTest {
     private val modes = listOf("normal" to null, "deuteranopia" to deut, "protanopia" to prot, "tritanopia" to trit)
-    private val accents = PuzzleRegistry.all.map { it.id to Color(it.accent) }
+    // A word-content edition keeps its mechanics family's visual identity.
+    private val accents = PuzzleRegistry.all.distinctBy { puzzleFamilyId(it.id) }.map { it.id to Color(it.accent) }
     private val grounds = listOf(LightScheme.surface, LightScheme.background, DarkScheme.surface, DarkScheme.background)
 
     /** CIELAB hue (degrees) and chroma. */
@@ -55,6 +59,24 @@ class AccentSpacingTest {
                 val d = de2000(ca, cb, m)
                 assertTrue("$a and $b accents are $d apart under $name vision, floor $floor", d >= floor)
             }
+        }
+    }
+
+    @Test
+    fun `Russian word editions reuse their registered family's exact accent`() {
+        val editions = mapOf(
+            "words-ru" to "words", "wordwheel-ru" to "wordwheel", "mini-ru" to "mini",
+            "codeword-ru" to "codeword", "hexwords-ru" to "hexwords", "dwindle-ru" to "dwindle", "cipher-ru" to "cipher",
+        )
+        val aliases = PuzzleRegistry.all.filter { puzzleFamilyId(it.id) != it.id }.map { it.id }.toSet()
+        assertEquals("every registered content edition has an explicit colour contract", editions.keys, aliases)
+        for ((id, familyId) in editions) {
+            val edition = PuzzleRegistry.byId(id)
+            val family = PuzzleRegistry.byId(familyId)
+            assertNotNull("$id is registered", edition)
+            assertNotNull("$familyId is registered", family)
+            assertEquals("$id mechanics family", familyId, puzzleFamilyId(id))
+            assertEquals("$id reuses $familyId's accent", family!!.accent, edition!!.accent)
         }
     }
 

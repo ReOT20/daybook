@@ -55,7 +55,7 @@ class LevelBoardsProvedTest {
         "inequality" to Inequality::generateVerified,
         "regions" to { s, d -> RegionsLogic.generateVerified(s, d) },
         "cipher" to Cipher::generateVerified,
-        "wordwheel" to WordWheelLogic::generateVerified,
+        "wordwheel" to { s, d -> WordWheelLogic.generateVerified(s, d) },
         "tally" to TallyLogic::generateVerified,
         "sand" to SandLogic::generateVerified,
         "tents" to TentsLogic::generateVerified,
@@ -67,9 +67,15 @@ class LevelBoardsProvedTest {
         "mines" to MinesLogic::generateVerified,
         "lamps" to LampsLogic::generateVerified,
         "pearls" to PearlsLogic::generateVerified,
-        "mini" to MiniLogic::generateVerified,
-        "hexwords" to com.joebywan.daybook.puzzles.HexLogic::generateVerified,
-        "dwindle" to DwindleLogic::generateVerified,
+        "mini" to { s, d -> MiniLogic.generateVerified(s, d) },
+        "hexwords" to { s, d -> com.joebywan.daybook.puzzles.HexLogic.generateVerified(s, d) },
+        "dwindle" to { s, d -> DwindleLogic.generateVerified(s, d) },
+        "mini-ru" to { s, d -> MiniLogic.generateVerified(s, d, "ru") },
+        "codeword-ru" to { s, d -> com.joebywan.daybook.puzzles.CodewordLogic.generateVerified(s, d, "ru") },
+        "cipher-ru" to { s, d -> com.joebywan.daybook.puzzles.CipherLogic.generateVerified(s, d, "ru") },
+        "wordwheel-ru" to { s, d -> WordWheelLogic.generateVerified(s, d, "ru") },
+        "hexwords-ru" to { s, d -> com.joebywan.daybook.puzzles.HexLogic.generateVerified(s, d, "ru") },
+        "dwindle-ru" to { s, d -> DwindleLogic.generateVerified(s, d, "ru") },
     )
 
     @Test

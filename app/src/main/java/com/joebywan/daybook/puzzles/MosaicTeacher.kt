@@ -1,9 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.forEachBit
-import com.joebywan.daybook.core.plural
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
 
 /**
  * Mosaic, taught one fill at a time.
@@ -56,7 +58,7 @@ internal object MosaicTeacher {
     const val BUDGET = 1_500_000
 
     /** Names for [Mosaic.palette], index for index. */
-    val colourNames = listOf("amber", "teal", "violet", "rose", "blue")
+    val colourNames = listOf(message("teacher.mosaic.colour_names.1"), message("teacher.mosaic.colour_names.2"), message("teacher.mosaic.colour_names.3"), message("teacher.mosaic.colour_names.4"), message("teacher.mosaic.colour_names.5"))
 
     /**
      * One step: a fill to make ([cell] and [colour]), or — for a [MISTAKE] — a board to go back to.
@@ -71,11 +73,17 @@ internal object MosaicTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         val rewind: MosaicState? = null,
         val rewindTo: Int = -1,
-    ) : TeachStep
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     // ---- the board as areas --------------------------------------------------------------------
 
@@ -256,7 +264,7 @@ internal object MosaicTeacher {
         return if (search.exhausted) null else step
     }
 
-    private fun name(colour: Int) = colourNames.getOrElse(colour) { "colour ${colour + 1}" }
+    private fun name(colour: Int) = colourNames.getOrElse(colour) { message("teacher.mosaic.name.1", "colour_1" to (colour + 1)) }
 
     private fun fill(
         a: Areas,
@@ -265,8 +273,8 @@ internal object MosaicTeacher {
         colour: Int,
         focus: Set<Int>,
         cited: Set<Int>,
-        nudge: String,
-        explanation: String,
+        nudge: Message,
+        explanation: Message,
     ) = Step(
         technique = technique,
         cell = a.firstCell(group),
@@ -284,13 +292,13 @@ internal object MosaicTeacher {
     }
 
     /** Why this colour for this area, in a few words, and never claiming more than is true. */
-    private fun colourReason(search: Search, root: Mosaic.Position, colours: Int, group: Int, colour: Int): String {
+    private fun colourReason(search: Search, root: Mosaic.Position, colours: Int, group: Int, colour: Int): Message {
         val g = search.gain(root, group, colour)
         val best = (0 until colours).filter { it != root.hue[group] }.maxOf { search.gain(root, group, it) }
         return when {
-            g > 0 && g == best && g == 1 -> "it joins the ${name(colour)} area beside it"
-            g > 0 && g == best -> "it joins the most neighbours"
-            else -> "that colour keeps you in the limit"
+            g > 0 && g == best && g == 1 -> message("teacher.mosaic.colour_reason.1", "name_colour_" to (name(colour)))
+            g > 0 && g == best -> message("teacher.mosaic.colour_reason.2")
+            else -> message("teacher.mosaic.colour_reason.3")
         }
     }
 
@@ -304,9 +312,8 @@ internal object MosaicTeacher {
                 a, FINISH, g, c,
                 focus = a.cellsOf(g),
                 cited = swallowed(a, g, c),
-                nudge = "One fill can finish this.",
-                explanation = "Every other area touches the glowing one, and they're all ${name(c)}. " +
-                    "Pour ${name(c)} into it and the whole board is one colour.",
+                nudge = message("teacher.mosaic.finish.1"),
+                explanation = message("teacher.mosaic.finish.2", "name_c_" to (name(c))),
             )
         }
         return null
@@ -325,18 +332,16 @@ internal object MosaicTeacher {
         val g = move / 8
         val c = move % 8
         val which = if (lone.size == 1) {
-            "Only ${name(a.hue[g])} is down to one patch: pour ${name(c)} into it."
+            message("teacher.mosaic.count.1", "name_a_hue_g_" to (name(a.hue[g])), "name_c_" to (name(c)))
         } else {
-            "Pour ${name(c)} into the glowing ${name(a.hue[g])} patch: " +
-                "${colourReason(search, root, colours, g, c)}."
+            message("teacher.mosaic.count.2", "name_c_" to (name(c)), "name_a_hue_g_" to (name(a.hue[g])), "value3" to (colourReason(search, root, colours, g, c)))
         }
         return fill(
             a, COUNT, g, c,
             focus = lone.flatMap { a.cellsOf(it) }.toSet(),
             cited = swallowed(a, g, c),
-            nudge = "Count: ${fills(r)} left, $k colours on the board.",
-            explanation = "A fill wipes out a colour only by covering its last patch. ${fills(r).cap()} " +
-                "for ${k - 1} colours means every fill must. $which",
+            nudge = message("teacher.mosaic.count.3", "fills_r_" to (fills(r)), "k" to (k)),
+            explanation = message("teacher.mosaic.count.4", "fills_r_cap_" to (fills(r).cap()), "k_1" to (k - 1), "which" to (which)),
         )
     }
 
@@ -358,9 +363,8 @@ internal object MosaicTeacher {
                     a, BIGGEST, g, c,
                     focus = near,
                     cited = swallowed(a, g, c),
-                    nudge = "Which fill swallows the most areas?",
-                    explanation = "Pouring ${name(c)} into the glowing area swallows $mx neighbouring areas " +
-                        "at once. No fill on the board swallows more.",
+                    nudge = message("teacher.mosaic.biggest.1"),
+                    explanation = message("teacher.mosaic.biggest.2", "name_c_" to (name(c)), "mx" to (mx)),
                 )
             }
         }
@@ -387,14 +391,13 @@ internal object MosaicTeacher {
             val order = (0 until colours).filter { it != a.hue[g] && (only < 0 || g * 8 + it == only) }
                 .sortedWith(compareByDescending<Int> { search.gain(root, g, it) }.thenBy { it })
             val c = order.firstOrNull { search.keeps(root, g, it, r) } ?: continue
-            val warn = if (biggestLoses(a, root, colours, r, search)) " The biggest swallow falls short here." else ""
+            val warn = if (biggestLoses(a, root, colours, r, search)) message("teacher.mosaic.centre.1") else ""
             return fill(
                 a, CENTRE, g, c,
                 focus = a.cellsOf(g),
                 cited = swallowed(a, g, c),
-                nudge = "Think about growing from the middle.",
-                explanation = "Every other area is at most $least steps from the glowing one; none is more " +
-                    "central. Grow it with ${name(c)}: ${colourReason(search, root, colours, g, c)}.$warn",
+                nudge = message("teacher.mosaic.centre.2"),
+                explanation = message("teacher.mosaic.centre.3", "least" to (least), "name_c_" to (name(c)), "value3" to (colourReason(search, root, colours, g, c)), "warn" to (warn)),
             )
         }
         return null
@@ -408,18 +411,18 @@ internal object MosaicTeacher {
         val m = safe.firstOrNull() ?: return null
         val g = m / 8
         val c = m % 8
-        val warn = if (biggestLoses(a, root, search.colours, r, search)) " The biggest swallow falls short." else ""
+        val warn = if (biggestLoses(a, root, search.colours, r, search)) message("teacher.mosaic.keeps.1") else ""
         val claim = if (safe.size == 1) {
-            "it's the only fill that stays in the limit: pour ${name(c)} into the glowing area."
+            message("teacher.mosaic.keeps.2", "name_c_" to (name(c)))
         } else {
-            "pouring ${name(c)} into the glowing area stays in the limit."
+            message("teacher.mosaic.keeps.3", "name_c_" to (name(c)))
         }
         return fill(
             a, KEEPS, g, c,
             focus = a.cellsOf(g),
             cited = swallowed(a, g, c),
-            nudge = "Try growing the glowing area.",
-            explanation = "No rule of thumb explains this one, but $claim$warn",
+            nudge = message("teacher.mosaic.keeps.4"),
+            explanation = message("teacher.mosaic.keeps.5", "claim" to (claim), "warn" to (warn)),
         )
     }
 
@@ -437,12 +440,11 @@ internal object MosaicTeacher {
         val left = s.limit - s.moves
         val k = a.root.colours()
         val why = when {
-            left <= 0 -> "You're out of fills."
-            k - 1 > left -> "$k colours are left and a fill wipes out one at most, so it needs ${fills(k - 1)}; " +
-                "you have $left."
-            else -> "No order of ${fills(left)} finishes it from here."
+            left <= 0 -> message("teacher.mosaic.lost.1")
+            k - 1 > left -> message("teacher.mosaic.lost.2", "k" to (k), "fills_k_1_" to (fills(k - 1)), "left" to (left))
+            else -> message("teacher.mosaic.lost.3", "fills_left_" to (fills(left)))
         }
-        val nudge = if (left <= 0) "Out of fills." else "The limit can't be met from here."
+        val nudge = if (left <= 0) message("teacher.mosaic.lost.4") else message("teacher.mosaic.lost.5")
 
         // The record is only trusted if it replays to the board on screen.
         val whole = replay(s, s.moves)
@@ -468,7 +470,7 @@ internal object MosaicTeacher {
                 cited = emptySet(),
                 targets = emptySet(),
                 nudge = nudge,
-                explanation = "$why Undo back to the last point it could still be done, or restart.",
+                explanation = message("teacher.mosaic.lost.6", "why" to (why)),
             )
         }
         val at = replay(s, good)!!
@@ -476,10 +478,9 @@ internal object MosaicTeacher {
         val slipCells = at.area(slip / 8).toSet()
         val undo = s.moves - good
         val back = if (good == 0) {
-            "Undo back to the start: your first fill, ${name(slip % 8)} on the glowing squares, lost it."
+            message("teacher.mosaic.lost.7", "name_slip_8_" to (name(slip % 8)))
         } else {
-            "Undo ${fills(undo)}, back to $good used: fill ${good + 1}, ${name(slip % 8)} on the glowing " +
-                "squares, lost it."
+            message("teacher.mosaic.lost.8", "fills_undo_" to (fills(undo)), "good" to (good), "good_1" to (good + 1), "name_slip_8_" to (name(slip % 8)))
         }
         return Step(
             technique = MISTAKE,
@@ -487,7 +488,7 @@ internal object MosaicTeacher {
             cited = emptySet(),
             targets = slipCells,
             nudge = nudge,
-            explanation = "$why $back",
+            explanation = message("teacher.mosaic.lost.extra.1", "why" to (why), "back" to (back)),
             rewind = at,
             rewindTo = good,
         )
@@ -495,5 +496,5 @@ internal object MosaicTeacher {
 
     // ---- words ----------------------------------------------------------------------------------
 
-    private fun fills(n: Int) = plural(n, "fill")
+    private fun fills(n: Int) = message("teacher.mosaic.count.fill", "count" to (n))
 }

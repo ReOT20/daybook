@@ -1,10 +1,15 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.fit
-import com.joebywan.daybook.core.listed
-import com.joebywan.daybook.core.squareName
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.fitMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.squareNameMessage
 
 /**
  * Dominoes, reasoned the way a person reasons it (`docs/DOMINO_SPEC.md` "Teacher").
@@ -81,9 +86,15 @@ internal object DominoTeacher {
         val placement: Placement?,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int>
             get() = (placement?.let { setOf(it.first, it.second) } ?: emptySet()) + (TRAY + domino)
         val mistake: Boolean get() = technique == MISTAKE
@@ -128,9 +139,8 @@ internal object DominoTeacher {
                 placement = null,
                 focus = setOf(p.first, p.second),
                 cited = emptySet(),
-                nudge = "One of your dominoes isn't where it belongs.",
-                explanation = "The ${words.domino(s.tray[d])} you laid can't stay as it is: no way of keeping " +
-                    "every rule has it there that way round. Lift it.",
+                nudge = message("teacher.domino.mistake.1"),
+                explanation = message("teacher.domino.mistake.2", "words_domino_s_tray_d_" to (words.domino(s.tray[d]))),
             )
         }
         return null
@@ -148,10 +158,8 @@ internal object DominoTeacher {
             placement = p,
             focus = setOf(p.first, p.second),
             cited = emptySet(),
-            nudge = "This one takes a longer chain. Look at the ${words.domino(s.tray[d])}.",
-            explanation = "This one needs a longer chain than a hint can walk through, so here's the answer for the " +
-                "${words.domino(s.tray[d])}: it goes here, " +
-                words.half(s.tray[d], p) + ".",
+            nudge = message("teacher.domino.fallback.1", "words_domino_s_tray_d_" to (words.domino(s.tray[d]))),
+            explanation = message("teacher.domino.fallback.2", "words_domino_s_tray_d_" to (words.domino(s.tray[d])), "value2" to (words.half(s.tray[d], p))),
         )
     }
 
@@ -229,43 +237,41 @@ internal object DominoTeacher {
             else -> ONLY_DOMINO
         }
         val name = words.domino(dom)
-        val so = "So the $name goes here, ${words.half(dom, p)}."
-        val where = if (q >= 0) words.glowing(q, partnerOf(p, q)) else ""
+        val so = message("teacher.domino.placement_step.1", "name" to (name), "words_half_dom_p_" to (words.half(dom, p)))
+        val where = if (q >= 0) words.glowing(q, partnerOf(p, q)) else literalMessage("")
         val partner = if (q >= 0) partnerOf(p, q) else -1
         fun factList(max: Int) = words.facts(facts.take(max))
-        val leaves = if (q >= 0) "one way to cover $where" else "one place for the $name"
-        val nudge: String
-        val text: (Int) -> String
+        val leaves = if (q >= 0) message("teacher.domino.placement_step.2", "where" to (where)) else message("teacher.domino.placement_step.3", "name" to (name))
+        val nudge: Message
+        val text: (Int) -> Message
         when (technique) {
             ONLY_PARTNER -> {
-                nudge = "Look at $where: how many free neighbours has it?"
-                text = { m -> "${where.cap()} has one free neighbour, so the two share a domino. " +
-                    (if (facts.isEmpty()) "Only the $name is left. " else "Only the $name fits ${factList(m)}. ") + so }
+                nudge = message("teacher.domino.placement_step.4", "where" to (where))
+                text = { m -> message("teacher.domino.placement_step.5", "where_cap_" to (where.cap()), "value2" to ((if (facts.isEmpty()) message("teacher.domino.placement_step.extra.1", "name" to (name)) else message("teacher.domino.placement_step.extra.2", "name" to (name), "factList_m_" to (factList(m))))), "value3" to (so)) }
             }
             ONLY_PLACE -> {
-                nudge = "Where can the $name go?"
-                text = { m -> if (facts.isEmpty()) "The $name has one place left. $so" else "Everywhere else the $name could lie breaks ${factList(m)}. $so" }
+                nudge = message("teacher.domino.placement_step.8", "name" to (name))
+                text = { m -> if (facts.isEmpty()) message("teacher.domino.placement_step.9", "name" to (name), "so" to (so)) else message("teacher.domino.placement_step.10", "name" to (name), "factList_m_" to (factList(m)), "so" to (so)) }
             }
             ONLY_DOMINO -> {
-                nudge = "Which dominoes could cover $where?"
-                text = { m -> "Only one domino can cover $where: ${factList(m)} rule${if (facts.size == 1) "s" else ""} out the rest. $so" }
+                nudge = message("teacher.domino.placement_step.11", "where" to (where))
+                text = { m -> message("teacher.domino.placement_step.12", "where" to (where), "factList_m_" to (factList(m)), "if_facts_size_1_s_else_" to (if (facts.size == 1) message("teacher.domino.placement_step.extra.3") else ""), "so" to (so)) }
             }
             REGION_VALUE -> {
-                nudge = "Look at what ${words.regionOrThis(facts)} can be made of."
+                nudge = message("teacher.domino.placement_step.13", "value1" to (words.regionOrThis(facts)))
                 val value = facts.filter { it.kind == DominoLadder.VALUE_KIND }
-                text = { m -> if (value.isEmpty()) "The values the tray can still supply settle the regions around it. That leaves $leaves. $so"
-                    else "${words.facts(value.take(m)).cap()} can only be made from what the tray still has. That leaves $leaves. $so" }
+                text = { m -> if (value.isEmpty()) message("teacher.domino.placement_step.14", "leaves" to (leaves), "so" to (so))
+                    else message("teacher.domino.placement_step.15", "value1" to (words.facts(value.take(m)).cap()), "leaves" to (leaves), "so" to (so)) }
             }
             else -> {
-                nudge = "Count the ${words.countValue(facts)} left in the tray."
+                nudge = message("teacher.domino.placement_step.16", "words_countValue_facts_" to (words.countValue(facts)))
                 val v = words.countValue(facts)
-                text = { _ -> "The tray has only as many $v as squares that can take nothing else, so no other square gets one. " +
-                    "That leaves $leaves. $so" }
+                text = { _ -> message("teacher.domino.placement_step.17", "v" to (v), "leaves" to (leaves), "so" to (so)) }
             }
         }
-        val explanation = fit(listOf(3, 2, 1).map(text) + "${words.techniqueName(technique).cap()}. $so", MAX_EXPLANATION)
+        val explanation = fitMessage(listOf(3, 2, 1).map(text) + message("teacher.domino.placement_step.extra.4", "value1" to (words.techniqueName(technique).cap()), "so" to (so)), MAX_EXPLANATION)
         val cited = regionsIn(facts).map { RULE + it }.toSet() + (if (partner >= 0) setOf(q, partner) else emptySet())
-        return Step(technique, used, d, p, setOf(p.first, p.second), cited, fitNudge(nudge, "Look at the $name."), explanation)
+        return Step(technique, used, d, p, setOf(p.first, p.second), cited, fitNudge(nudge, message("teacher.domino.placement_step.18", "name" to (name))), explanation)
     }
 
     private fun whatIfStep(ladder: DominoLadder, w: DominoLadder.WhatIf): Step {
@@ -276,28 +282,28 @@ internal object DominoTeacher {
         val dom = layout.tray[d]
         val p = ladder.placement(c)
         val where = words.glowing(w.square, partnerOf(p, w.square))
-        val so = "So the ${words.domino(dom)} goes here, ${words.half(dom, p)}."
-        fun refute(r: DominoLadder.Refuted, full: Boolean): String {
+        val so = message("teacher.domino.what_if_step.1", "words_domino_dom_" to (words.domino(dom)), "words_half_dom_p_" to (words.half(dom, p)))
+        fun refute(r: DominoLadder.Refuted, full: Boolean): Message {
             val d = ladder.cDom[r.cand]
             val twin = (w.refuted.map { it.cand } + c).count { ladder.cDom[it] == d } > 1
-            val head = "with the " + words.way(layout.tray[d], ladder.placement(r.cand), w.square, twin)
-            return if (full) "$head, ${words.broken(r.kind, r.arg)}" else head + " something breaks"
+            val head = message("teacher.domino.refute.1", "value1" to (words.way(layout.tray[d], ladder.placement(r.cand), w.square, twin)))
+            return if (full) message("teacher.domino.refute.extra.1", "head" to (head), "value2" to (words.broken(r.kind, r.arg))) else head + message("teacher.domino.refute.2")
         }
         val texts = listOf(w.refuted.size, 1, 0).map { full ->
-            "Try what could cover $where: " + w.refuted.withIndex().joinToString("; ") { (i, r) -> refute(r, i < full) } + ". $so"
-        } + "Every other domino that could cover $where runs into trouble within a few steps. $so"
+            message("teacher.domino.what_if_step.2", "where" to (where), "value2" to (w.refuted.withIndex().map { (i, r) -> refute(r, i < full) }.joinedMessages("; ")), "so" to (so))
+        } + message("teacher.domino.what_if_step.3", "where" to (where), "so" to (so))
         val cited = w.refuted.filter { it.kind == DominoLadder.REGION }.map { RULE + it.arg }.toSet()
         return Step(
             WHAT_IF, LEVEL_WHAT_IF, d, p, setOf(w.square), cited,
-            "Try each domino that could cover the glowing square.",
-            fit(texts, MAX_EXPLANATION),
+            message("teacher.domino.what_if_step.4"),
+            fitMessage(texts, MAX_EXPLANATION),
         )
     }
 
 
     private fun partnerOf(p: Placement, q: Int) = if (p.first == q) p.second else p.first
 
-    private fun fitNudge(nudge: String, short: String) = if (nudge.length <= MAX_NUDGE) nudge else short
+    private fun fitNudge(nudge: Message, short: Message) = if (nudge.length <= MAX_NUDGE) nudge else short
 
     /** Region indices named by [facts], in order, without a hash set. */
     private fun regionsIn(facts: List<DominoLadder.Reason>): List<Int> {
@@ -309,76 +315,76 @@ internal object DominoTeacher {
     // ---- words -------------------------------------------------------------------------------------
 
     private class Words(val layout: DominoLogic.Layout) {
-        fun square(q: Int) = squareName(layout.width, q)
+        fun square(q: Int) = squareNameMessage(layout.width, q)
 
         /** "6-3 going right, its 3 here": a candidate as seen from square [q]. */
-        fun way(d: Domino, p: Placement, q: Int, which: Boolean): String {
+        fun way(d: Domino, p: Placement, q: Int, which: Boolean): Message {
             val other = if (p.first == q) p.second else p.first
-            val dir = when (other - q) { 1 -> "right"; -1 -> "left"; layout.width -> "down"; else -> "up" }
+            val dir = when (other - q) { 1 -> message("teacher.domino.way.1"); -1 -> message("teacher.domino.way.2"); layout.width -> message("teacher.domino.way.3"); else -> message("teacher.domino.way.4") }
             val here = if (p.first == q) d.a else d.b
-            return if (!which) domino(d) else if (d.isDouble) "${domino(d)} going $dir" else "${domino(d)} going $dir, its $here here"
+            return if (!which) domino(d) else if (d.isDouble) message("teacher.domino.way.5", "domino_d_" to (domino(d)), "dir" to (dir)) else message("teacher.domino.way.6", "domino_d_" to (domino(d)), "dir" to (dir), "here" to (here))
         }
 
-        fun domino(d: Domino) = if (d.isDouble) "double ${d.a}" else "${d.b}-${d.a}"
+        fun domino(d: Domino) = if (d.isDouble) message("teacher.domino.domino.1", "d_a" to (d.a)) else message("teacher.domino.domino.extra.1", "d_b" to (d.b), "d_a" to (d.a))
 
         /** Which half goes where: "its 6 on the left square" (the larger half), or "a 6 on each square" for a double. */
-        fun half(d: Domino, p: Placement) = if (d.isDouble) "a ${d.a} on each square" else "its ${d.b} on the ${side(p.second, p.first)} square"
+        fun half(d: Domino, p: Placement) = if (d.isDouble) message("teacher.domino.half.1", "d_a" to (d.a)) else message("teacher.domino.half.2", "d_b" to (d.b), "side_p_second_p_first_" to (side(p.second, p.first)))
 
         /** "the left glowing square": [q] told from [other], the domino's other square, by where it lies. */
-        fun glowing(q: Int, other: Int) = "the ${side(q, other)} glowing square"
+        fun glowing(q: Int, other: Int) = message("teacher.domino.glowing.1", "side_q_other_" to (side(q, other)))
 
-        private fun side(q: Int, other: Int) = when (other - q) { 1 -> "left"; -1 -> "right"; layout.width -> "top"; else -> "bottom" }
+        private fun side(q: Int, other: Int) = when (other - q) { 1 -> message("teacher.domino.side.1"); -1 -> message("teacher.domino.side.2"); layout.width -> message("teacher.domino.side.3"); else -> message("teacher.domino.side.4") }
 
-        private fun ruleWords(r: Int): String {
+        private fun ruleWords(r: Int): Message {
             val rule = layout.rules[r]
             val one = layout.regionSquares[r].size == 1
             return when (rule.kind) {
-                RuleKind.SUM -> if (one) "the square marked ${rule.n}" else "the region totalling ${rule.n}"
-                RuleKind.LESS -> if (one) "the square under ${rule.n}" else "the region under ${rule.n}"
-                RuleKind.MORE -> if (one) "the square over ${rule.n}" else "the region over ${rule.n}"
-                RuleKind.EQUAL -> "the equal region"
-                RuleKind.DIFFERENT -> "the all-different region"
+                RuleKind.SUM -> if (one) message("teacher.domino.rule_words.1", "rule_n" to (rule.n)) else message("teacher.domino.rule_words.2", "rule_n" to (rule.n))
+                RuleKind.LESS -> if (one) message("teacher.domino.rule_words.3", "rule_n" to (rule.n)) else message("teacher.domino.rule_words.4", "rule_n" to (rule.n))
+                RuleKind.MORE -> if (one) message("teacher.domino.rule_words.5", "rule_n" to (rule.n)) else message("teacher.domino.rule_words.6", "rule_n" to (rule.n))
+                RuleKind.EQUAL -> message("teacher.domino.rule_words.7")
+                RuleKind.DIFFERENT -> message("teacher.domino.rule_words.8")
             }
         }
 
         /** A region by its rule, with where it starts when another region reads the same. */
-        fun region(r: Int): String {
+        fun region(r: Int): Message {
             val words = ruleWords(r)
-            val twin = layout.rules.indices.any { it != r && ruleWords(it) == words }
-            return if (twin) "$words at ${square(layout.regionSquares[r][0])}" else words
+            val twin = layout.rules.indices.any { it != r && ruleWords(it).english == words.english }
+            return if (twin) message("teacher.domino.region.1", "words" to (words), "value2" to (square(layout.regionSquares[r][0]))) else words
         }
 
-        fun fact(f: DominoLadder.Reason): String = when (f.kind) {
-            DominoLadder.GEOMETRY_KIND -> "the only partner left for ${square(f.arg)}"
+        fun fact(f: DominoLadder.Reason): Message = when (f.kind) {
+            DominoLadder.GEOMETRY_KIND -> message("teacher.domino.fact.1", "square_f_arg_" to (square(f.arg)))
             DominoLadder.RULE_KIND, DominoLadder.VALUE_KIND -> region(f.arg)
-            DominoLadder.COUNT_KIND -> "the ${f.arg}s"
-            else -> "where the other dominoes must go"
+            DominoLadder.COUNT_KIND -> message("teacher.domino.fact.2", "f_arg" to (f.arg))
+            else -> message("teacher.domino.fact.3")
         }
 
-        fun facts(list: List<DominoLadder.Reason>): String {
+        fun facts(list: List<DominoLadder.Reason>): Message {
             val parts = list.map { fact(it) }
-            return if (parts.isEmpty()) "the rules" else listed(parts)
+            return if (parts.isEmpty()) message("teacher.domino.facts.1") else listedMessage(parts)
         }
 
-        fun regionOrThis(facts: List<DominoLadder.Reason>): String =
-            facts.firstOrNull { it.kind == DominoLadder.VALUE_KIND }?.let { region(it.arg) }?.takeIf { it.length <= 30 } ?: "this region"
+        fun regionOrThis(facts: List<DominoLadder.Reason>): Message =
+            facts.firstOrNull { it.kind == DominoLadder.VALUE_KIND }?.let { region(it.arg) }?.takeIf { it.length <= 30 } ?: message("teacher.domino.region_or_this.1")
 
-        fun countValue(facts: List<DominoLadder.Reason>): String =
-            facts.firstOrNull { it.kind == DominoLadder.COUNT_KIND }?.let { "${it.arg}s" } ?: "values"
+        fun countValue(facts: List<DominoLadder.Reason>): Message =
+            facts.firstOrNull { it.kind == DominoLadder.COUNT_KIND }?.let { message("teacher.domino.count_value.1", "it_arg" to (it.arg)) } ?: message("teacher.domino.count_value.2")
 
-        fun broken(kind: Int, arg: Int): String = when (kind) {
-            DominoLadder.SQUARE -> "${square(arg)} could not be covered"
-            DominoLadder.DOMINO -> "the ${domino(layout.tray[arg])} would have nowhere to go"
-            DominoLadder.REGION -> "${region(arg)} could not keep its rule"
-            else -> "there would not be enough ${arg}s"
+        fun broken(kind: Int, arg: Int): Message = when (kind) {
+            DominoLadder.SQUARE -> message("teacher.domino.broken.1", "square_arg_" to (square(arg)))
+            DominoLadder.DOMINO -> message("teacher.domino.broken.2", "domino_layout_tray_arg_" to (domino(layout.tray[arg])))
+            DominoLadder.REGION -> message("teacher.domino.broken.3", "region_arg_" to (region(arg)))
+            else -> message("teacher.domino.broken.4", "arg" to (arg))
         }
 
         fun techniqueName(t: String) = when (t) {
-            ONLY_PARTNER -> "a square with one free neighbour"
-            ONLY_PLACE -> "the domino has one place left"
-            ONLY_DOMINO -> "one domino fits this square"
-            REGION_VALUE -> "a region's values settle it"
-            else -> "counting the values left in the tray"
+            ONLY_PARTNER -> message("teacher.domino.technique_name.1")
+            ONLY_PLACE -> message("teacher.domino.technique_name.2")
+            ONLY_DOMINO -> message("teacher.domino.technique_name.3")
+            REGION_VALUE -> message("teacher.domino.technique_name.4")
+            else -> message("teacher.domino.technique_name.5")
         }
     }
 }

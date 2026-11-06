@@ -4,6 +4,7 @@ import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.TodaysThree
 import com.joebywan.daybook.core.earnedAchievements
+import com.joebywan.daybook.core.puzzleFamilyId
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.PuzzleOrder
 import kotlinx.datetime.LocalDate
@@ -11,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 /** Today's three ([TodaysThree]): the date alone decides it, and its achievement. */
 class TodaysThreeTest {
@@ -29,25 +31,81 @@ class TodaysThreeTest {
         val mid = ids.filter { it !in TodaysThree.QUICK && it !in TodaysThree.WORDS }
         tailrec fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
         val sizes = listOf(TodaysThree.QUICK.size, mid.size, TodaysThree.WORDS.size)
-        assertEquals(listOf(11, 13, 9), sizes)
+        assertEquals(listOf(11, 13, 16), sizes)
         assertTrue(sizes.indices.all { i -> sizes.indices.all { j -> i == j || gcd(sizes[i], sizes[j]) == 1 } })
-        val days = (0 until 1001).map { TodaysThree.of(LocalDate.fromEpochDays(day.toEpochDays() + it)) }
+        val from = LocalDate(2026, 11, 6)
+        val days = (0 until 1001).map { TodaysThree.of(LocalDate.fromEpochDays(from.toEpochDays() + it)) }
         assertEquals("no set repeats in 1,001 days", 1001, days.toSet().size)
         ids.forEach { id ->
             val on = days.indices.filter { id in days[it] }
             val gap = on.zipWithNext { a, b -> b - a }.max()
-            assertTrue("$id waits $gap days", gap <= 13)
+            assertTrue("$id waits $gap days", gap <= 16)
         }
         // A new puzzle joining the mid-weight list makes it 14, sharing 2 with the words: the slot then skips, and still
         // no set repeats within a year.
         val more = ids + "new"
-        assertEquals(365, (0 until 365).map { TodaysThree.of(LocalDate.fromEpochDays(day.toEpochDays() + it), more) }.toSet().size)
+        assertEquals(365, (0 until 365).map { TodaysThree.of(LocalDate.fromEpochDays(from.toEpochDays() + it), more) }.toSet().size)
     }
 
-    @Test fun `every puzzle has a slot, each slot keeps to its kind, and a year never repeats a day's three`() {
+    @Test fun `Russian additions preserve every historical three and its earned achievement`() {
+        val ids = PuzzleRegistry.all.map { it.id }
+        val old = ids.filterNot { it.endsWith("-ru") }
+        val cutover = LocalDate(2026, 11, 6).toEpochDays()
+        for (offset in 1..365) {
+            val historical = LocalDate.fromEpochDays(cutover - offset)
+            val three = TodaysThree.of(historical, old)
+            assertEquals(historical.toString(), three, TodaysThree.of(historical))
+            val solved = three.map { Completion(it, Difficulty.STANDARD, historical, 60, 0) }
+            assertTrue(earnedAchievements(solved, historical).any { it.id == "todaysThree" })
+        }
+    }
+
+    @Test fun `each language keeps all three scheduled families and selects its matching editions for a year`() {
+        val from = LocalDate(2026, 11, 6).toEpochDays()
+        for (offset in -365 until 365) {
+            val date = LocalDate.fromEpochDays(from + offset)
+            for (tag in listOf("en-GB", "ru-RU")) {
+                val visible = PuzzleRegistry.forLanguage(tag).mapTo(HashSet()) { it.id }
+                for ((original, localized) in listOf(
+                    TodaysThree.of(date) to TodaysThree.of(date, languageTag = tag),
+                    TodaysThree.starter(date) to TodaysThree.starter(date, languageTag = tag),
+                )) {
+                    assertEquals("$date $tag", 3, localized.distinct().size)
+                    assertEquals("$date $tag", original.map(::puzzleFamilyId), localized.map(::puzzleFamilyId))
+                    assertTrue("$date $tag", visible.containsAll(localized))
+                }
+            }
+        }
+    }
+
+    @Test fun `localized three achievements survive switches and still need all three at the same tier`() {
+        val original = Locale.getDefault()
+        try {
+            val date = LocalDate(2026, 11, 7)
+            for (schedule in listOf<(LocalDate, String) -> List<String>>(TodaysThree::of, TodaysThree::starter)) {
+                for (tag in listOf("en", "ru")) {
+                    val three = schedule(date, tag)
+                    val history = three.map { Completion(it, Difficulty.HARD, date, 60, 0) }
+                    for (locale in listOf(Locale.ENGLISH, Locale.forLanguageTag("ru-RU"), Locale.ENGLISH)) {
+                        Locale.setDefault(locale)
+                        assertTrue("$tag $locale", earnedAchievements(history, date).any { it.id == "todaysThree" })
+                        assertFalse("$tag $locale", earnedAchievements(history.dropLast(1), date).any { it.id == "todaysThree" })
+                        assertFalse("$tag $locale", earnedAchievements(history.dropLast(1) + history.last().copy(difficulty = Difficulty.STANDARD), date)
+                            .any { it.id == "todaysThree" })
+                    }
+                }
+            }
+        } finally {
+            Locale.setDefault(original)
+        }
+    }
+
+    @Test fun `every puzzle has a slot and the current catalog never repeats a day's three within a year`() {
         val ids = PuzzleRegistry.all.map { it.id }
         assertTrue("a listed puzzle that is not registered", (TodaysThree.QUICK + TodaysThree.WORDS).all { it in ids })
-        val year = (0 until 365).map { TodaysThree.of(LocalDate.fromEpochDays(day.toEpochDays() + it)) }
+        // Historical days keep the old catalog; test a complete year of the new schedule from its cutover.
+        val from = LocalDate(2026, 11, 6)
+        val year = (0 until 365).map { TodaysThree.of(LocalDate.fromEpochDays(from.toEpochDays() + it)) }
         year.forEach { (quick, mid, words) ->
             assertTrue(quick in TodaysThree.QUICK)
             assertTrue(mid !in TodaysThree.QUICK && mid !in TodaysThree.WORDS)

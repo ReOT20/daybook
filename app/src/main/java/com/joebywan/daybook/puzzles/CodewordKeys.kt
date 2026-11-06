@@ -1,5 +1,6 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
 import androidx.compose.ui.input.key.Key
 import com.joebywan.daybook.core.arrowStep
 import com.joebywan.daybook.core.isEraseKey
@@ -19,10 +20,10 @@ sealed interface CodewordKeyAction {
 }
 
 /** The action for [key], or null for a key the board does not use. The caller has ruled out chords. */
-fun codewordKeyAction(key: Key): CodewordKeyAction? {
+fun codewordKeyAction(key: Key, contentLanguage: String = "en"): CodewordKeyAction? {
     arrowStep(key)?.let { (r, c) -> return CodewordKeyAction.Move(r + c) }
     if (isEraseKey(key)) return CodewordKeyAction.Clear
-    return letterKey(key)?.let { CodewordKeyAction.Letter(it - 'a') }
+    return (if (contentLanguage == "en") letterKey(key) else null)?.let { CodewordKeyAction.Letter(it - 'a') }
 }
 
 /** What pressing [letter] does to [number]: gives it the letter, or takes it away if it already has it. */

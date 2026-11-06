@@ -58,9 +58,10 @@ each puzzle has a `<Name>Teacher.kt` except Snap and Pointers, whose teaching is
   custom geometry (Atoms: an atom's cell, a line's two atoms). A new board must report or the
   popover assumes "below". The walkthrough provides one too, for a free-play frame's hint popover.
 - The walkthrough's `TutorialRunner` sizes the slot under its board once, from its own text (the tallest caption plus
-  that frame's feedback lines, at most 156dp; captions a size down under 640dp tall), and a free-play frame's hint is a
-  popover as in play, so its board never changes size between frames or when a hint opens. At 375x537 that gave
-  boards 55-105dp more height than the old fixed 156dp slot (measured on every walkthrough, PR #358).
+  that frame's feedback lines, capped at 156dp). Under 640dp tall, captions use the smaller body style and a 120dp
+  budget, raised if necessary to fit one caption line and two feedback lines at the player's text size. Longer
+  captions scroll at full text size; the header and board controls use the shared 1.3× cap. A free-play frame's hint
+  is a popover as in play, so its board never changes size between frames or when a hint opens.
 - The finish is a compact "Congratulations!" frame (`FinishedFrame`) docked to the bottom of the play screen, an
   overlay with the time, hints and next-step tiles; the toolbar stays laid out (hidden), so
   completing a puzzle cannot resize the board. It is docked on every height: centred, it hid 50-58% of
@@ -136,6 +137,28 @@ What each teaches, and how often a player walking a board by hints alone reaches
 | Crossword (mini) | the words that fit each slot (the grid list's words of its length agreeing with the letters in it): a slot only one word fits ("2 Down reads A _ E. Only one word in the list fits those letters: the answer to \"Pub beer\""), of the words that fit, the one that leaves every crossing slot a word (those slots named), then every crossing worked through together (named as such). A clue is only quoted: matching it to its word would be reading the answer. A mistake is a letter off the stored answer, sound because a clue names one word. Word steps are typed by the player; only Show me types them | `clue`, by design: when no crossing settles a word, its first tap names the open slot the fewest words fit with that word's second clue, or its plain clue where the slot shows a hard one ("Another way in: ..."), and only the next tap reads the answer, says so, and gives one letter (one hint counted, as for any step). If the player solves that second clue, the crossings move on by themselves 27.2 / 32.9 / 28.5% of the time (proxy, `MiniTeachingTest`: the whole word typed, then is the walk's next step logic?); the letter alone would have settled that word through the crossings 52.5 / 54.1 / 56.6% of the time; words fitting the slot it names, median 22 / 8 / 6. From an empty grid nothing else starts, so every board needs some, and their share is the tier measure (`docs/MINI_SPEC.md`). 200 boards a tier, hints alone finish all: 44 / 54 / 62% of steps; steps a board, Standard / Hard / Expert: clue letters 5.6 / 9.4 / 15.2, one word 3.6 / 3.8 / 4.9, crossing 2.0 / 2.2 / 2.1, every crossing together 1.5 / 2.0 / 2.3. Word steps checked against `MiniOracle`: no fill keeping the letters puts another word in the slot (`MiniTeachingTest`). Hint, desktop JVM: median 0.2-0.3 ms, p95 1.2 ms, max 2.9 ms |
 | Sand | finish a tube, gather onto a matching colour (one that uncovers a colour with somewhere to go first), use an empty tube to free a buried colour, else plan ahead (the first pour of the shortest line to a pour that makes progress, explained by that pour). Each is offered only when the board stays sortable after it, and the first three only when they make progress (fewer places two colours meet in a tube, else fewer tubes in use, else more finished), which no pour ever undoes; a plan step makes none but shortens the line, so following hints cannot circle. A mistake is a board no order of pours sorts, proved exhaustively; stuck is the same with no pours left; a search out of budget is never a mistake and says so. The pour named is the one after the last board in the state's pour log that still sorts, and "Show me" goes back to that board | none exists: nothing is hidden. Hints alone sort every sampled board (200 per tier; 16.3 / 23.3 / 27.0 pours a board; finish 5.0 / 7.0 / 8.0, gather 8.0 / 11.9 / 13.9, spare 3.2 / 4.4 / 5.1, plan 0 / 0 / 0.005). **Truncated: 0 of 726 / 1,118 / 1,311 verdicts** from positions reached by random pours on daily boards (largest search 33 / 58 / 452 positions of a 200,000 budget). From 360 such positions a tier the hint called 45 / 143 / 192 unsortable, each confirmed by an independent breadth-first search, as was the claim that the named pour lost it. First hint on Expert, desktop JVM: median 0.03 ms, p95 0.2 ms, max 0.7 ms |
 | Mate (chess) | mate in one (why it is mate: check, each neighbouring square own piece or covered, checker cannot be taken), forcing key (every reply allows mate, the two most forcing named in SAN), quiet key (the same for a key that is not a check). The prover is the reasoning; a mistake is a move after which `forcedMate` is `None` (a second mating line or a non-shortest one is fine) | none exists: the teacher reads no stored answer, and hints alone finish every sampled board (200 / 100 / 60) with no mistake. Cost of the first hint over all 1,500 positions per tier (median / p95 / max ms): 0 / 0 / 0, 1 / 9 / 43, 8 / 105 / 487 on a desktop JVM. After the faster `forcedMate` (make/unmake, Zobrist table), on the x86 Android emulator (KVM, 400 positions per tier, first hint, warm; median / p95 / max ms): 0.5 / 1.2 / 3.9, 2.1 / 6.3 / 18, 11 / 94 / 234 (was 1 / 4 / 32, 8 / 42 / 98, 47 / 585 / 1353); first 50 on a fresh process (cold) Expert 16 / 109 / 263, Hard 4 / 31 / 138. Web (wasm, single thread, headless Chromium): Expert 7 / 74 / 181 warm, 7 / 54 / 108 cold. Inside the 300 ms p95 / 1.5 s max budget; a real phone is likely slower |
+
+Russian editions were measured separately on 365 daily boards per tier from 2026-11-06, with
+`DAYBOOK_RUSSIAN_TEACHING_DAYS=365` and `RussianWordGamesTest.measureRussianHintWalksWhenAsked`.
+Every public hint move was applied; complete Lexicon guesses were submitted. All 7,665 boards
+finished without a mistake, missing hint, stalled move or loss. This sample is not a guarantee that
+Lexicon wins every possible answer within its guess budget. Rates below are Standard / Hard / Expert;
+clue and answer-list fallbacks keep their honest flags and explanations.
+
+| Russian edition | total hint steps | fallback steps % | boards using a fallback (of 365) |
+|---|---|---|---|
+| `words-ru` | 1143 / 1140 / 1326 | 65.3 / 64.5 / 67.8 | 365 / 365 / 361 |
+| `wordwheel-ru` | 1577 / 2292 / 3112 | 7.4 / 9.7 / 15.6 | 96 / 162 / 256 |
+| `mini-ru` | 4433 / 6284 / 8516 | 40.3 / 49.9 / 59.5 | 365 / 365 / 365 |
+| `codeword-ru` | 4720 / 6385 / 7141 | 0.0 / 0.0 / 0.0 | 0 / 0 / 0 |
+| `hexwords-ru` | 1091 / 2156 / 3282 | 0.0 / 0.0 / 0.0 | 0 / 0 / 0 |
+| `dwindle-ru` | 2516 / 4159 / 6262 | 1.0 / 1.5 / 1.8 | 22 / 59 / 96 |
+| `cipher-ru` | 2508 / 2674 / 2688 | 0.0 / 0.0 / 0.0 | 0 / 0 / 0 |
+
+Russian Mini's clue fallback is intentional, as in the English edition; its clue-share bands are
+unchanged. Russian Codeword and Cipher require their same tier-specific logic ladders; no fallback
+was used. Russian Hexwords' hold-back steps were 0 / 18.5 / 19.2% of hints. These rates describe
+this frozen Russian corpus and do not replace the English measurements above.
 
 Adopting it, or changing a teacher — the lessons so far:
 

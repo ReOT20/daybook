@@ -1,0 +1,114 @@
+# Codeword
+> Give every number its Russian letter.
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Tap a square or a number, then a letter. The letter goes in every square with that number. Tap the letter again to clear it. A given number can't be changed.
+
+The key under the grid shows each number's letter. In the А to Я keys, a letter another number holds is greyed, with its number under it, but you can still use it.
+
+On a keyboard, with a number picked, type its Russian letter (again to clear it). Backspace clears and the arrows walk the numbers.
+
+A word that nothing can match any more, or a letter on two numbers, turns red after a moment. Nothing is refused.
+
+Stuck? The first tap on Hint says where to look, and the second explains why. You place the letter yourself, unless you ask for "Show me". Every board has exactly one answer, and you never need to guess to find it.
+
+## Rules
+
+- Every number stands for one letter, the same letter wherever it appears. Different numbers are different letters.
+- Every word across and down must be a real word.
+- The letters you start with are given, and stay put.
+
+## What changes per tier
+
+- Standard: 7x7 grid. One word at a time is enough to finish it.
+- Hard: 9x9 grid. Needs a number cut by every word it's in.
+- Expert: 11x11 grid. Needs every word worked through together.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, a number is a square still open, a letter is one placed, the tinted squares are where to look, and the filled squares are the move.
+
+### one-word | A word only one word fits
+
+The word's pattern counts: equal numbers are equal letters, different numbers are different letters, and a letter another number holds is out. Sometimes that leaves one word.
+
+~~~board
+_ _ _ 12 К 7 _
+_ _ 11 К 9 3 8
+_ К 3 2 3 10 12
+7 3 8 _ Ч 12 Д
+3 2 12 7 3 2 _
+К 3 7 1 К _ _
+_ 5 12 11 _ _ _
+content-language: ru
+focus: r4c5 r4c6 r4c7
+cite: r4c5 r4c6 r4c7
+answer: r1c4=А r3c7=А r4c6=А r5c3=А r7c3=А
+caption: Only ЧАД fits Ч 12 Д, so 12 is А.
+~~~
+
+### run-agrees | A letter every fitting word shares
+
+You don't need to know the word. If every word that fits has the same letter for one number, that number is settled.
+
+~~~board
+_ _ _ 12 К 7 _
+_ _ 11 К 9 3 8
+_ К 3 2 3 10 12
+7 3 8 _ 6 12 Д
+3 2 12 7 3 2 _
+К 3 7 1 К _ _
+_ 5 12 11 _ _ _
+content-language: ru
+focus: r1c5 r2c5 r3c5 r4c5 r5c5 r6c5
+cite: r1c5 r2c5 r3c5 r4c5 r5c5 r6c5
+answer: r4c5=Ч
+caption: КАУЧУК and КЛОЧОК both fit К 9 3 6 3 К. Both put Ч at number 6, even though the word itself is not settled.
+~~~
+
+### crossing | A number cut by every word it is in
+
+Each word a number is in allows only some letters for it. Put those lists side by side: the letter has to be on all of them.
+
+~~~board
+_ _ _ _ _ _ 2 11 13
+6 15 18 _ _ 16 14 12 14
+3 9 14 _ 17 11 16 14 13
+Д 15 13 1 19 6 _ _ _
+_ _ 1 8 10 19 6 _ _
+_ _ _ 6 8 13 19 6 Д
+5 8 10 8 4 _ 2 19 14
+15 9 14 9 _ _ 14 13 6
+Д 11 20 _ _ _ _ _ _
+content-language: ru
+focus: r2c1 r4c6 r5c7 r6c4 r6c8 r8c9
+cite: r2c1 r2c2 r2c3 r2c6 r3c1 r3c6 r4c1 r4c2 r4c3 r4c4 r4c5 r4c6 r5c3 r5c4 r5c5 r5c6 r5c7 r6c4 r6c5 r6c6 r6c7 r6c8 r6c9 r7c4 r7c7 r7c8 r7c9 r8c4 r8c7 r8c8 r8c9
+answer: r2c1=Р r4c6=Р r5c7=Р r6c4=Р r6c8=Р r8c9=Р
+caption: Number 6 appears in eleven words. Each permits only some letters for it, and only Р survives all eleven lists.
+~~~
+
+### all-words | Every word worked through together
+
+When no one word or number settles anything, work them all at once. Each word rules out letters for its numbers, and a letter pinned to one number is taken from the rest, until a number has one letter left.
+
+~~~board
+_ _ _ _ _ _ _ _ _ _ _
+_ _ 8 2 16 _ _ 19 11 22 11
+8 6 2 12 5 _ _ 11 3 17 15
+16 5 22 11 6 _ _ 22 5 3 5
+11 15 18 _ 9 4 16 17 22 _ _
+_ _ _ _ 17 13 14 _ _ _ _
+_ _ 16 14 13 5 6 _ 7 2 16
+15 13 5 8 _ _ 9 20 11 3 5
+5 14 20 5 _ _ 20 1 7 5 8
+9 21 5 З _ _ 5 8 20 _ _
+_ _ _ _ _ _ _ _ _ _ _
+content-language: ru
+focus: r9c8
+cite: r8c8 r9c7 r9c8 r9c9 r9c10 r9c11 r10c8
+answer: r9c8=Ы
+caption: Working every word through together removes letters from their numbers, and a letter pinned to one number leaves the rest. This fixes number 1 as Ы.
+~~~

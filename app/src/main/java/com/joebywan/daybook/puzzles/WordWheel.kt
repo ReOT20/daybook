@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +68,7 @@ import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.core.Rng
 import com.joebywan.daybook.core.TutorialFrame
 import com.joebywan.daybook.core.boardKeys
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.highlightGrid
 import com.joebywan.daybook.core.keepClear
 import com.joebywan.daybook.core.reportHighlight
@@ -101,19 +105,19 @@ import com.joebywan.daybook.ui.rememberMoveFeel
 object WordWheel : PuzzleType {
 
     override val id = "wordwheel"
-    override val displayName = "Word Wheel"
-    override val tagline = "Spell every word in the grid from the wheel"
+    override val displayName get() = text("puzzle.wordwheel.name")
+    override val tagline get() = text("puzzle.wordwheel.tagline")
     override val accent = 0xFF2891AC
-    override val rules = listOf(
-        "Spell words from the wheel by swiping across its letters, or tap them in turn and press Enter.",
-        "Each letter on the wheel is used at most once in a word, and no word is shorter than the grid's shortest.",
-        "A word the grid holds fills its slot. Fill every slot to finish.",
-        "Other real words count as bonus words. They are never needed.",
-        "Shuffle moves the letters round the wheel and changes nothing else.",
+    override val rules get() = listOf(
+        text("puzzle.wordwheel.rule.1"),
+        text("puzzle.wordwheel.rule.2"),
+        text("puzzle.wordwheel.rule.3"),
+        text("puzzle.wordwheel.rule.4"),
+        text("puzzle.wordwheel.rule.5"),
     )
 
-    override val keyboardHelp = listOf(
-        "Type letters from the wheel, Backspace deletes, Enter tries the word, Escape clears it.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.wordwheel.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -163,40 +167,38 @@ object WordWheel : PuzzleType {
         listOf(
             TutorialFrame(
                 state = s0,
-                caption = "Spell words from the wheel's letters to fill the grid. Each slot holds one word, and the longest " +
-                    "uses every letter on the wheel.",
+                caption = message("puzzle.wordwheel.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = slot(0), soft = wheelOf("brain")),
             ),
             TutorialFrame(
                 state = s0,
-                caption = "Swipe across B, R, A, I and N without lifting, then let go.",
+                caption = message("puzzle.wordwheel.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = wheelOf("brain"), soft = slot(0)),
                 accepts = only(listOf("brain"), emptyList()),
-                retry = "Swipe across the glowing letters in order: B, R, A, I, N.",
-                done = "BRAIN fills its slot.",
+                retry = message("puzzle.wordwheel.tutorial.2.retry"),
+                done = message("puzzle.wordwheel.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = s1,
-                caption = "Crossing letters help: this four-letter slot has R third, and BARN is the only word the wheel " +
-                    "spells like that. This time tap B, A, R and N, then press Enter.",
+                caption = message("puzzle.wordwheel.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = slot(1), soft = wheelOf("barn")),
                 accepts = only(listOf("brain", "barn"), emptyList()),
-                retry = "Tap the glowing letters in order: B, A, R, N. Then press Enter.",
-                done = "BARN. Swipe or tap, whichever you like.",
+                retry = message("puzzle.wordwheel.tutorial.3.retry"),
+                done = message("puzzle.wordwheel.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = s2,
-                caption = "A real word the grid does not hold is a bonus word: counted, never needed. Spell BRAN.",
+                caption = message("puzzle.wordwheel.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = wheelOf("bran")),
                 accepts = only(listOf("brain", "barn"), listOf("bran")),
-                retry = "Spell the glowing letters: B, R, A, N.",
-                done = "BRAN is a bonus word.",
+                retry = message("puzzle.wordwheel.tutorial.4.retry"),
+                done = message("puzzle.wordwheel.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = s3,
-                caption = "Your turn: fill the last slot. Stuck? Hint gives you its clue.",
+                caption = message("puzzle.wordwheel.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.wordwheel.tutorial.5.done"),
             ),
         )
     }
@@ -241,8 +243,8 @@ object WordWheel : PuzzleType {
 
     /** One line, always laid out: a refusal or a bonus, else how many words are found. */
     private fun headerOf(s: WordWheelState, notice: String?): String = notice ?: buildString {
-        append("${s.found.size} of ${s.slots.size} words")
-        if (s.bonus.isNotEmpty()) append(" · ${s.bonus.size} bonus")
+        append(text("puzzle.wordwheel.board.progress", "found" to (s.found.size), "total" to (s.slots.size)))
+        if (s.bonus.isNotEmpty()) append(text("puzzle.wordwheel.board.bonus_count", "count" to (s.bonus.size)))
     }
 
 
@@ -298,21 +300,29 @@ object WordWheel : PuzzleType {
                     onState(now.enter(word))
                 }
                 WheelEntry.Bonus -> {
-                    say("Bonus word: ${word.uppercase()}", false)
+                    say(text("puzzle.wordwheel.board.bonus_notice", "word" to (word.uppercase())), false)
                     onState(now.enter(word))
                 }
-                WheelEntry.Found -> say("${word.uppercase()} is already found", true)
-                WheelEntry.NotAWord -> say("${word.uppercase()} is not in the word list", true)
-                WheelEntry.TooShort -> say("Words here have ${now.shortestWord} letters or more", true)
-                WheelEntry.NotOnWheel -> say("The wheel cannot spell ${word.uppercase()}", true)
+                WheelEntry.Found -> say(text("puzzle.wordwheel.board.already_found", "word" to (word.uppercase())), true)
+                WheelEntry.NotAWord -> say(text("puzzle.wordwheel.board.not_word", "word" to (word.uppercase())), true)
+                WheelEntry.TooShort -> say(text("puzzle.wordwheel.board.too_short", "count" to (now.shortestWord)), true)
+                WheelEntry.NotOnWheel -> say(text("puzzle.wordwheel.board.cannot_spell", "word" to (word.uppercase())), true)
             }
         }
 
         BoxWithConstraints(
             Modifier
                 .fillMaxSize()
-                .boardKeys(playable) { key, _, repeat ->
-                    val action = wordWheelKeyAction(key) ?: return@boardKeys false
+                .boardKeys(playable, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                    val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                    if (letter != null && letter in WordContent.alphabet(s.contentLanguage)) {
+                        if (!repeat) {
+                            typeWheelLetter(latest.wheel, picked, letter)?.let { picked = it }
+                        }
+                        true
+                    } else false
+                } else null) { key, _, repeat ->
+                    val action = wordWheelKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                     if (!repeat) when (action) {
                         is WheelKeyAction.Letter -> typeWheelLetter(latest.wheel, picked, action.letter)?.let { picked = it }
                         WheelKeyAction.Backspace -> picked = picked.dropLast(1)
@@ -613,7 +623,7 @@ internal fun EnterButton(enabled: Boolean, modifier: Modifier = Modifier, onClic
             .padding(horizontal = 16.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
-        CappedFontScale { Text("Enter", color = a.control.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
+        CappedFontScale { Text(text("puzzle.wordwheel.board.enter"), color = a.control.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
     }
 }
 
@@ -638,7 +648,7 @@ internal fun BonusLine(bonus: List<String>, height: Dp) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "Bonus: " + bonus.asReversed().joinToString(", ") { it.uppercase() },
+                text("puzzle.wordwheel.board.bonus_label") + bonus.asReversed().joinToString(", ") { it.uppercase() },
                 style = MaterialTheme.typography.bodySmall,
                 color = a.control.ink,
                 fontWeight = FontWeight.Bold,
@@ -652,13 +662,13 @@ internal fun BonusLine(bonus: List<String>, height: Dp) {
     if (open) {
         AlertDialog(
             onDismissRequest = { open = false },
-            title = { Text("Bonus words: ${bonus.size}") },
+            title = { Text(text("puzzle.wordwheel.board.bonus_title", "count" to (bonus.size))) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     bonus.sorted().forEach { Text(it.uppercase(), Modifier.padding(vertical = 2.dp)) }
                 }
             },
-            confirmButton = { TextButton(onClick = { open = false }) { Text("Close") } },
+            confirmButton = { TextButton(onClick = { open = false }) { Text(text("puzzle.wordwheel.board.close")) } },
         )
     }
 }

@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.home
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.ArcadeBoard
 import com.joebywan.daybook.ui.theme.ArcadeFill
 import com.joebywan.daybook.ui.theme.arcadeGlow
@@ -61,15 +63,22 @@ import kotlin.math.abs
  * icon — which is what made eleven cards too tall to see at once. It is one question asked once,
  * above the grid, because the answer is nearly always the same for a whole session.
  */
-enum class LaunchMode(val label: String) {
-    DAILY("Daily"),
+enum class LaunchMode {
+    DAILY,
 
     /** Numbered levels of five boards (`docs/LEVELS_SPEC.md`); the level sets each board's tier. */
-    LEVELS("Levels"),
-    RANDOM("Random"),
+    LEVELS,
+    RANDOM,
 
     /** The puzzles with a Training course (`docs/TRAINING_SPEC.md`); a tap opens the course. No tier. */
-    TRAINING("Training");
+    TRAINING;
+
+    val label: String get() = when (this) {
+        DAILY -> text("ui.launch_options.daily")
+        LEVELS -> text("ui.launch_options.levels")
+        RANDOM -> text("ui.launch_options.random")
+        TRAINING -> text("ui.launch_options.training")
+    }
 
     /** Whether the tier row applies: Daily and Random only. */
     val tiered: Boolean get() = this == DAILY || this == RANDOM
@@ -293,10 +302,10 @@ fun LaunchOptions(
                 when (segment) {
                     ModeSegment.DAY -> {
                         contentDescription = dayMode.label
-                        stateDescription = if (selected) "Selected, double-tap for ${other.label}" else "Not selected"
+                        stateDescription = if (selected) text("ui.launch_options.selected_double_tap_for", "other_label" to (other.label)) else text("ui.launch_options.not_selected")
                     }
-                    ModeSegment.LEVELS -> contentDescription = "Levels, $levelLine"
-                    ModeSegment.TRAINING -> contentDescription = "Training, $trainingLine courses graduated"
+                    ModeSegment.LEVELS -> contentDescription = text("ui.launch_options.levels_d82a74", "levelLine" to (levelLine))
+                    ModeSegment.TRAINING -> contentDescription = text("ui.launch_options.training_courses_graduated", "trainingLine" to (trainingLine))
                 }
             },
             content = { segment, ink, selected ->

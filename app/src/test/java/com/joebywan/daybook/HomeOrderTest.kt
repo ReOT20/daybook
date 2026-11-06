@@ -2,6 +2,7 @@ package com.joebywan.daybook
 
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.PuzzleRegistry
+import com.joebywan.daybook.core.puzzleFamilyId
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.KeyValueStore
 import com.joebywan.daybook.data.ProgressStore
@@ -56,6 +57,41 @@ class HomeOrderTest {
         assertEquals(gentle, PuzzleOrder.mostPlayed(emptyList(), today, gentle))
         assertEquals(listOf("chess", "kings", "pointers", "pipes", "sudoku", "new"),
             PuzzleOrder.mostPlayed(listOf(solve("chess", 1), solve("chess", 2), solve("kings", 1)), today, gentle))
+    }
+
+    @Test
+    fun `language editions meet the player in their family's gentlest position`() {
+        val english = PuzzleOrder.gentlest(PuzzleRegistry.forLanguage("en").map { it.id })
+        val russian = PuzzleOrder.gentlest(PuzzleRegistry.forLanguage("ru").map { it.id })
+        assertEquals(english, russian.map(::puzzleFamilyId))
+        assertEquals(listOf("sudoku", "words-ru"), russian.subList(3, 5))
+    }
+
+    @Test
+    fun `reordering visible tiles preserves every hidden edition and its position across menu switches`() {
+        var full = PuzzleOrder.gentlest(PuzzleRegistry.all.map { it.id })
+        for (tag in listOf("en", "ru", "en")) {
+            val visible = PuzzleRegistry.forLanguage(tag).mapTo(HashSet()) { it.id }
+            val before = full.toList()
+            val shown = before.filter { it in visible }
+            val reordered = PuzzleOrder.moved(shown, shown.lastIndex, 0)
+            full = PuzzleOrder.mergeVisible(before, reordered)
+            assertEquals(reordered, full.filter { it in visible })
+            before.forEachIndexed { i, id -> if (id !in visible) assertEquals(id, full[i]) }
+            assertEquals(before.sorted(), full.sorted())
+            assertEquals(full, PuzzleOrder.arranged(full, PuzzleRegistry.all.map { it.id }))
+        }
+        assertEquals(full, PuzzleOrder.mergeVisible(full, emptyList()))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a visible reorder cannot duplicate a tile`() {
+        PuzzleOrder.mergeVisible(ids, listOf("a", "a"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a visible reorder cannot add an unknown tile`() {
+        PuzzleOrder.mergeVisible(ids, listOf("a", "unknown"))
     }
 
     @Test

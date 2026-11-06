@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.stats
 
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,7 +27,7 @@ import kotlinx.datetime.LocalDate
 fun AchievementsScreen(today: LocalDate, completions: List<Completion>, onBack: () -> Unit, training: Set<String> = emptySet()) {
     val scheme = MaterialTheme.colorScheme
     val earned = earnedAchievements(completions, today, training = training).map { it.id }.toSet()
-    TitledScreen("Achievements", "${earned.size} of ${ACHIEVEMENTS.size}", onBack) {
+    TitledScreen(text("ui.home_screen.achievements"), text("ui.achievements_screen.of", "earned_size" to (earned.size), "ACHIEVEMENTS_size" to (ACHIEVEMENTS.size)), onBack) {
         // Definition order, so a badge keeps its place as more are earned.
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),

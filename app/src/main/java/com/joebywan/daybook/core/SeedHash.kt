@@ -1,5 +1,7 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.catalogLanguage
+
 /**
  * Every board's seed: a daily's from its epoch day ([DailySeed] passes a date's), a random game's from its nonce, a
  * level board's from its level. One copy, compiled by both builds, so a phone and a browser cannot disagree about
@@ -10,6 +12,9 @@ object SeedHash {
     fun daily(epochDay: Long, puzzleId: String, difficulty: Difficulty): Long {
         if (puzzleId == "words" && epochDay >= LEXICON_CYCLE_FROM) {
             return (LEXICON_CYCLE shl 32) or (difficulty.ordinal.toLong() shl 28) or (epochDay - LEXICON_CYCLE_FROM)
+        }
+        if (puzzleId == "words-ru" && epochDay >= RUSSIAN_LEXICON_CYCLE_FROM) {
+            return (RUSSIAN_LEXICON_CYCLE shl 32) or (difficulty.ordinal.toLong() shl 28) or (epochDay - RUSSIAN_LEXICON_CYCLE_FROM)
         }
         var h = epochDay * 0x100000001B3L
         h = mix(h xor puzzleId.stableHash())
@@ -30,6 +35,13 @@ object SeedHash {
     /** The cycle's day count (0 on [LEXICON_CYCLE_FROM]) of a Lexicon daily seed, or null for any other seed. */
     fun lexiconCycleDay(seed: Long): Long? =
         if (seed ushr 32 == LEXICON_CYCLE) seed and 0x0FFFFFFFL else null
+
+    /** Independent Russian content cycle; English seeds and round order stay untouched. */
+    val RUSSIAN_LEXICON_CYCLE_FROM: Long = epochDay(2026, 11, 6)
+    private const val RUSSIAN_LEXICON_CYCLE = 0x52754379L // "RuCy"
+
+    fun russianLexiconCycleDay(seed: Long): Long? =
+        if (seed ushr 32 == RUSSIAN_LEXICON_CYCLE) seed and 0x0FFFFFFFL else null
 
     /** Days since 1970-01-01 for a proleptic Gregorian date, without `java.time` (the web has none). */
     fun epochDay(year: Int, month: Int, day: Int): Long {
@@ -57,10 +69,15 @@ object SeedHash {
         return h
     }
 
+    /** A neutral puzzle has a different saved board in each language lane and in previous levels. */
+    fun levelForLanguage(level: Int, puzzleId: String, difficulty: Difficulty, languageTag: String): Long =
+        mix(level(level, puzzleId, difficulty) xor LANGUAGE_LEVEL xor catalogLanguage(languageTag).stableHash())
+
     /** The seed of a draw [Levels] makes: [index] is a deck or a level number, [salt] says which draw. */
     fun levelPick(index: Int, salt: Long): Long = mix(mix(index.toLong() xor LEVEL_PICK) xor salt)
 
     private const val LEVEL = 0x4C6576656C730001L // "Levels" and a version
+    private const val LANGUAGE_LEVEL = 0x4C6576656C734C31L // "LevelsL1"
     private const val LEVEL_PICK = 0x4C65766C50696B01L
 
     /**

@@ -1,5 +1,8 @@
 package com.joebywan.daybook.ui.settings
 
+import com.joebywan.daybook.core.i18n.text
+
+import com.joebywan.daybook.core.i18n.SUPPORTED_LANGUAGES
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import com.joebywan.daybook.ui.card
@@ -8,6 +11,8 @@ import com.joebywan.daybook.ui.TitledScreen
 import com.joebywan.daybook.ui.MotionChoice
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,10 +21,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +54,7 @@ import com.joebywan.daybook.ui.home.rememberLaunchPreferences
 import kotlinx.coroutines.launch
 import com.joebywan.daybook.platform.VIBRATION_NOTE
 import com.joebywan.daybook.platform.rememberRateLink
+import com.joebywan.daybook.platform.rememberAppLanguage
 import com.joebywan.daybook.ui.home.SegmentedControl
 import com.joebywan.daybook.ui.theme.Appearance
 
@@ -72,24 +83,25 @@ fun SettingsScreen(
 ) {
     val rateLink = rememberRateLink()
 
-    TitledScreen("Settings", null, onBack) {
+    val languageNote = text("ui.settings_screen.message")
+    TitledScreen(text("ui.home_screen.settings"), null, onBack) {
         LazyColumn(
             contentPadding = PaddingValues(18.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item { LanguageChoice() }
             item {
                 SettingSwitch(
-                    title = "Show the timer while playing",
-                    detail = "A running clock above the board. Off or on, your time is counted, " +
-                        "shown when you solve, and kept for your statistics.",
+                    title = text("ui.settings_screen.show_the_timer_while_playing"),
+                    detail = text("ui.settings_screen.a_running_clock_above_the_board"),
                     checked = showTimer,
                     onChecked = onShowTimer,
                 )
             }
             item {
                 SettingSwitch(
-                    title = "Sound",
-                    detail = "Soft sounds as you play, and a short tune when you solve a puzzle. $SOLVE_SOUND_NOTE",
+                    title = text("ui.settings_screen.sound"),
+                    detail = text("ui.settings_screen.soft_sounds_as_you_play_and", "SOLVE_SOUND_NOTE" to (SOLVE_SOUND_NOTE)),
                     checked = playSound,
                     onChecked = onPlaySound,
                 )
@@ -100,9 +112,8 @@ fun SettingsScreen(
             item { MotionSetting(motionChoice, onMotionChoice) }
             item {
                 SettingSwitch(
-                    title = "Vibration",
-                    detail = "A light tap when a move lands, a firmer one when a bump costs a life, and a short buzz " +
-                        "when you solve. $VIBRATION_NOTE",
+                    title = text("ui.settings_screen.vibration"),
+                    detail = text("ui.settings_screen.a_light_tap_when_a_move", "VIBRATION_NOTE" to (VIBRATION_NOTE)),
                     checked = vibrate,
                     onChecked = onVibrate,
                 )
@@ -110,9 +121,45 @@ fun SettingsScreen(
             item { PuzzleOrderRow(customOrder, onResetOrder) }
             item { TrainingRow(onTraining) }
             item { RateRow(rateLink) }
+            if (languageNote.isNotEmpty()) item {
+                Text(languageNote, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             item { Credits() }
         }
     }
+}
+
+@Composable
+private fun LanguageChoice() {
+    val (selected, select) = rememberAppLanguage()
+    var open by remember { mutableStateOf(false) }
+    val system = text("ui.settings_screen.system_default")
+    val title = text("ui.settings_screen.language")
+    val label = SUPPORTED_LANGUAGES.firstOrNull { it.tag == selected }?.nativeName ?: system
+    Column(Modifier.fillMaxWidth().card(MaterialTheme.colorScheme.surface).clickable(role = Role.Button) { open = true }.padding(14.dp)) {
+        CardText(title, label)
+    }
+    if (open) AlertDialog(
+        onDismissRequest = { open = false },
+        title = { Text(title) },
+        confirmButton = { TextButton(onClick = { open = false }) { Text(text("ui.share_preview.close")) } },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()).selectableGroup()) {
+                (listOf(null to system) + SUPPORTED_LANGUAGES.map { it.tag to it.nativeName }).forEach { (tag, name) ->
+                    Row(
+                        Modifier.fillMaxWidth().selectable(selected = tag == selected, role = Role.RadioButton) {
+                            open = false
+                            select(tag)
+                        }.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = tag == selected, onClick = null)
+                        Text(name, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        },
+    )
 }
 
 /**
@@ -131,9 +178,9 @@ private fun ReminderSetting() {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().card(scheme.surface)) {
         SettingSwitch(
-            title = "Daily reminder",
-            detail = if (refused) "Daybook isn't allowed to send notifications. Allow them in your phone's settings, then try again."
-            else "One quiet note a day at a time you choose, and none on a day you've already solved a daily.",
+            title = text("ui.android_reminder.daily_reminder"),
+            detail = if (refused) text("ui.settings_screen.daybook_isn_t_allowed_to_send")
+            else text("ui.settings_screen.one_quiet_note_a_day_at"),
             checked = on,
             onChecked = { want ->
                 fun apply(now: Boolean) = scope.launch {
@@ -171,10 +218,9 @@ private fun ReminderSetting() {
 private fun AccessibilityHeading() {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 12.dp)) {
-        Text("Accessibility", style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
+        Text(text("ui.settings_screen.accessibility"), style = MaterialTheme.typography.titleLarge, color = scheme.onBackground)
         Text(
-            "Always on: press and hold does whatever a double tap does, the numbers and letters on a board stay " +
-                "inside their squares at large font sizes, and what is right or wrong is never shown by colour alone.",
+            text("ui.settings_screen.always_on_press_and_hold_does"),
             style = MaterialTheme.typography.bodyMedium,
             color = scheme.onSurfaceVariant,
         )
@@ -194,8 +240,8 @@ private fun MotionSetting(choice: MotionChoice, onChoice: (MotionChoice) -> Unit
     ) {
         Column {
             CardText(
-                "Reduced motion",
-                "Stills the confetti, sparkles, shakes and slides, and holds the hint glow steady. System follows your device's setting.",
+                text("ui.settings_screen.reduced_motion"),
+                text("ui.settings_screen.stills_the_confetti_sparkles_shakes_and"),
             )
         }
         SegmentedControl(
@@ -221,7 +267,7 @@ private fun AppearanceChoice(appearance: Appearance, onAppearance: (Appearance) 
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Column { CardText("Appearance", "Light or dark, or the same as your device.") }
+        Column { CardText(text("ui.settings_screen.appearance"), text("ui.settings_screen.light_or_dark_or_the_same")) }
         SegmentedControl(
             modifier = Modifier,
             options = Appearance.entries,
@@ -250,14 +296,11 @@ private fun Credits() {
             .padding(14.dp),
     ) {
         CardText(
-            "Word lists",
-            "Lexicon's words come from SCOWL (Spell Checker Oriented Word Lists), Copyright 2000-2016 " +
-                "by Kevin Atkinson, used under its permissive licence. The lists are provided \"as is\" " +
-                "without warranty, and Kevin Atkinson makes no representations about their suitability " +
-                "for any purpose.",
+            text("ui.settings_screen.word_lists"),
+            text("ui.settings_screen.lexicon_s_words_come_from_scowl"),
         )
         Spacer(Modifier.height(12.dp))
-        CardText("Typeface", "Fredoka, Copyright 2016 The Fredoka Project Authors, used under the SIL Open Font License 1.1.")
+        CardText(text("ui.settings_screen.typeface"), text("ui.settings_screen.fredoka_copyright_2016_the_fredoka_project"))
     }
 }
 
@@ -274,14 +317,14 @@ private fun PuzzleOrderRow(customOrder: Boolean, onReset: () -> Unit) {
     ) {
         Column(Modifier.weight(1f)) {
             CardText(
-                "Puzzle order",
-                if (customOrder) "Your own order. Puzzles added later join at the end."
-                else "Most played first, over the last two months. Press and hold a puzzle on the home screen to move it.",
+                text("ui.settings_screen.puzzle_order"),
+                if (customOrder) text("ui.settings_screen.your_own_order_puzzles_added_later")
+                else text("ui.settings_screen.most_played_first_over_the_last"),
             )
         }
         if (customOrder) {
             Text(
-                "Reset to most played",
+                text("ui.settings_screen.reset_to_most_played"),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = scheme.primary,
@@ -331,6 +374,6 @@ private fun TrainingRow(onOpen: () -> Unit) {
             .clickable(onClick = onOpen)
             .padding(14.dp),
     ) {
-        CardText("Training", "Practise the hints' techniques one at a time, on real boards.")
+        CardText(text("ui.launch_options.training"), text("ui.settings_screen.practise_the_hints_techniques_one_at"))
     }
 }

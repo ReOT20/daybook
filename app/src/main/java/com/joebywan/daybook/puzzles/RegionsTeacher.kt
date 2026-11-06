@@ -1,13 +1,16 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.answerFallback
 import com.joebywan.daybook.core.lonePlace
 import com.joebywan.daybook.core.bit
 import com.joebywan.daybook.core.fullMask
 import com.joebywan.daybook.core.has
-import com.joebywan.daybook.core.listed
-import com.joebywan.daybook.core.squareName
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.squareNameMessage
 
 /**
  * Regions, reasoned a step at a time.
@@ -182,17 +185,17 @@ internal object RegionsTeacher {
         val wrong = s.cells.indices.firstOrNull { s.cells[it] != 0 && !s.givens[it] && s.cells[it] != s.solution[it] }
             ?: return null
         val d = s.cells[wrong]
-        val clear = "Select it and tap $d again to clear it."
-        fun step(explanation: String, cited: Set<Int>) =
-            PlacementStep(MISTAKE, wrong, 0, setOf(wrong), cited, "Check this $d.", explanation)
+        val clear = message("teacher.regions.mistake.1", "d" to (d))
+        fun step(explanation: CharSequence, cited: Set<Int>) =
+            PlacementStep(MISTAKE, wrong, 0, setOf(wrong), cited, message("teacher.regions.step.1", "d" to (d)), explanation)
 
         val size = layout.sizeOf[wrong]
-        if (d > size) return step("This region has $size squares, so it only holds 1 to $size. $clear", layout.members[layout.region[wrong]].toSet() - wrong)
+        if (d > size) return step(message("teacher.regions.mistake.2", "size" to (size), "clear" to (clear)), layout.members[layout.region[wrong]].toSet() - wrong)
         layout.members[layout.region[wrong]].firstOrNull { it != wrong && s.cells[it] == d }
-            ?.let { return step("This $d repeats the $d in its region. $clear", setOf(it)) }
+            ?.let { return step(message("teacher.regions.mistake.3", "d" to (d), "clear" to (clear)), setOf(it)) }
         layout.around[wrong].firstOrNull { s.cells[it] == d }
-            ?.let { return step("This $d touches another $d, and equal digits may not touch, even at a corner. $clear", setOf(it)) }
-        return step("No valid way to finish the board keeps this $d. $clear", emptySet())
+            ?.let { return step(message("teacher.regions.mistake.4", "d" to (d), "clear" to (clear)), setOf(it)) }
+        return step(message("teacher.regions.mistake.5", "d" to (d), "clear" to (clear)), emptySet())
     }
 
     // ---- explaining ---------------------------------------------------------------------------------
@@ -205,9 +208,9 @@ internal object RegionsTeacher {
         return when (hit.technique) {
             LAST -> PlacementStep(
                 LAST, x, d, members.toSet(), members.filter { cells[it] != 0 }.toSet(),
-                "Look at this region.",
-                if (members.size == 1) "A region of one square holds just a 1."
-                else "This region has every digit from 1 to ${members.size} except $d, so its last empty square is a $d.",
+                message("teacher.regions.deduce.1"),
+                if (members.size == 1) message("teacher.regions.deduce.2")
+                else message("teacher.regions.deduce.3", "members_size" to (members.size), "d" to (d)),
             )
             ONLY_DIGIT -> {
                 val inRegion = members.filter { it != x && cells[it] != 0 }
@@ -216,25 +219,24 @@ internal object RegionsTeacher {
                 val touchDigits = touching.map { cells[it] }.sorted().distinct()
                 val why = when {
                     regionDigits.isNotEmpty() && touchDigits.isNotEmpty() ->
-                        "Its region already has ${listed(regionDigits)}, and the squares touching it have ${listed(touchDigits)}, so only $d is left."
-                    regionDigits.isNotEmpty() -> "Its region already has ${listed(regionDigits)}, so only $d is left."
-                    touchDigits.isEmpty() -> "Its region is one square, so it holds just a 1."
-                    else -> "The squares touching it have ${listed(touchDigits)}, so only $d is left."
+                        message("teacher.regions.deduce.4", "listed_regionDigits_" to (listedMessage(regionDigits)), "listed_touchDigits_" to (listedMessage(touchDigits)), "d" to (d))
+                    regionDigits.isNotEmpty() -> message("teacher.regions.deduce.5", "listed_regionDigits_" to (listedMessage(regionDigits)), "d" to (d))
+                    touchDigits.isEmpty() -> message("teacher.regions.deduce.6")
+                    else -> message("teacher.regions.deduce.7", "listed_touchDigits_" to (listedMessage(touchDigits)), "d" to (d))
                 }
                 PlacementStep(
                     ONLY_DIGIT, x, d, setOf(x), (inRegion + touching.sorted().distinctBy { cells[it] }).toSet(),
-                    "Which digits can this square still take?", why,
+                    message("teacher.regions.deduce.8"), why,
                 )
             }
             LOCKED -> {
                 val n = layout.n
-                val why = "This region's ${hit.lockDigit} must go in one of the marked squares. They all touch the square at " +
-                    "${squareName(n, hit.struck)}, so it is not a ${hit.lockDigit}."
-                val then = if (hit.byPlace) "That leaves the glowing square as its region's only place for a $d."
-                else "That leaves it only $d."
+                val why = message("teacher.regions.deduce.9", "hit_lockDigit" to (hit.lockDigit), "squareName_n_hit_struck_" to (squareNameMessage(n, hit.struck)))
+                val then = if (hit.byPlace) message("teacher.regions.deduce.10", "d" to (d))
+                else message("teacher.regions.deduce.11", "d" to (d))
                 PlacementStep(
                     LOCKED, x, d, members.toSet() + hit.struck, hit.places.toSet() + hit.struck + x,
-                    "Where can the ${hit.lockDigit} go in this region?", "$why $then",
+                    message("teacher.regions.deduce.12", "hit_lockDigit" to (hit.lockDigit)), message("teacher.regions.deduce.extra.1", "why" to (why), "then" to (then)),
                 )
             }
             else -> {
@@ -243,8 +245,8 @@ internal object RegionsTeacher {
                     .mapNotNull { o -> layout.around[o].firstOrNull { cells[it] == d } }.toSet()
                 PlacementStep(
                     ONLY_PLACE, x, d, members.toSet(), blockers,
-                    "Where can the $d go in this region?",
-                    "This region still needs a $d, and every other empty square in it has a $d touching it. This square is the only place left.",
+                    message("teacher.regions.deduce.13", "d" to (d)),
+                    message("teacher.regions.deduce.14", "d" to (d)),
                 )
             }
         }

@@ -1,8 +1,13 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.listed
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.listedMessage
 
 /**
  * Pipes, reasoned the way a person reasons it, one tile at a time.
@@ -60,8 +65,8 @@ internal object PipesTeacher {
     private const val CLOSED = 2
 
     /** Direction index d is the bit `1 shl d`: 0 up, 1 right, 2 down, 3 left, as in [Pipes]. */
-    private val towards = listOf("above", "to the right", "below", "to the left")
-    private val sideName = listOf("top", "right", "bottom", "left")
+    private val towards = listOf(message("teacher.pipes.towards.1"), message("teacher.pipes.towards.2"), message("teacher.pipes.towards.3"), message("teacher.pipes.towards.4"))
+    private val sideName = listOf(message("teacher.pipes.side_name.1"), message("teacher.pipes.side_name.2"), message("teacher.pipes.side_name.3"), message("teacher.pipes.side_name.4"))
 
     /**
      * One step: turn [cell] until it reads [mask]. For a [MISTAKE], [wrong] is the turn the player
@@ -73,10 +78,16 @@ internal object PipesTeacher {
         val mask: Int,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         val wrong: Int? = null,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = setOf(cell)
     }
 
@@ -100,15 +111,15 @@ internal object PipesTeacher {
 
     /** An explanation, the tiles it leans on, and the technique it amounts to. */
     private class Reason(
-        val text: String,
+        val text: Message,
         val cited: Set<Int>,
         val technique: String,
         val setNeighbours: List<Int>,
         /** [text] without its closing "So it has only one way round.", for when the panel has no room for it. */
-        val brief: String = text,
+        val brief: Message = text,
     ) {
         /** [text] after a [lead], or [brief] after it when the two together would not fit the panel. */
-        fun after(lead: String = ""): String = if (lead.length + text.length <= MAX_EXPLANATION) lead + text else lead + brief
+        fun after(lead: Message = literalMessage("")): Message = if (lead.length + text.length <= MAX_EXPLANATION) lead + text else lead + brief
     }
 
     // ---- the whole hint: mistakes, then reasoning, then the honest fallback ----------------------
@@ -152,8 +163,8 @@ internal object PipesTeacher {
                 mask = solution[f.cell],
                 focus = setOf(f.cell),
                 cited = why.cited,
-                nudge = "Check this tile.",
-                explanation = why.after("Wet doesn't mean right. "),
+                nudge = message("teacher.pipes.mistake.1"),
+                explanation = why.after(message("teacher.pipes.mistake.2")),
                 wrong = s.cells[f.cell],
             )
         }
@@ -164,9 +175,8 @@ internal object PipesTeacher {
             mask = solution[cell],
             focus = setOf(cell),
             cited = emptySet(),
-            nudge = "Check this tile.",
-            explanation = "Wet doesn't mean right: no finished network has this " +
-                "one turned this way.",
+            nudge = message("teacher.pipes.mistake.3"),
+            explanation = message("teacher.pipes.mistake.4"),
             wrong = s.cells[cell],
         )
     }
@@ -185,9 +195,8 @@ internal object PipesTeacher {
             mask = solution[cell],
             focus = setOf(cell),
             cited = emptySet(),
-            nudge = "This one takes a longer chain. Look at the glowing tile.",
-            explanation = "Nothing on the board settles this tile yet, so here's a way it sits in a " +
-                "finished network.",
+            nudge = message("teacher.pipes.fallback.1"),
+            explanation = message("teacher.pipes.fallback.2"),
         )
     }
 
@@ -242,7 +251,7 @@ internal object PipesTeacher {
             mask = f.mask,
             focus = setOf(f.cell),
             cited = why.cited,
-            nudge = "Look at the glowing tile.",
+            nudge = message("teacher.pipes.step.1"),
             explanation = why.after(),
         )
     }
@@ -254,7 +263,7 @@ internal object PipesTeacher {
         val cited = mutableListOf<Int>()
         val setNeighbours = mutableListOf<Int>()
         val border = mutableListOf<Int>()
-        val parts = mutableListOf<String>()
+        val parts = mutableListOf<Message>()
         var whichever = false
         var loop = false
         // Settled sides by what they say: 0 set and open, 1 set and closed, 2 free and open, 3 free
@@ -270,7 +279,7 @@ internal object PipesTeacher {
             if (why.rule == NO_LOOP) {
                 loop = true
                 cited += why.cited
-                parts += "it already reaches the tile ${towards[d]} another way, so a direct join would close a loop"
+                parts += message("teacher.pipes.explain.1", "towards_d_" to (towards[d]))
                 continue
             }
             // A side this tile settled for itself is a consequence, not a reason.
@@ -287,12 +296,12 @@ internal object PipesTeacher {
             val ds = sides[kind]
             if (ds.isEmpty()) continue
             val one = ds.size == 1
-            val tiles = (if (one) "the tile " else "the tiles ") + listed(ds.map { towards[it] })
+            val tiles = (if (one) message("teacher.pipes.explain.2") else message("teacher.pipes.explain.3")) + listedMessage(ds.map { towards[it] })
             parts += tiles + when (kind) {
-                0 -> if (one) " is set and points into it" else " are set and point into it"
-                1 -> if (one) " is set and doesn't point at it" else " are set and don't point at it"
-                2 -> if (one) " always points into it" else " always point into it"
-                else -> " can never point at it"
+                0 -> if (one) message("teacher.pipes.explain.4") else message("teacher.pipes.explain.5")
+                1 -> if (one) message("teacher.pipes.explain.6") else message("teacher.pipes.explain.7")
+                2 -> if (one) message("teacher.pipes.explain.8") else message("teacher.pipes.explain.9")
+                else -> message("teacher.pipes.explain.10")
             }
         }
         val technique = when {
@@ -307,23 +316,22 @@ internal object PipesTeacher {
         if (parts.isEmpty()) {
             val text = when {
                 shape == 5 || shape == 10 ->
-                    "A straight can't point off the board, so against the border it has to run along it."
+                    message("teacher.pipes.explain.11")
                 shape.countOneBits() == 3 ->
-                    "A T can't point off the board, so its flat side has to face the border."
+                    message("teacher.pipes.explain.12")
                 shape.countOneBits() == 2 && border.size >= 2 ->
-                    "In a corner, a bend can't point off either edge, so it can only turn one way."
+                    message("teacher.pipes.explain.13")
                 else ->
-                    "It sits against the border on its ${listed(border.map { sideName[it] })}, and no " +
-                        "pipe can point off the board, so it only fits one way round."
+                    message("teacher.pipes.explain.14", "value1" to (listedMessage(border.map { sideName[it] })))
             }
             return Reason(text, citedSorted, technique, setNeighbours)
         }
         val all = buildList {
-            if (border.isNotEmpty()) add("its ${listed(border.map { sideName[it] })} is against the border")
+            if (border.isNotEmpty()) add(message("teacher.pipes.explain.15", "value1" to (listedMessage(border.map { sideName[it] }))))
             addAll(parts)
         }
-        val reasons = "${clauses(all).cap()}."
-        return Reason("$reasons So it has only one way round.", citedSorted, technique, setNeighbours, brief = reasons)
+        val reasons = message("teacher.pipes.explain.extra.1", "clauses_all_cap_" to (clauses(all).cap()))
+        return Reason(message("teacher.pipes.explain.16", "reasons" to (reasons)), citedSorted, technique, setNeighbours, brief = reasons)
     }
 
     // ---- the reasoning engine ---------------------------------------------------------------------
@@ -555,8 +563,8 @@ internal object PipesTeacher {
     // ---- words -----------------------------------------------------------------------------------
 
     /** Whole clauses, which may carry their own "and": a semicolon keeps them apart. */
-    private fun clauses(parts: List<String>): String = when (parts.size) {
+    private fun clauses(parts: List<Message>): Message = when (parts.size) {
         1 -> parts[0]
-        else -> parts.joinToString("; ")
+        else -> parts.joinedMessages("; ")
     }
 }

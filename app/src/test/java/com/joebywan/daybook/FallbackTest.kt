@@ -187,6 +187,19 @@ class FallbackTest {
     @Test
     fun `dwindle proves every daily board of a year on every tier`() = assertYearProved(Dwindle) { seed, d -> DwindleLogic.generateVerified(seed, d) }
 
+    @Test fun `Russian word games prove every daily board of a year on every tier`() {
+        val verified: Map<String, (Long, Difficulty) -> Any?> = mapOf(
+            "mini-ru" to { s, d -> MiniLogic.generateVerified(s, d, "ru") },
+            "codeword-ru" to { s, d -> CodewordLogic.generateVerified(s, d, "ru") },
+            "cipher-ru" to { s, d -> com.joebywan.daybook.puzzles.CipherLogic.generateVerified(s, d, "ru") },
+            "wordwheel-ru" to { s, d -> WordWheelLogic.generateVerified(s, d, "ru") },
+            "hexwords-ru" to { s, d -> com.joebywan.daybook.puzzles.HexLogic.generateVerified(s, d, "ru") },
+            "dwindle-ru" to { s, d -> DwindleLogic.generateVerified(s, d, "ru") },
+        )
+        for ((id, prove) in verified) assertYearProved(
+            requireNotNull(com.joebywan.daybook.core.PuzzleRegistry.byId(id)), shipsChecked = 14, verified = prove)
+    }
+
     /** [SandLogic.generateVerified] returns a board only when the search found a sorting road and the naive player does not always sort it. */
     @Test
     fun `sand proves every daily board of a year on every tier`() = assertYearProved(Sand) { seed, d -> SandLogic.generateVerified(seed, d) }

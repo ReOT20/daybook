@@ -36,6 +36,7 @@ python tools/render/render.py                                # every puzzle x 4 
 python tools/render/render.py -p pipes -p sudoku -s 375x537 -b webkit --scheme dark
 python tools/render/render.py -p mosaic -t expert -s 390x664 --measure
 python tools/render/render.py --home                         # the home grid
+python tools/render/render.py --home --locale ru-RU -o /tmp/daybook-render-ru  # Russian shell
 python tools/render/render.py --home --query "screen=archive&puzzle=kings&day=2026-06-01"   # an archive, a day selected
 python tools/render/render.py --list                         # puzzle ids, from PuzzleRegistry
 python tools/render/glyphs.py                                # symbol screens: fails on any request off 127.0.0.1
@@ -45,7 +46,9 @@ Defaults: all puzzles, tier `standard`, sizes 390x844 390x664 360x640 375x537, b
 schemes, `?date=2026-06-15` (fixed so boards reproduce), device scale 2, touch on. A full default run
 is 11 x 4 x 2 x 2 = 176 screenshots; narrow it. Output goes to `$TMPDIR/daybook-render/` (`-o` to
 change; keep it out of the repo tree) as `<puzzle>-<tier>-<W>x<H>-<scheme>-<browser>.png`.
-`--dist` points at a different build.
+`--dist` points at a different build. `--locale` selects the browser language (default `en-US`);
+use separate output directories when comparing languages. `glyphs.py` accepts a locale as its third
+positional argument after the output and distribution directories.
 
 Each page is served from a private port on 127.0.0.1 (chosen by the OS, with `.wasm` served as
 `application/wasm`) that is shut down on exit. Each viewport/scheme gets a fresh browser context, so

@@ -3,6 +3,9 @@ package com.joebywan.daybook
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.joebywan.daybook.ui.BoardGlyph
+import com.joebywan.daybook.ui.boardFontSize
+import com.joebywan.daybook.ui.boardStyle
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -23,6 +26,25 @@ class BoardTextSizeTest {
                 assertEquals(26.25f, 10.dp.toSp().toPx(), 0.01f)
                 // What they replaced: grows with the font size.
                 assertEquals(26.25f * scale, (10.dp.value).sp.toPx(), 0.01f)
+            }
+        }
+    }
+
+    @Test
+    fun `zero board room leaves a finite positive font size at every font scale`() {
+        for (scale in listOf(1f, 1.3f, 2f)) {
+            with(Density(2.625f, fontScale = scale)) {
+                assertEquals(26.25f, boardFontSize(26.25f).toPx(), 0.01f)
+                for (room in listOf(0f, -1f)) {
+                    val size = boardFontSize(room)
+                    assertTrue(size.value.isFinite())
+                    assertTrue(size.toPx() > 0f)
+                    for (glyph in BoardGlyph.entries) {
+                        val style = boardStyle(glyph, room)
+                        assertTrue(style.fontSize.value.isFinite())
+                        assertTrue(style.fontSize.toPx() > 0f)
+                    }
+                }
             }
         }
     }

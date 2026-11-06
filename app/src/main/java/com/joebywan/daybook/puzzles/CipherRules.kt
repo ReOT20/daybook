@@ -1,5 +1,6 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.Rng
 import com.joebywan.daybook.core.Verdict
@@ -14,7 +15,7 @@ import com.joebywan.daybook.core.Verdict
  */
 private val PLACES = listOf("units", "tens", "hundreds", "thousands", "ten-thousands", "hundred-thousands")
 
-internal class CipherSum(val words: List<String>) {
+internal class CipherSum(val words: List<String>, val contentLanguage: String = "en") {
     val addends: List<String> = words.dropLast(1)
     val total: String = words.last()
     val letters: List<Char> = words.flatMap { it.toList() }.distinct().sorted()
@@ -78,7 +79,7 @@ internal class CipherSum(val words: List<String>) {
     /** Whether this is a sum the puzzle can pose: at most ten letters, and a total that can be the right length. */
     val wellFormed: Boolean
         get() = addends.size >= 2 && letters.size <= 10 && addends.all { it.length <= width } &&
-            width <= addends.maxOf { it.length } + 1 && words.all { w -> w.isNotEmpty() && w.all { it in 'a'..'z' } }
+            width <= addends.maxOf { it.length } + 1 && words.all { w -> w.isNotEmpty() && w.all { it in WordContent.alphabet(contentLanguage) } }
 }
 
 /**
@@ -211,31 +212,31 @@ internal object CipherLogic {
     /** Each attempt draws another entry with `Rng(seed + attempt)`; every entry is proved in tests, so one is enough. */
     const val ATTEMPTS = 8
 
-    fun sums(difficulty: Difficulty): List<String> = when (difficulty) {
+    fun sums(difficulty: Difficulty, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") RussianCipherSums.entries(difficulty) else when (difficulty) {
         Difficulty.STANDARD -> CipherSums.STANDARD
         Difficulty.HARD -> CipherSums.HARD
         Difficulty.EXPERT -> CipherSums.EXPERT
     }
 
     /** "abc+de=fgh" into its words. */
-    fun parse(entry: String): CipherSum {
+    fun parse(entry: String, contentLanguage: String = "en"): CipherSum {
         val (left, total) = entry.split("=")
-        return CipherSum(left.split("+") + total)
+        return CipherSum(left.split("+") + total, contentLanguage)
     }
 
     /** The board for [entry] when the ladder finishes it and the search proves one answer, else null. */
-    fun board(entry: String): CipherState? {
-        val sum = parse(entry)
+    fun board(entry: String, contentLanguage: String = "en"): CipherState? {
+        val sum = parse(entry, contentLanguage)
         if (!sum.wellFormed || !CipherTeacher.solvesByLogic(sum)) return null
         val verdict = prove(sum) as? Verdict.ExactlyOne ?: return null
-        return CipherState(words = sum.words, solution = verdict.value, digits = List(sum.letters.size) { EMPTY })
+        return CipherState(contentLanguage = contentLanguage, words = sum.words, solution = verdict.value, digits = List(sum.letters.size) { EMPTY })
     }
 
     /** Null when nothing was proved. Pure in (seed, difficulty): only the list's own order reaches the `Rng`. */
-    fun generateVerified(seed: Long, difficulty: Difficulty): CipherState? {
-        val list = sums(difficulty)
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): CipherState? {
+        val list = sums(difficulty, contentLanguage)
         for (attempt in 0 until ATTEMPTS) {
-            board(list[Rng(seed + attempt).nextInt(list.size)])?.let { return it }
+            board(list[Rng(seed + attempt).nextInt(list.size)], contentLanguage)?.let { return it }
         }
         return null
     }
@@ -247,5 +248,6 @@ internal object CipherLogic {
         Difficulty.EXPERT to "able+boil=amass",
     )
 
-    fun lastResort(difficulty: Difficulty): CipherState = board(LAST_RESORT.getValue(difficulty))!!
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): CipherState =
+        board(if (contentLanguage == "en") LAST_RESORT.getValue(difficulty) else sums(difficulty, contentLanguage).first(), contentLanguage)!!
 }

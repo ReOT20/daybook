@@ -2,6 +2,7 @@ package com.joebywan.daybook
 
 import com.joebywan.daybook.core.ACHIEVEMENTS
 import com.joebywan.daybook.core.Difficulty
+import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.earnedAchievements
 import com.joebywan.daybook.core.nearestToGo
 import com.joebywan.daybook.core.newlyEarned
@@ -12,6 +13,7 @@ import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 import kotlin.random.Random
 
 class AchievementsTest {
@@ -76,6 +78,70 @@ class AchievementsTest {
         assertTrue("allPuzzles" !in new(h, c(1, "c"), ids + "d"))
         assertTrue("allPuzzles" in new(h + c(1, "c"), c(1, "d"), ids + "d"))
         assertTrue("allPuzzles" !in got(emptyList(), emptyList()))
+    }
+
+    @Test fun eitherWordEditionCountsTowardFamilyCoverageAcrossLanguageSwitches() {
+        val original = Locale.getDefault()
+        try {
+            for (tag in listOf("en", "ru")) {
+                val history = PuzzleRegistry.forLanguage(tag).map {
+                    Completion(it.id, Difficulty.STANDARD, today, 60, 0)
+                }
+                for (locale in listOf(Locale.ENGLISH, Locale.forLanguageTag("ru-RU"), Locale.ENGLISH)) {
+                    Locale.setDefault(locale)
+                    val earned = earnedAchievements(history, today).map { it.id }
+                    assertTrue("$tag $locale", "oneOfEach" in earned)
+                    assertTrue("$tag $locale", "allPuzzles" in earned)
+                    assertEquals(null, remaining("oneOfEach", history, today))
+                    assertEquals(null, remaining("allPuzzles", history, today))
+                }
+            }
+        } finally {
+            Locale.setDefault(original)
+        }
+    }
+
+    @Test fun missingCoverageNamesTheCurrentEditionAndCountsEachFamilyOnce() {
+        val original = Locale.getDefault()
+        try {
+            val history = PuzzleRegistry.forLanguage("en").filter { it.id != "words" }.map {
+                Completion(it.id, Difficulty.STANDARD, today, 60, 0)
+            }
+            for ((locale, expected) in listOf(Locale.ENGLISH to "words", Locale.forLanguageTag("ru-RU") to "words-ru")) {
+                Locale.setDefault(locale)
+                for (achievement in listOf("oneOfEach", "allPuzzles")) {
+                    val result = remaining(achievement, history, today, nameOf = { it })!!
+                    assertEquals(1, result.left)
+                    assertTrue(result.text, result.text.contains(expected))
+                    val names = (result.textSource!!.arguments["names"] as com.joebywan.daybook.core.i18n.SavedArgument.Puzzles).ids
+                    assertEquals(listOf(expected), names)
+                }
+            }
+        } finally {
+            Locale.setDefault(original)
+        }
+    }
+
+    @Test fun puzzleSpecificSuggestionsNeverRecommendHiddenEditionProgress() {
+        val original = Locale.getDefault()
+        try {
+            for ((id, visible, hidden) in listOf(
+                Triple("words", Locale.ENGLISH, Locale.forLanguageTag("ru-RU")),
+                Triple("words-ru", Locale.forLanguageTag("ru-RU"), Locale.ENGLISH),
+            )) {
+                val history = (0..4).map { back ->
+                    Completion(id, Difficulty.STANDARD, d(back), 60, 0)
+                } + Completion(id, Difficulty.EXPERT, today, 60, 0)
+                Locale.setDefault(visible)
+                assertEquals(2, remaining("puzzleStreak7", history, today)!!.left)
+                assertEquals(1, remaining("fullSet", history, today)!!.left)
+                Locale.setDefault(hidden)
+                assertEquals(null, remaining("puzzleStreak7", history, today))
+                assertEquals(null, remaining("fullSet", history, today))
+            }
+        } finally {
+            Locale.setDefault(original)
+        }
     }
 
     @Test fun cleanSweepIsAnyWeek() {

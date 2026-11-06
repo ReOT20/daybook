@@ -1,5 +1,15 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.words.WordContent
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.bit
 import com.joebywan.daybook.core.has
 import com.joebywan.daybook.core.listed
@@ -39,10 +49,8 @@ internal object MiniTeacher {
 
     val TECHNIQUES = listOf(ONE_WORD, CROSSING, ALL_WORDS, CLUE)
 
-    private const val ALL = (1 shl 26) - 1
-
     /** The board's slots, and for every square the slots through it and its place in each. */
-    internal class Shape(val size: Int, grid: String) {
+    internal class Shape(val size: Int, grid: String, val contentLanguage: String = "en") {
         val slots: List<MiniLogic.Slot> = MiniLogic.slots(size, grid)
         /** Per square: (slot, place) pairs, the across one first. */
         val through: List<List<Pair<Int, Int>>> = List(size * size) { sq ->
@@ -59,26 +67,26 @@ internal object MiniTeacher {
         val dom = IntArray(shape.size * shape.size) { sq ->
             when (val c = letters[sq]) {
                 BLACK -> 0
-                OPEN -> ALL
-                else -> bit(c - 'a')
+                OPEN -> WordContent.alphabet(shape.contentLanguage).let { if (it.length == 32) -1 else (1 shl it.length) - 1 }
+                else -> bit(WordContent.index(c, shape.contentLanguage))
             }
         }
-        val words: Array<IntArray> = Array(shape.slots.size) { r -> filter(r, WheelWords.grid(shape.slots[r].length).indices.toList().toIntArray()) }
+        val words: Array<IntArray> = Array(shape.slots.size) { r -> filter(r, WheelWords.grid(shape.slots[r].length, shape.contentLanguage).indices.toList().toIntArray()) }
         var consistent = words.all { it.isNotEmpty() }
 
         private fun filter(r: Int, from: IntArray): IntArray {
             val slot = shape.slots[r]
-            val list = WheelWords.grid(slot.length)
-            return from.filter { w -> val word = list[w]; slot.squares.indices.all { has(dom[slot.squares[it]], word[it] - 'a') } }.toIntArray()
+            val list = WheelWords.grid(slot.length, shape.contentLanguage)
+            return from.filter { w -> val word = list[w]; slot.squares.indices.all { has(dom[slot.squares[it]], WordContent.index(word[it], shape.contentLanguage)) } }.toIntArray()
         }
 
-        fun word(r: Int, w: Int): String = WheelWords.grid(shape.slots[r].length)[w]
+        fun word(r: Int, w: Int): String = WheelWords.grid(shape.slots[r].length, shape.contentLanguage)[w]
 
         /** The letters place [i] of slot [r] takes in some word still fitting it. */
         fun support(r: Int, i: Int): Int {
             var m = 0
-            val list = WheelWords.grid(shape.slots[r].length)
-            for (w in words[r]) m = m or bit(list[w][i] - 'a')
+            val list = WheelWords.grid(shape.slots[r].length, shape.contentLanguage)
+            for (w in words[r]) m = m or bit(WordContent.index(list[w][i], shape.contentLanguage))
             return m
         }
 
@@ -137,12 +145,12 @@ internal object MiniTeacher {
             val supports = crossing.map { (_, t, j) -> base.support(t, j) }
             val keep = base.words[r].filter { w ->
                 val word = base.word(r, w)
-                crossing.indices.all { k -> has(supports[k], word[crossing[k].first] - 'a') }
+                crossing.indices.all { k -> has(supports[k], WordContent.index(word[crossing[k].first], shape.contentLanguage)) }
             }
             if (keep.size == 1) {
                 val word = base.word(r, keep[0])
                 val crossers = crossing.indices.filter { k ->
-                    base.words[r].any { w -> w != keep[0] && !has(supports[k], base.word(r, w)[crossing[k].first] - 'a') }
+                    base.words[r].any { w -> w != keep[0] && !has(supports[k], WordContent.index(base.word(r, w)[crossing[k].first], shape.contentLanguage)) }
                 }.map { crossing[it].second }.distinct()
                 return Hit(CROSSING, r, word, weighed = base.words[r].size, crossers = crossers)
             }
@@ -167,8 +175,8 @@ internal object MiniTeacher {
      * The hints' walk from an empty grid to [answer]: each step the first logic step, else a [CLUE] letter from the
      * answer. Null when a step ever disagrees with the answer (the ladder would be unsound) or a slot is left no word.
      */
-    fun walk(size: Int, answer: String, upTo: Int = TECHNIQUES.indexOf(ALL_WORDS)): List<Hit>? {
-        val shape = Shape(size, answer)
+    fun walk(size: Int, answer: String, upTo: Int = TECHNIQUES.indexOf(ALL_WORDS), contentLanguage: String = "en"): List<Hit>? {
+        val shape = Shape(size, answer, contentLanguage)
         val now = CharArray(answer.length) { if (answer[it] == BLACK) BLACK else OPEN }
         val steps = mutableListOf<Hit>()
         while (OPEN in now) {
@@ -214,93 +222,104 @@ internal object MiniTeacher {
         val letter: Char,
         val focus: Set<Int>,
         val cited: Set<Int>,
-        val nudge: String,
-        val explanation: String,
-    )
+        nudge: CharSequence,
+        explanation: CharSequence,
+    ) {
+
+        val nudgeMessage: Message = nudge.asMessage()
+        val explanationMessage: Message = explanation.asMessage()
+        val nudge: String get() = nudgeMessage.english
+        val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: MiniState): Step? {
         if (s.solved) return null
         mistake(s)?.let { return it }
-        return deduce(s.size, s.letters, s.clues) ?: fallback(s)
+        return deduce(s.size, s.letters, s.clues, s.contentLanguage) ?: fallback(s)
     }
 
     /** A slot as the player reads it: letters in capitals, open squares as dashes. */
     private fun read(letters: String, slot: MiniLogic.Slot): String =
         slot.squares.joinToString(" ") { if (letters[it] == OPEN) "_" else letters[it].uppercase() }
 
-    private val ORDINALS = listOf("first", "second", "third", "fourth", "fifth", "sixth", "seventh")
+    private fun slotNameMessage(slot: MiniLogic.Slot): Message = message(
+        "teacher.mini.slot_name", "number" to slot.number,
+        "direction" to message(if (slot.across) "teacher.mini.across" else "teacher.mini.down"),
+    )
+
+    private val ORDINALS = listOf(message("teacher.mini.ordinal.1"), message("teacher.mini.ordinal.2"), message("teacher.mini.ordinal.3"), message("teacher.mini.ordinal.4"), message("teacher.mini.ordinal.5"), message("teacher.mini.ordinal.6"), message("teacher.mini.ordinal.7"))
 
     private fun fallback(s: MiniState): Step? {
-        val shape = Shape(s.size, s.letters)
+        val shape = Shape(s.size, s.letters, s.contentLanguage)
         val r = clueSlot(shape, s.letters) ?: return null
         val slot = shape.slots[r]
         val i = slot.squares.indexOfFirst { s.letters[it] == OPEN }
         val sq = slot.squares[i]
         val l = s.answer[sq]
-        val where = if (i == 0) "starts with ${l.uppercase()}" else "has ${l.uppercase()} as its ${ORDINALS[i]} letter"
+        val where = if (i == 0) message("teacher.mini.fallback.1", "l_uppercase_" to (l.uppercase())) else message("teacher.mini.fallback.2", "l_uppercase_" to (l.uppercase()), "ORDINALS_i_" to (ORDINALS[i]))
         val squares = slot.squares.toSet()
         // The second clue first (tap 1), the letter of the answer only on the next tap. A save from before second
         // clues has none: the nudge is then the old pointer to the slot.
         val second = s.secondClues.getOrNull(r)?.takeIf { it.isNotBlank() }
         return Step(
-            CLUE, r, null, sq, l, squares, squares, if (second != null) "Another way in: ${slot.name}, \"$second\"." else "Try ${slot.name}.",
-            "No crossing letters settle a word yet, so this hint reads the answer: ${slot.name}, \"${s.clues[r]}\", $where.",
+            CLUE, r, null, sq, l, squares, squares, if (second != null) message("teacher.mini.fallback.3", "slot_name" to (slotNameMessage(slot)), "second" to (second)) else message("teacher.mini.fallback.4", "slot_name" to (slotNameMessage(slot))),
+            message("teacher.mini.fallback.5", "slot_name" to (slotNameMessage(slot)), "s_clues_r_" to (s.clues[r]), "where" to (where)),
         )
     }
 
     private fun mistake(s: MiniState): Step? {
         val wrong = s.letters.indices.filter { s.letters[it] != OPEN && s.letters[it] != BLACK && s.letters[it] != s.answer[it] }
         if (wrong.isEmpty()) return null
-        val shape = Shape(s.size, s.letters)
-        val dead = MiniLogic.deadSlots(s.size, s.letters).sorted()
+        val shape = Shape(s.size, s.letters, s.contentLanguage)
+        val dead = MiniLogic.deadSlots(s.size, s.letters, s.contentLanguage).sorted()
         val sq = wrong.firstOrNull { w -> dead.any { w in shape.slots[it].squares } } ?: wrong.first()
         val l = s.letters[sq].uppercase()
-        val clear = "Tap it and type over it, or Backspace to clear it."
+        val clear = message("teacher.mini.mistake.1")
         val inDead = dead.firstOrNull { sq in shape.slots[it].squares }
         if (inDead != null) {
             val slot = shape.slots[inDead]
             return Step(
-                MISTAKE, inDead, null, sq, OPEN, setOf(sq), slot.squares.toSet(), "Check the $l in ${slot.name}.",
-                "${slot.name} spells ${MiniLogic.spelled(s.letters, slot).uppercase()}, which is not a word in the list, and this $l is not the answer's. $clear",
+                MISTAKE, inDead, null, sq, OPEN, setOf(sq), slot.squares.toSet(), message("teacher.mini.mistake.2", "l" to (l), "slot_name" to (slotNameMessage(slot))),
+                message("teacher.mini.mistake.3", "slot_name" to (slotNameMessage(slot)), "value2" to (MiniLogic.spelled(s.letters, slot).uppercase()), "l" to (l), "clear" to (clear)),
             )
         }
         val (r, _) = shape.through[sq].first()
         val slot = shape.slots[r]
         return Step(
-            MISTAKE, r, null, sq, OPEN, setOf(sq), slot.squares.toSet(), "Check the $l in ${slot.name}.",
-            "This $l is not in the answer to ${slot.name}, \"${s.clues[r]}\". $clear",
+            MISTAKE, r, null, sq, OPEN, setOf(sq), slot.squares.toSet(), message("teacher.mini.mistake.4", "l" to (l), "slot_name" to (slotNameMessage(slot))),
+            message("teacher.mini.mistake.5", "l" to (l), "slot_name" to (slotNameMessage(slot)), "s_clues_r_" to (s.clues[r]), "clear" to (clear)),
         )
     }
 
     /** The step to hint from the letters on the board alone; [clues] are only quoted. */
-    fun deduce(size: Int, letters: String, clues: List<String>): Step? {
-        val shape = Shape(size, letters)
+    fun deduce(size: Int, letters: String, clues: List<String>, contentLanguage: String = "en"): Step? {
+        val shape = Shape(size, letters, contentLanguage)
         val hit = findStep(shape, letters) ?: return null
         val r = hit.slot
         val slot = shape.slots[r]
         val squares = slot.squares.toSet()
         val clue = "\"${clues[r]}\""
-        fun fit(text: String) = text.takeIf { it.length <= MAX_EXPLANATION }
+        fun fit(text: Message) = text.takeIf { it.length <= MAX_EXPLANATION }
         return when (hit.technique) {
             ONE_WORD -> Step(
-                ONE_WORD, r, hit.word, -1, OPEN, squares, squares, "One word fits ${slot.name}.",
-                fit("${slot.name} reads ${read(letters, slot)}. Only one word in the list fits those letters: the answer to $clue.")
-                    ?: "${slot.name} reads ${read(letters, slot)}. Only one word in the list fits those letters.",
+                ONE_WORD, r, hit.word, -1, OPEN, squares, squares, message("teacher.mini.deduce.1", "slot_name" to (slotNameMessage(slot))),
+                fit(message("teacher.mini.deduce.2", "slot_name" to (slotNameMessage(slot)), "read_letters_slot_" to (read(letters, slot)), "clue" to (clue)))
+                    ?: message("teacher.mini.deduce.3", "slot_name" to (slotNameMessage(slot)), "read_letters_slot_" to (read(letters, slot))),
             )
             CROSSING -> {
-                val names = hit.crossers.map { shape.slots[it].name }
+                val names = hit.crossers.map { slotNameMessage(shape.slots[it]) }
                 val cited = squares + hit.crossers.flatMap { shape.slots[it].squares.toList() }
                 Step(
-                    CROSSING, r, hit.word, -1, OPEN, squares, cited, "Look at the words crossing ${slot.name}.",
-                    fit("${hit.weighed} words fit ${slot.name} (${read(letters, slot)}), but only one leaves ${listed(names)} a word that fits: the answer to $clue.")
-                        ?: "${hit.weighed} words fit ${slot.name} (${read(letters, slot)}), but only one leaves ${listed(names)} a word that fits.",
+                    CROSSING, r, hit.word, -1, OPEN, squares, cited, message("teacher.mini.deduce.4", "slot_name" to (slotNameMessage(slot))),
+                    fit(message("teacher.mini.deduce.5", "hit_weighed" to (hit.weighed), "slot_name" to (slotNameMessage(slot)), "read_letters_slot_" to (read(letters, slot)), "listed_names_" to (listedMessage(names)), "clue" to (clue)))
+                        ?: message("teacher.mini.deduce.6", "hit_weighed" to (hit.weighed), "slot_name" to (slotNameMessage(slot)), "read_letters_slot_" to (read(letters, slot)), "listed_names_" to (listedMessage(names))),
                 )
             }
             else -> Step(
                 ALL_WORDS, r, hit.word, -1, OPEN, squares, squares + slot.squares.flatMap { sq -> shape.through[sq].flatMap { shape.slots[it.first].squares.toList() } },
-                "Work the crossings through together.",
-                fit("Work every crossing through together: each square keeps only letters both its words allow. That leaves ${slot.name} one word: the answer to $clue.")
-                    ?: "Work every crossing through together: each square keeps only letters both its words allow. That leaves ${slot.name} one word.",
+                message("teacher.mini.deduce.7"),
+                fit(message("teacher.mini.deduce.8", "slot_name" to (slotNameMessage(slot)), "clue" to (clue)))
+                    ?: message("teacher.mini.deduce.9", "slot_name" to (slotNameMessage(slot))),
             )
         }
     }

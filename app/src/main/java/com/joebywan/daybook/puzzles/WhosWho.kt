@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -85,21 +88,21 @@ import com.joebywan.daybook.ui.boardSp
 object WhosWho : PuzzleType {
 
     override val id = "whoswho"
-    override val displayName = "Who's Who"
-    override val tagline = "Match everyone to everything from the clues"
+    override val displayName get() = text("puzzle.whoswho.name")
+    override val tagline get() = text("puzzle.whoswho.tagline")
     override val accent = 0xFF846CAD
 
-    override val rules = listOf(
-        "Each row is a person and each column a category: their house, and one or two more. No two people share anything.",
-        "The houses stand in a row, numbered from the left. Next to means one house either side; somewhere left of means a lower number.",
-        "Tap a square, then an item under the board. With the tick chosen it is theirs; with the cross chosen it is not.",
-        "A tick rules that item out of the rest of its column, and the square shows what is still possible.",
-        "Tap a clue to strike it through once you have used it. It is only a note.",
-        "Solved when every square has its tick and every clue is true. Every board has one answer, found without guessing.",
+    override val rules get() = listOf(
+        text("puzzle.whoswho.rule.1"),
+        text("puzzle.whoswho.rule.2"),
+        text("puzzle.whoswho.rule.3"),
+        text("puzzle.whoswho.rule.4"),
+        text("puzzle.whoswho.rule.5"),
+        text("puzzle.whoswho.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move between squares, 1-5 tick that item (Shift+1-5 crosses it), Backspace clears the square.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.whoswho.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState = WhosWhoLogic.generate(seed, difficulty)
@@ -149,71 +152,70 @@ object WhosWho : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Each row is a person, each column a category. The clues fix one way to fill every square: " +
-                    "Ann lives in house 2 and has the dog.",
+                caption = message("puzzle.whoswho.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(0, 0), cell(0, 1))),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "Clue 1 says Ann lives in house 2. Tap Ann's House square, then 2 under the board.",
+                caption = message("puzzle.whoswho.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(0, 0)), soft = setOf(clue(0))),
                 accepts = only(ann),
-                retry = "Tap the glowing square, then 2 with the tick chosen.",
-                done = "Ticked. Nobody else can live in house 2 now.",
+                retry = message("puzzle.whoswho.tutorial.2.retry"),
+                done = message("puzzle.whoswho.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = ann,
-                caption = "Clue 1 is used up. Tap it to strike it through.",
+                caption = message("puzzle.whoswho.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(clue(0))),
                 accepts = only(struck),
-                retry = "Tap the glowing clue.",
-                done = "Struck through: only a note, to keep your place.",
+                retry = message("puzzle.whoswho.tutorial.3.retry"),
+                done = message("puzzle.whoswho.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = struck,
-                caption = "Clue 2: Ben does not have the dog. Choose the cross under the board, then tap Ben's Pet square and the dog.",
+                caption = message("puzzle.whoswho.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(1, 1)), soft = setOf(clue(1))),
                 accepts = only(noDog),
-                retry = "Choose the cross, then tap the glowing square and the dog.",
-                done = "Crossed off. Ben's square no longer offers the dog.",
+                retry = message("puzzle.whoswho.tutorial.4.retry"),
+                done = message("puzzle.whoswho.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = noDog,
-                caption = "Clue 4: Ben does not live in house 3. Cross 3 off in Ben's House square.",
+                caption = message("puzzle.whoswho.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(1, 0)), soft = setOf(clue(3))),
                 accepts = only(noThree),
-                retry = "Tap the glowing square, then 3 with the cross chosen.",
-                done = "Crossed off. House 2 is Ann's, so Ben has only house 1 left.",
+                retry = message("puzzle.whoswho.tutorial.5.retry"),
+                done = message("puzzle.whoswho.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = noThree,
-                caption = "Only 1 is left in Ben's House square. Choose the tick and tick it.",
+                caption = message("puzzle.whoswho.tutorial.6.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(1, 0))),
                 accepts = only(benOne),
-                retry = "Choose the tick, then tap the glowing square and 1.",
-                done = "Ticked. That leaves Cara only house 3.",
+                retry = message("puzzle.whoswho.tutorial.6.retry"),
+                done = message("puzzle.whoswho.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = benOne,
-                caption = "See what a wrong tick does: tick the dog for Cara.",
+                caption = message("puzzle.whoswho.tutorial.7.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(2, 1))),
                 accepts = only(slip),
-                retry = "Tap Cara's glowing Pet square, then the dog, with the tick chosen.",
-                done = "Clue 3 turns red: the cat owner must live in house 3, and only Cara can.",
+                retry = message("puzzle.whoswho.tutorial.7.retry"),
+                done = message("puzzle.whoswho.tutorial.7.done"),
             ),
             TutorialFrame(
                 state = slip,
-                caption = "So Cara has the cat, not the dog. Tap the dog again to take the tick off.",
+                caption = message("puzzle.whoswho.tutorial.8.caption"),
                 highlight = BoardHighlight(strong = setOf(cell(2, 1)), soft = setOf(clue(2))),
                 accepts = only(benOne),
-                retry = "Tap Cara's glowing Pet square, then the dog.",
-                done = "Taken back. Every board has one answer, so every clue can be kept.",
+                retry = message("puzzle.whoswho.tutorial.8.retry"),
+                done = message("puzzle.whoswho.tutorial.8.done"),
             ),
             TutorialFrame(
                 state = benOne,
-                caption = "Your turn: fill in the rest. Stuck? Hint shows you why.",
+                caption = message("puzzle.whoswho.tutorial.9.caption"),
                 freePlay = true,
-                done = "Solved. Every board works out one clue at a time.",
+                done = message("puzzle.whoswho.tutorial.9.done"),
             ),
         )
     }
@@ -388,7 +390,7 @@ object WhosWho : PuzzleType {
                 for (column in 0 until s.columns) {
                     Box(Modifier.weight(weights[column]).fillMaxHeight(), contentAlignment = Alignment.Center) {
                         Text(
-                            WhosWhoWords.HEADERS[s.groups[column]],
+                            WhosWhoText.header(s.groups[column]).resolve(),
                             fontSize = 12.dp.boardSp(), lineHeight = 12.dp.boardSp() * 1.2f,
                             fontWeight = FontWeight.SemiBold,
                             color = scheme.onSurface,
@@ -401,7 +403,7 @@ object WhosWho : PuzzleType {
                 Row(Modifier.fillMaxWidth().height(rowH).background(scheme.surface)) {
                     Box(Modifier.width(NAME_W).fillMaxHeight().border(0.5.dp, line), contentAlignment = Alignment.CenterStart) {
                         Text(
-                            s.names[p],
+                            WhosWhoText.name(s, p).resolve(),
                             Modifier.padding(start = 6.dp),
                             fontSize = 14.dp.boardSp(), lineHeight = 14.dp.boardSp() * 1.2f,
                             fontWeight = FontWeight.SemiBold,
@@ -457,7 +459,7 @@ object WhosWho : PuzzleType {
         ) {
             if (placed >= 0) {
                 Text(
-                    s.word(column, placed),
+                    WhosWhoText.word(s, column, placed).resolve(),
                     fontSize = 15.dp.boardSp(), lineHeight = 15.dp.boardSp() * 1.2f,
                     fontWeight = FontWeight.Bold,
                     color = if (isBad) scheme.error else BoardHues.ink(look.hueB, look.dark),
@@ -466,7 +468,7 @@ object WhosWho : PuzzleType {
                 )
             } else {
                 Text(
-                    open.joinToString(" ") { s.word(column, it) },
+                    open.joinToString(" ") { WhosWhoText.word(s, column, it).resolve() },
                     Modifier.padding(horizontal = 3.dp),
                     fontSize = if (column == 0) 12.dp.boardSp() else 10.5.dp.boardSp(),
                     lineHeight = 12.dp.boardSp(),
@@ -510,7 +512,7 @@ object WhosWho : PuzzleType {
                         color = if (bad[k]) scheme.error else BoardHues.ink(look.hueA, look.dark),
                     )
                     Text(
-                        WhosWhoLogic.clueText(s, k),
+                        WhosWhoText.clueText(s, k).resolve(),
                         fontSize = CLUE_SP,
                         lineHeight = 18.sp,
                         color = when {
@@ -561,7 +563,7 @@ object WhosWho : PuzzleType {
             Spacer(Modifier.width(4.dp))
             if (selected == null) {
                 Text(
-                    "Tap a square in the table",
+                    text("puzzle.whoswho.board.start"),
                     Modifier.weight(1f),
                     fontSize = 13.sp,
                     color = scheme.onSurfaceVariant,
@@ -583,7 +585,7 @@ object WhosWho : PuzzleType {
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            s.word(column, slot),
+                            WhosWhoText.word(s, column, slot).resolve(),
                             fontSize = if (column == 0) 17.sp else 12.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = if (mark == WhosWhoLogic.TICK) BoardHues.onFill(BoardHues.fill(look.hueB, look.dark)) else scheme.onSurface,

@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Pearls
 import com.joebywan.daybook.puzzles.PearlsState
 import com.joebywan.daybook.puzzles.PearlsTeacher
@@ -15,19 +16,13 @@ import com.joebywan.daybook.puzzles.PearlsTeacher
 val PearlsTraining: Course = Course(
     puzzle = Pearls,
     explanations = linkedMapOf(
-        PearlsTeacher.BLACK_PEARL to "The loop turns on a black pearl and runs straight on through the next square both " +
-            "ways. An arm it can't draw sends it the other way. Drag to draw a line; tap an edge to cross it.",
-        PearlsTeacher.WHITE_PEARL to "The loop goes straight through a white pearl. When it can't go one way, for an " +
-            "edge crossed or the border, it runs straight through the other way.",
-        PearlsTeacher.WHITE_TURN to "The loop turns just before or just after a white pearl. When it runs straight on " +
-            "through the square on one side, it must turn at the square on the other: cross the edge straight on from there.",
-        PearlsTeacher.ONE_WAY to "A line can't stop. When the square at its end has only one way on left, the line goes there.",
-        PearlsTeacher.DEAD_END to "A loop through a square needs two ways in. A square with only one way left can't be " +
-            "passed: cross its last edge.",
-        PearlsTeacher.SMALL_LOOP to "There is only one loop. Joining two ends of one line would close a loop that leaves " +
-            "out a pearl or another line, so cross the edge between them.",
-        PearlsTeacher.WHAT_IF to "Suppose a line on an edge, or none, and follow the rules a few steps. If a square " +
-            "would need three lines or a pearl couldn't keep its rule, the edge goes the other way.",
+        PearlsTeacher.BLACK_PEARL to message("training.pearls_black_pearl"),
+        PearlsTeacher.WHITE_PEARL to message("training.pearls_white_pearl"),
+        PearlsTeacher.WHITE_TURN to message("training.pearls_white_turn"),
+        PearlsTeacher.ONE_WAY to message("training.pearls_one_way"),
+        PearlsTeacher.DEAD_END to message("training.pearls_dead_end"),
+        PearlsTeacher.SMALL_LOOP to message("training.pearls_small_loop"),
+        PearlsTeacher.WHAT_IF to message("training.pearls_what_if"),
     ),
     // PearlsLogic.specFor: Standard the pearls' and squares' own rules, Hard must need the one loop, Expert a what-if.
     tierFor = tierByIndex({ PearlsTraining.techniques }, hard = 5, expert = 6),

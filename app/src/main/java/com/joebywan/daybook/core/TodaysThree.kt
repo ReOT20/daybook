@@ -5,10 +5,10 @@ import kotlinx.datetime.LocalDate
 /**
  * Today's three (`docs/REWARDS.md`): one quick puzzle, one mid-weight, one word or number puzzle, derived from the date
  * alone, so it is the same for everyone and nothing is stored. Each slot steps one place a day through its own list
- * (quick 11, mid-weight 13, words 7: pairwise coprime, so a set of three comes round again only after 1,001 days, and
+ * (quick 11, mid-weight 13, words 16: pairwise coprime, so a set of three comes round again only after 2,288 days, and
  * no puzzle waits longer than its list's length). If a new puzzle (which joins the mid-weight list unless listed) gives
- * the mid-weight list a factor of 7 or 11, it steps one more each time the 77-day quick-and-words cycle comes round
- * (`d mod 77 + d / 77`), so no set repeats within the year whatever its length, at the cost of one puzzle's gap doubling
+ * the mid-weight list a common factor, it steps one more each time the 176-day quick-and-words cycle comes round
+ * (`d mod 176 + d / 176`), so no set repeats within the year whatever its length, at the cost of one puzzle's gap doubling
  * at each turn of that cycle. Plain list indexing: no hash order, so the JVM and the web agree.
  *
  * The slots were sorted by what each puzzle asks (2026-10-26): quick is one gesture, or few rules and about a dozen hint
@@ -25,8 +25,11 @@ object TodaysThree {
     /** Quick: one gesture, or few rules and about a dozen hint steps on Standard; a Standard board in a few minutes. */
     val QUICK = listOf("pointers", "pipes", "snap", "sand", "sets", "mosaic", "kings", "tents", "shikaku", "atoms", "lamps")
 
-    /** Words and numbers. */
-    val WORDS = listOf("words", "wordwheel", "mini", "target", "cipher", "codeword", "tally", "hexwords", "dwindle")
+    private val RUSSIAN_WORDS = listOf("words-ru", "wordwheel-ru", "mini-ru", "codeword-ru", "hexwords-ru", "dwindle-ru", "cipher-ru")
+    private val RUSSIAN_FROM = LocalDate(2026, 11, 6)
+
+    /** Words and numbers; Russian editions join from [RUSSIAN_FROM], without changing earned historical threes. */
+    val WORDS = listOf("words", "wordwheel", "mini", "target", "cipher", "codeword", "tally", "hexwords", "dwindle") + RUSSIAN_WORDS
 
     /** Below this many solves in all, a player is new and gets [starter]. */
     const val NEWCOMER_SOLVES = 5
@@ -44,11 +47,16 @@ object TodaysThree {
         return listOfNotNull(QUICK.at(d), STARTER_MID.at(d), STARTER_WORDS.at(d))
     }
 
+    /** The same scheduled families, with the word slot in the menu's language. */
+    fun starter(day: LocalDate, languageTag: String): List<String> =
+        starter(day).map { PuzzleRegistry.localizedId(it, languageTag) }.distinct()
+
     /** The three for [day], quick first, from the puzzles [ids] (the registry's, in its order); everything else is mid-weight. */
     fun of(day: LocalDate, ids: List<String> = PuzzleRegistry.all.map { it.id }): List<String> {
-        val quick = QUICK.filter { it in ids }
-        val words = WORDS.filter { it in ids }
-        val mid = ids.filter { it !in QUICK && it !in WORDS }
+        val available = if (day < RUSSIAN_FROM) ids.filterNot { it in RUSSIAN_WORDS } else ids
+        val quick = QUICK.filter { it in available }
+        val words = WORDS.filter { it in available }
+        val mid = available.filter { it !in QUICK && it !in WORDS }
         val d = day.toEpochDays()
         val cycle = maxOf(1, quick.size * words.size).toLong()
         tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
@@ -56,4 +64,8 @@ object TodaysThree {
         fun List<String>.at(i: Long) = if (isEmpty()) null else this[i.mod(size)]
         return listOfNotNull(quick.at(d), mid.at(m), words.at(d))
     }
+
+    /** Keep the date's quick/mid-weight slots and historical schedule; select the matching word edition. */
+    fun of(day: LocalDate, languageTag: String): List<String> =
+        of(day).map { PuzzleRegistry.localizedId(it, languageTag) }.distinct()
 }

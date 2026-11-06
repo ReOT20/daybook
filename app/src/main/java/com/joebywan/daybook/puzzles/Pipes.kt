@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -131,18 +134,18 @@ data class PipesState(
 object Pipes : PuzzleType {
 
     override val id = "pipes"
-    override val displayName = "Pipes"
-    override val tagline = "Rotate until every pipe joins up"
+    override val displayName get() = text("puzzle.pipes.name")
+    override val tagline get() = text("puzzle.pipes.tagline")
     override val accent = 0xFF1C7EAB
-    override val rules = listOf(
-        "Tap a tile to rotate it a quarter turn.",
-        "Water enters at the ringed tile; pipes joined back to it run full.",
-        "Finish with no loose ends: every pipe opening must meet another.",
-        "All the pipework must form one single connected network.",
+    override val rules get() = listOf(
+        text("puzzle.pipes.rule.1"),
+        text("puzzle.pipes.rule.2"),
+        text("puzzle.pipes.rule.3"),
+        text("puzzle.pipes.rule.4"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, Space or R turns the tile.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.pipes.keyboard.1"),
     )
 
     fun rotateCw(mask: Int): Int {
@@ -353,19 +356,16 @@ object Pipes : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Each tile's pipes are fixed; only the way it faces can change. Turn the " +
-                    "tiles until every pipe joins into one network, with no loose ends and no loops.",
+                caption = message("puzzle.pipes.tutorial.1.caption"),
             ),
             TutorialFrame(
                 state = solved,
-                caption = "Water comes in at the ringed tile and fills every pipe joined back to it. " +
-                    "When the whole board runs full, it's solved.",
+                caption = message("puzzle.pipes.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(TUTORIAL_SOURCE)),
             ),
             TutorialFrame(
                 state = start,
-                caption = "No pipe may point off the board: an edge straight runs along it, a corner bend faces " +
-                    "in, a T's flat side faces out. A tap turns a tile clockwise. Tap each glowing tile.",
+                caption = message("puzzle.pipes.tutorial.3.caption"),
                 // Each tile glows until it faces its one way.
                 glow = { s -> BoardHighlight(strong = border.filter { (s as PipesState).cells[it] != TUTORIAL_SOLUTION[it] }.toSet()) },
                 // Any order, one tap each; a tile turned past its way is refused.
@@ -378,23 +378,22 @@ object Pipes : PuzzleType {
                         else -> TutorialStep.REJECT
                     }
                 },
-                retry = "Tap the glowing tile once.",
-                done = "Each fits the border the only way it can.",
+                retry = message("puzzle.pipes.tutorial.3.retry"),
+                done = message("puzzle.pipes.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tee,
-                caption = "The straight above now points down into this end, and every opening has " +
-                    "to meet another. So this end must point up. Tap it.",
+                caption = message("puzzle.pipes.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(6), soft = setOf(3)),
                 accepts = only(tee, 6),
-                retry = "Tap the glowing tile once.",
-                done = "Joined. A set tile tells you about the tiles beside it.",
+                retry = message("puzzle.pipes.tutorial.4.retry"),
+                done = message("puzzle.pipes.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = end,
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.pipes.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.pipes.tutorial.5.done"),
             ),
         )
     }

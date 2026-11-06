@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -82,22 +85,21 @@ import com.joebywan.daybook.ui.rememberSettledFlags
 object Dominoes : PuzzleType {
 
     override val id = "dominoes"
-    override val displayName = "Dominoes"
-    override val tagline = "Lay every domino so each region keeps its rule"
+    override val displayName get() = text("puzzle.dominoes.name")
+    override val tagline get() = text("puzzle.dominoes.tagline")
     override val accent = 0xFF8F5DD6
 
-    override val rules = listOf(
-        "Lay every domino from the tray on two neighbouring squares, either way round.",
-        "Each coloured region has a rule. A number is the total of its pips; < and > bound the total.",
-        "= means every square of the region shows the same; a crossed-out = means no two match.",
-        "Squares outside a region have no rule, and a domino may cross from one region into another.",
-        "Drag a domino from the tray onto a square and on into its neighbour: the way you swipe is the way it lies. " +
-            "Or tap it (again to turn it round), then two neighbouring squares. Its first half goes on the first square.",
-        "Tap a laid domino to lift it; double-tap or long-press it to turn it round. Every board has one answer, found without guessing.",
+    override val rules get() = listOf(
+        text("puzzle.dominoes.rule.1"),
+        text("puzzle.dominoes.rule.2"),
+        text("puzzle.dominoes.rule.3"),
+        text("puzzle.dominoes.rule.4"),
+        text("puzzle.dominoes.rule.5"),
+        text("puzzle.dominoes.rule.6"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, ] or Tab and [ pick a domino, F or Space turns it, Enter marks a square and lays it, Backspace lifts.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.dominoes.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -184,54 +186,54 @@ object Dominoes : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Lay every domino from the tray so each coloured region keeps its rule. The 12 region's pips add up to 12: 6 + 6.",
+                caption = message("puzzle.dominoes.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 4, rule + 0)),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "Only two 6s make 12, so the double 6 goes there. Tap it in the tray, then tap the two glowing squares.",
+                caption = message("puzzle.dominoes.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 4, tray + 3), soft = setOf(rule + 0)),
                 accepts = only(six),
-                retry = "Tap the glowing double 6 in the tray, then the two glowing squares.",
-                done = "Laid. A domino covers two neighbouring squares.",
+                retry = message("puzzle.dominoes.tutorial.2.retry"),
+                done = message("puzzle.dominoes.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = six,
-                caption = "A one-square region shows its pips: this one needs a 2, the 5-2's 2. Tap the 5-2, then this square, then the one below.",
+                caption = message("puzzle.dominoes.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(1, tray + 2), soft = setOf(5, rule + 1)),
                 accepts = only(backwards),
-                retry = "Tap the glowing 5-2 in the tray, then the glowing square, then the one below.",
-                done = "The 5 landed on the 2: the half shown first goes on the first square.",
+                retry = message("puzzle.dominoes.tutorial.3.retry"),
+                done = message("puzzle.dominoes.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = backwards,
-                caption = "Turn it round where it lies: double-tap the 5-2, or long-press it.",
+                caption = message("puzzle.dominoes.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(1, 5), soft = setOf(rule + 1)),
                 accepts = only(five),
-                retry = "Double-tap the glowing domino, or long-press it.",
-                done = "Turned. In the tray, a second tap turns a domino before you lay it.",
+                retry = message("puzzle.dominoes.tutorial.4.retry"),
+                done = message("puzzle.dominoes.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = five,
-                caption = "= wants its squares the same: only 1 is on both dominoes left, and < 2 takes the 0. Drag the 1-0 from the tray onto the = square, then on to the right.",
+                caption = message("puzzle.dominoes.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(6, 7, tray + 0), soft = setOf(2, rule + 2, rule + 3)),
                 accepts = only(one),
-                retry = "Drag the glowing 1-0 onto the glowing = square, then on into the square to its right.",
-                done = "Both = squares will show 1, and 0 is under 2.",
+                retry = message("puzzle.dominoes.tutorial.5.retry"),
+                done = message("puzzle.dominoes.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = one,
-                caption = "Changed your mind? Tap a laid domino to lift it back to the tray. Lift the 5-2.",
+                caption = message("puzzle.dominoes.tutorial.6.caption"),
                 highlight = BoardHighlight(strong = setOf(1, 5)),
                 accepts = only(lifted),
-                retry = "Tap the glowing domino once.",
-                done = "Back in the tray, and in your hand to lay again.",
+                retry = message("puzzle.dominoes.tutorial.6.retry"),
+                done = message("puzzle.dominoes.tutorial.6.done"),
             ),
             TutorialFrame(
                 state = lifted,
-                caption = "Your turn: lay the last two. Stuck? Hint shows you why.",
+                caption = message("puzzle.dominoes.tutorial.7.caption"),
                 freePlay = true,
-                done = "Solved. Every board works out one domino at a time.",
+                done = message("puzzle.dominoes.tutorial.7.done"),
             ),
         )
     }

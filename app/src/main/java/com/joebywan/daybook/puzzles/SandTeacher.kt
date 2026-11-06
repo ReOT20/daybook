@@ -2,6 +2,9 @@ package com.joebywan.daybook.puzzles
 
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
 
 /**
  * Sand, taught by searching what is on the board.
@@ -52,8 +55,8 @@ internal object SandTeacher {
 
     class Step(
         override val technique: String,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
@@ -64,7 +67,13 @@ internal object SandTeacher {
         val to: Int = -1,
         /** For a mistake: how much of the log to keep ([SandState.withoutFrom]), or -1 when the board had no log. */
         val keep: Int = -1,
-    ) : TeachStep
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: SandState): Step? {
         if (s.solved) return null
@@ -76,9 +85,9 @@ internal object SandTeacher {
     }
 
     /** The colour's name and the tube's number, as the player reads them. */
-    private fun name(c: Int) = Sand.colourNames[c]
-    private fun tube(i: Int) = "tube ${i + 1}"
-    private fun layers(k: Int, c: Int) = if (k == 1) "the ${name(c)}" else "the $k ${name(c)}"
+    private fun name(c: Int) = Sand.colourNameMessage(c)
+    private fun tube(i: Int) = message("teacher.sand.tube.1", "i_1" to (i + 1))
+    private fun layers(k: Int, c: Int) = if (k == 1) message("teacher.sand.layers.1", "name_c_" to (name(c))) else message("teacher.sand.layers.2", "k" to (k), "name_c_" to (name(c)))
 
     /** How far from sorted: (places two colours meet inside a tube, tubes in use, minus tubes finished). Lower is closer. */
     private fun progress(tubes: List<List<Int>>, height: Int): Triple<Int, Int, Int> {
@@ -171,8 +180,8 @@ internal object SandTeacher {
         val c = tubes[a].last()
         return Step(
             FINISH,
-            "One tube is a pour away from finished.",
-            "Pour ${tube(a)} onto ${tube(b)}: ${layers(moved(tubes, height, m), c)} fill it, and ${tube(b)} is all ${name(c)}.",
+            message("teacher.sand.finish.1"),
+            message("teacher.sand.finish.2", "tube_a_" to (tube(a)), "tube_b_" to (tube(b)), "value3" to (layers(moved(tubes, height, m), c)), "name_c_" to (name(c))),
             setOf(a), setOf(b), setOf(a, b), after, a, b,
         )
     }
@@ -183,20 +192,20 @@ internal object SandTeacher {
         val k = moved(tubes, height, m)
         val src = after[a]
         val then = when {
-            src.isEmpty() -> "That empties ${tube(a)}."
+            src.isEmpty() -> message("teacher.sand.gather.1", "tube_a_" to (tube(a)))
             else -> {
                 val h = home(after, a, height)
                 when {
-                    h == null -> "That keeps the ${name(c)} together."
-                    after[h].isEmpty() -> "That uncovers ${name(src.last())}, which can go in the empty ${tube(h)}."
-                    else -> "That uncovers ${name(src.last())}, which can go on ${tube(h)}."
+                    h == null -> message("teacher.sand.gather.2", "name_c_" to (name(c)))
+                    after[h].isEmpty() -> message("teacher.sand.gather.3", "name_src_last_" to (name(src.last())), "tube_h_" to (tube(h)))
+                    else -> message("teacher.sand.gather.4", "name_src_last_" to (name(src.last())), "tube_h_" to (tube(h)))
                 }
             }
         }
         return Step(
             GATHER,
-            "Two tubes have the same colour on top.",
-            "Pour ${layers(k, c)} from ${tube(a)} onto ${tube(b)}. $then",
+            message("teacher.sand.gather.5"),
+            message("teacher.sand.gather.6", "layers_k_c_" to (layers(k, c)), "tube_a_" to (tube(a)), "tube_b_" to (tube(b)), "then" to (then)),
             setOf(a), setOf(b), setOf(a, b), after, a, b,
         )
     }
@@ -207,8 +216,8 @@ internal object SandTeacher {
         val freed = after[a].last()
         return Step(
             SPARE,
-            "An empty tube can free a buried colour.",
-            "Pour ${layers(moved(tubes, height, m), c)} from ${tube(a)} into the empty ${tube(b)}. That frees the ${name(freed)} under it.",
+            message("teacher.sand.spare.1"),
+            message("teacher.sand.spare.2", "value1" to (layers(moved(tubes, height, m), c)), "tube_a_" to (tube(a)), "tube_b_" to (tube(b)), "name_freed_" to (name(freed))),
             setOf(a), setOf(b), setOf(a, b), after, a, b,
         )
     }
@@ -217,12 +226,12 @@ internal object SandTeacher {
         val (a, b) = m
         val c = tubes[a].last()
         val after = SandLogic.pour(tubes, height, a, b)
-        val why = if (next == null) "and the board is sorted."
-        else "It clears the way for pouring ${tube(next.first)} onto ${tube(next.second)}."
+        val why = if (next == null) message("teacher.sand.plan.1")
+        else message("teacher.sand.plan.2", "tube_next_first_" to (tube(next.first)), "tube_next_second_" to (tube(next.second)))
         return Step(
             PLAN,
-            "Think a pour or two ahead.",
-            "Pour ${layers(moved(tubes, height, m), c)} from ${tube(a)} onto ${tube(b)}. $why",
+            message("teacher.sand.plan.3"),
+            message("teacher.sand.plan.4", "value1" to (layers(moved(tubes, height, m), c)), "tube_a_" to (tube(a)), "tube_b_" to (tube(b)), "why" to (why)),
             setOf(a), next?.let { setOf(it.first, it.second) - setOf(a, b) } ?: emptySet(), setOf(a, b), after, a, b,
         )
     }
@@ -264,23 +273,23 @@ internal object SandTeacher {
 
     private fun back(s: SandState, technique: String): Step? {
         val (nudge, why) = when (technique) {
-            STUCK -> "No pours left." to "No pour is possible, and the board is not sorted."
-            UNSURE -> "There's no quick way through from here." to "There's no quick way through from here. Try undoing a few pours."
-            else -> "This board can no longer be sorted." to "No order of pours sorts this board now."
+            STUCK -> message("teacher.sand.back.1") to message("teacher.sand.back.2")
+            UNSURE -> message("teacher.sand.back.3") to message("teacher.sand.back.4")
+            else -> message("teacher.sand.back.5") to message("teacher.sand.back.6")
         }
         badPour(s)?.let { j ->
             val p = s.log[j]
             val after = s.log.size - 1 - j
             val then = when (after) {
-                0 -> "Take that pour back."
-                1 -> "Take it back, and the pour after it."
-                else -> "Take it back, and the $after pours after it."
+                0 -> message("teacher.sand.back.7")
+                1 -> message("teacher.sand.back.8")
+                else -> message("teacher.sand.back.9", "after" to (after))
             }
             val before = s.withoutFrom(j)
             val c = before.tubes[p.from].last()
             return Step(
                 technique, nudge,
-                "$why It went wrong when ${layers(p.count, c)} went from ${tube(p.from)} onto ${tube(p.to)}. $then",
+                message("teacher.sand.back.10", "why" to (why), "layers_p_count_c_" to (layers(p.count, c)), "tube_p_from_" to (tube(p.from)), "tube_p_to_" to (tube(p.to)), "then" to (then)),
                 setOf(p.to), setOf(p.from), setOf(p.from, p.to), before.tubes, keep = j,
             )
         }
@@ -289,9 +298,9 @@ internal object SandTeacher {
         val (_, from, to) = line.first()
         val k = s.tubes[to].size - line.first().first[to].size
         val c = s.tubes[to].last()
-        val more = if (line.size > 1) " and ${line.size - 1} more" else ""
-        val putBack = "Put ${layers(k, c)} on ${tube(to)} back in ${tube(from)}$more, and it can be sorted again."
-        return Step(technique, nudge, "$why $putBack", setOf(to), setOf(from), setOf(from, to), before)
+        val more = if (line.size > 1) message("teacher.sand.back.11", "line_size_1" to (line.size - 1)) else ""
+        val putBack = message("teacher.sand.back.12", "layers_k_c_" to (layers(k, c)), "tube_to_" to (tube(to)), "tube_from_" to (tube(from)), "more" to (more))
+        return Step(technique, nudge, message("teacher.sand.back.extra.1", "why" to (why), "putBack" to (putBack)), setOf(to), setOf(from), setOf(from, to), before)
     }
 
     /** Canonical form for "has the player made this pour": tubes are interchangeable, so an equal pour into another empty tube counts. */

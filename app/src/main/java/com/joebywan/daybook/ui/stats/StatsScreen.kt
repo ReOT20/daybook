@@ -1,12 +1,18 @@
 package com.joebywan.daybook.ui.stats
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.platform.platformLanguage
+
 import com.joebywan.daybook.ui.theme.vivid
 import com.joebywan.daybook.ui.theme.BoardHues
 import com.joebywan.daybook.ui.card
 import com.joebywan.daybook.ui.TitledScreen
+import com.joebywan.daybook.ui.CappedFontScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,9 +30,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,11 +47,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.joebywan.daybook.core.ACHIEVEMENTS
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.earnedAchievements
-import com.joebywan.daybook.core.PuzzleRegistry
 import com.joebywan.daybook.core.PuzzleType
 import com.joebywan.daybook.data.Completion
 import com.joebywan.daybook.data.KeptCard
@@ -82,18 +89,16 @@ fun StatsScreen(
     keptCards.firstOrNull { keyOf(it) == open }?.let { SharePreview(it.card) { open = null } }
     val streak = Stats.streak(completions, today)
 
-    TitledScreen("Statistics", "All time, on this device.", onBack, trailing = {
+    TitledScreen(text("ui.home_screen.statistics"), text("ui.stats_screen.all_time_on_this_device"), onBack, trailing = {
         // Only once a daily is solved today. The title's two lines are taller than the button, so it moves nothing.
-        val card = remember(completions, today) {
-            dayShareCard(PuzzleRegistry.all.map { it.id }, completions, today, formatDate(today, "d MMM"), streak.current)
+        val card = remember(completions, today, puzzles, platformLanguage()) {
+            dayShareCard(puzzles.map { it.id }, completions, today, formatDate(today, "d MMM"), streak.current, dateValue = today)
         }
         // Saveable, so turning the device keeps the preview open.
         var sharing by rememberSaveable { mutableStateOf(sharePreviewOpen) }
         if (card != null) {
-            TextButton(onClick = { sharing = true }, Modifier.padding(end = 8.dp)) {
-                Icon(Icons.Default.Share, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Share today")
+            IconButton(onClick = { sharing = true }, Modifier.padding(end = 8.dp)) {
+                Icon(Icons.Default.Share, text("ui.stats_screen.share_today"), Modifier.size(18.dp), tint = scheme.primary)
             }
             if (sharing) SharePreview(card) { sharing = false }
         }
@@ -108,9 +113,9 @@ fun StatsScreen(
 
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Tile("Solved", completions.size.toString(), Modifier.weight(1f))
-                    Tile("Streak", if (streak.alive) streak.current.toString() else DASH, Modifier.weight(1f))
-                    Tile("Best streak", streak.best.toString(), Modifier.weight(1f))
+                    Tile(text("ui.archive_screen.solved"), completions.size.toString(), Modifier.weight(1f))
+                    Tile(text("ui.stats_screen.streak"), if (streak.alive) streak.current.toString() else DASH, Modifier.weight(1f))
+                    Tile(text("ui.stats_screen.best_streak"), streak.best.toString(), Modifier.weight(1f))
                 }
             }
 
@@ -120,8 +125,8 @@ fun StatsScreen(
                     Modifier.fillMaxWidth().card(scheme.surface).clickable(onClick = onAchievements).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Achievements", style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
-                    Text("$got of ${ACHIEVEMENTS.size}", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                    Text(text("ui.home_screen.achievements"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
+                    Text(text("ui.stats_screen.of", "got" to (got), "ACHIEVEMENTS_size" to (ACHIEVEMENTS.size)), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
 
@@ -133,8 +138,8 @@ fun StatsScreen(
                         .clickable(onClick = onTechniques).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Techniques", style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
-                    if (met > 0) Text("$met shown", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+                    Text(text("ui.stats_screen.techniques"), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface, modifier = Modifier.weight(1f))
+                    if (met > 0) Text(text("ui.stats_screen.shown", "met" to (met)), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 }
             }
 
@@ -175,42 +180,46 @@ private fun PuzzleStats(
 ) {
     val scheme = MaterialTheme.colorScheme
     val accent = vivid(puzzle.accent)
-    Column(modifier.card(scheme.surface).padding(14.dp)) {
+    CappedFontScale { Column(modifier.card(scheme.surface).padding(14.dp)) {
         Text(puzzle.displayName, style = MaterialTheme.typography.titleMedium, color = BoardHues.textOn(accent, scheme.surface), maxLines = 1)
         // Never played: one line, not three tiers of dashes and zeroes.
         if (completions.none { it.puzzleId == puzzle.id }) {
             Spacer(Modifier.height(8.dp))
-            Text("Not played yet", style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
+            Text(text("ui.stats_screen.not_played_yet"), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
         } else Difficulty.entries.forEach { difficulty ->
             val best = Stats.bestTime(completions, puzzle.id, difficulty)
             val count = completions.count { it.puzzleId == puzzle.id && it.difficulty == difficulty }
             Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth()) {
-                Text(difficulty.label, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(difficulty.label, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
                 Text(if (best == null) DASH else formatClock(best), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
             }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("$count solved", style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text("ui.stats_screen.solved", "count" to (count)), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
                 // Always laid out, greyed when there is nothing to share, so a card arriving moves nothing.
                 fun kept(best: Boolean) = keptCards.firstOrNull { it.puzzleId == puzzle.id && it.difficulty == difficulty && it.best == best }
-                ShareLink("Best", kept(true), accent, onOpen)
-                ShareLink("Last", kept(false), accent, onOpen)
+                ShareLink(text("ui.stats_screen.best"), kept(true), accent, onOpen)
+                ShareLink(text("ui.stats_screen.last"), kept(false), accent, onOpen)
             }
         }
         remember(completions, today, puzzle.id) { ThisWeek.trend(completions, puzzle.id, today) }?.let { TrendLine(it, accent) }
-    }
+    } }
 }
 
 @Composable
 private fun Tile(label: String, value: String, modifier: Modifier) {
     val scheme = MaterialTheme.colorScheme
-    Column(
+    CappedFontScale { Column(
         modifier.card(scheme.surface).padding(vertical = 18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(value, style = MaterialTheme.typography.displaySmall, color = scheme.onSurface)
-        Text(label, style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant)
-    }
+        Text(
+            label, style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp), textAlign = TextAlign.Center, maxLines = 2,
+            autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
+        )
+    } }
 }
 
 /** A share link for one kept card: [label] in [accent], or greyed and inert when there is no [kept] card. */

@@ -1,0 +1,87 @@
+{
+  "achievement.solves1.title": "Первое решение",
+  "achievement.solves1.description": "Решите первую головоломку.",
+  "achievement.solves100.title": "Сто решений",
+  "achievement.solves100.description": "Решите 100 головоломок.",
+  "achievement.streak3.title": "Три дня в серии",
+  "achievement.streak7.title": "Целая неделя",
+  "achievement.streak14.title": "Две недели",
+  "achievement.streak30.title": "Месяц головоломок",
+  "achievement.streak60.title": "Шестьдесят дней",
+  "achievement.streak100.title": "Сто дней",
+  "achievement.streak365.title": "Целый год",
+  "achievement.puzzle_streak7.title": "Верность игре",
+  "achievement.puzzle_streak30.title": "Специалист",
+  "achievement.days30.title": "Постоянный игрок",
+  "achievement.days30.description": "Играйте в 30 разных дней.",
+  "achievement.first_top.title": "Первый «{tier}»",
+  "achievement.first_top.description": "Решите головоломку на сложности «{tier}».",
+  "achievement.clean_top.title": "{tier} без помощи",
+  "achievement.clean_top.description": "Решите головоломку на сложности «{tier}» без подсказок.",
+  "achievement.one_of_each.title": "Каждой по одной",
+  "achievement.one_of_each.description": "Решите хотя бы по одной головоломке каждого вида.",
+  "achievement.full_set.title": "Полный набор",
+  "achievement.full_set.description": "Решите все сложности ежедневной головоломки одного вида в один день.",
+  "achievement.todays_three.title": "Три за день",
+  "achievement.todays_three.description": "Решите тройку дня на одной сложности в тот же день.",
+  "achievement.all_puzzles.title": "Полный охват",
+  "achievement.all_puzzles.description": "Решите ежедневные головоломки всех видов за одну неделю.",
+  "achievement.trained.title": "{puzzle}: обучение",
+  "achievement.trained.description": "Освойте все приёмы игры «{puzzle}» в тренировке.",
+  "achievement.graduate.title": "Мастер игры «{puzzle}»",
+  "achievement.graduate.description": "Затем решите итоговое поле в тренировке.",
+  "achievement.streak.description": {
+    "one": "Соберите серию: {count} день.",
+    "few": "Соберите серию: {count} дня.",
+    "many": "Соберите серию: {count} дней.",
+    "other": "Соберите серию: {count} дней."
+  },
+  "achievement.puzzle_streak.description": {
+    "one": "Соберите серию в одной головоломке: {count} день.",
+    "few": "Соберите серию в одной головоломке: {count} дня.",
+    "many": "Соберите серию в одной головоломке: {count} дней.",
+    "other": "Соберите серию в одной головоломке: {count} дней."
+  },
+  "achievement.remaining.days30": {
+    "one": "Ещё {count} день игры до достижения «Постоянный игрок».",
+    "few": "Ещё {count} дня игры до достижения «Постоянный игрок».",
+    "many": "Ещё {count} дней игры до достижения «Постоянный игрок».",
+    "other": "Ещё {count} дней игры до достижения «Постоянный игрок»."
+  },
+  "achievement.remaining.streak": {
+    "one": "Ещё {count} день до {target}-дневной серии.",
+    "few": "Ещё {count} дня до {target}-дневной серии.",
+    "many": "Ещё {count} дней до {target}-дневной серии.",
+    "other": "Ещё {count} дней до {target}-дневной серии."
+  },
+  "achievement.remaining.puzzle_streak": {
+    "one": "Ещё {count} день до {target}-дневной серии в головоломке «{puzzle}».",
+    "few": "Ещё {count} дня до {target}-дневной серии в головоломке «{puzzle}».",
+    "many": "Ещё {count} дней до {target}-дневной серии в головоломке «{puzzle}».",
+    "other": "Ещё {count} дней до {target}-дневной серии в головоломке «{puzzle}»."
+  },
+  "achievement.remaining.solves100": {
+    "one": "До сотого решения осталось ещё {count} решение.",
+    "few": "До сотого решения осталось ещё {count} решения.",
+    "many": "До сотого решения осталось ещё {count} решений.",
+    "other": "До сотого решения осталось ещё {count} решений."
+  },
+  "achievement.remaining.untried": {
+    "one": "«{names}» — единственная головоломка, которую вы ещё не пробовали.",
+    "few": "{count} головоломки вы ещё не пробовали: {names}.",
+    "many": "{count} головоломок вы ещё не пробовали: {names}.",
+    "other": "{count} головоломок вы ещё не пробовали: {names}."
+  },
+  "achievement.remaining.full_set": {
+    "one": "Осталось решить «{puzzle}» на сложности «{tiers}», чтобы собрать полный набор сегодня.",
+    "few": "Осталось решить «{puzzle}» на сложностях «{tiers}», чтобы собрать полный набор сегодня.",
+    "many": "Осталось решить «{puzzle}» на сложностях «{tiers}», чтобы собрать полный набор сегодня.",
+    "other": "Осталось решить «{puzzle}» на сложностях «{tiers}», чтобы собрать полный набор сегодня."
+  },
+  "achievement.remaining.all_puzzles": {
+    "one": "До достижения «Полный охват» на этой неделе осталось: {names}.",
+    "few": "До достижения «Полный охват» на этой неделе осталось: {names}.",
+    "many": "До достижения «Полный охват» на этой неделе осталось: {names}.",
+    "other": "До достижения «Полный охват» на этой неделе осталось: {names}."
+  }
+}

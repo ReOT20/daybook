@@ -27,6 +27,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.utf16CodePoint
 import kotlinx.coroutines.launch
 
 /**
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
  * Focus is claimed on arrival and again whenever a hint lights something up (the Hint button took it
  * when clicked, and the move it asks for should be makeable from the keyboard). It draws nothing.
  *
+ * [onCharacter] optionally handles Unicode text before physical shortcuts, including letters from a non-Latin layout.
  * [onKey] gets a key that is not part of a chord and says whether the board uses it (true consumes it,
  * even when the key changes nothing). `repeat` is true for the auto-repeat of a held key: act on it
  * only for arrows (see [arrowStep]). Shift+key reaches [onKey] only when [shift] is set.
@@ -51,17 +53,21 @@ import kotlinx.coroutines.launch
 fun Modifier.boardKeys(
     enabled: Boolean,
     shift: Boolean = false,
+    onCharacter: ((character: Char, repeat: Boolean) -> Boolean)? = null,
     onKey: (key: Key, shift: Boolean, repeat: Boolean) -> Boolean,
 ): Modifier {
     val focus = remember { FocusRequester() }
     var held by remember { mutableStateOf<Key?>(null) }
     val latest by rememberUpdatedState(onKey)
+    val latestCharacter by rememberUpdatedState(onCharacter)
     val live by rememberUpdatedState(enabled)
     val pacer = remember { KeyPacer() }
     val scope = rememberCoroutineScope()
     // Two frames: the key's state lands in the first frame's recomposition, which runs after its frame callbacks.
+    fun dispatch(p: KeyPress): Boolean =
+        (p.character?.let { latestCharacter?.invoke(it, p.repeat) } == true) || latest(p.key, p.shift, p.repeat)
     fun press(p: KeyPress): Boolean {
-        val used = latest(p.key, p.shift, p.repeat)
+        val used = dispatch(p)
         if (used) {
             pacer.settling = true
             scope.launch {
@@ -69,7 +75,7 @@ fun Modifier.boardKeys(
                     withFrameNanos { }
                     withFrameNanos { }
                     val next = pacer.queue.removeFirstOrNull() ?: break
-                    if (live) latest(next.key, next.shift, next.repeat) else pacer.queue.clear()
+                    if (live) dispatch(next) else pacer.queue.clear()
                 }
                 pacer.settling = false
             }
@@ -84,7 +90,7 @@ fun Modifier.boardKeys(
             if (!enabled) return@onKeyEvent false
             // Chords belong to the browser (Ctrl+R, Cmd+L...) and to the system.
             if (event.isCtrlPressed || event.isMetaPressed || event.isAltPressed) return@onKeyEvent false
-            if (event.isShiftPressed && !shift) return@onKeyEvent false
+            if (event.isShiftPressed && !shift && onCharacter == null) return@onKeyEvent false
             when (event.type) {
                 KeyEventType.KeyUp -> {
                     if (held == event.key) held = null
@@ -93,7 +99,8 @@ fun Modifier.boardKeys(
                 KeyEventType.KeyDown -> {
                     val repeat = held == event.key
                     held = event.key
-                    val p = KeyPress(event.key, event.isShiftPressed, repeat)
+                    val character = event.utf16CodePoint.takeIf { it in 1..Char.MAX_VALUE.code }?.toChar()
+                    val p = KeyPress(event.key, event.isShiftPressed, repeat, character)
                     when {
                         !pacer.settling -> press(p)
                         // A held key outrunning the frames is dropped rather than piled up to run on after release.
@@ -109,7 +116,7 @@ fun Modifier.boardKeys(
         .focusable(enabled)
 }
 
-private class KeyPress(val key: Key, val shift: Boolean, val repeat: Boolean)
+private class KeyPress(val key: Key, val shift: Boolean, val repeat: Boolean, val character: Char?)
 
 /** Keys waiting for the board to catch up with the last one. Plain fields: read only from event handlers and the pacing coroutine. */
 private class KeyPacer {

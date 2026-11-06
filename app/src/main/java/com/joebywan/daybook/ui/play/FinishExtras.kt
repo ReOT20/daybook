@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.play
 
+import com.joebywan.daybook.core.i18n.text
+
 import com.joebywan.daybook.ui.theme.BoardHues
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -191,13 +193,13 @@ fun ResultsBlock(praise: Praise, accent: Color, badge: Dp, celebrate: Boolean) {
             if (items.size > 1) {
                 Spacer(Modifier.height(4.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${index % items.size + 1} of ${items.size}", style = MaterialTheme.typography.labelMedium, color = scheme.onSurface)
+                    Text(text("ui.finish_extras.of", "index_items_size_1" to (index % items.size + 1), "items_size" to (items.size)), style = MaterialTheme.typography.labelMedium, color = scheme.onSurface)
                     items.indices.forEach { i ->
                         Spacer(Modifier.size(6.dp).clip(RoundedCornerShape(3.dp)).background(
                             if (i == index % items.size) accent else scheme.onSurfaceVariant.copy(alpha = 0.35f)))
                     }
                 }
-                Text("Tap to see next achievement", style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text(text("ui.finish_extras.tap_to_see_next_achievement"), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant, textAlign = TextAlign.Center)
             }
         }
         praise.toGo?.let {

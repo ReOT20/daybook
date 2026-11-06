@@ -7,7 +7,7 @@ Mini and the streak calendar ‹ ›, Target −, the share previews' shape mark
 WebKit at 375x537, and writes a screenshot of each to the output directory. The walkthrough's ✓
 needs a move made first, so it is not here. Set-up and options are render.py's.
 
-    python3 tools/render/glyphs.py [out-dir [dist-dir]]
+    python3 tools/render/glyphs.py [out-dir [dist-dir [locale]]]
 """
 import json
 import sys
@@ -31,12 +31,13 @@ def main():
     seen = json.dumps(R.puzzle_ids())  # no walkthrough offer over the boards
     failures = []
     dist = Path(sys.argv[2]) if len(sys.argv) > 2 else R.DEFAULT_DIST
+    locale = sys.argv[3] if len(sys.argv) > 3 else "en-US"
     with R.Server(dist) as server, sync_playwright() as p:
         for engine in R.BROWSERS:
             browser = R.launch(p, engine)
             for i, query in enumerate(PAGES):
                 ctx = browser.new_context(viewport={"width": 375, "height": 537}, device_scale_factor=2,
-                                          has_touch=True, locale="en-US")
+                                          has_touch=True, locale=locale)
                 ctx.add_init_script("localStorage.setItem(%s, %s)" % (json.dumps(R.SEEN_KEY), json.dumps(seen)))
                 page = ctx.new_page()
                 off = []

@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
 
@@ -42,12 +51,18 @@ internal object HexwordsTeacher {
         val path: List<Int>,
         /** For a mistake: how many words stay. */
         val keep: Int,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-    ) : TeachStep
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     fun teach(s: HexwordsState): Step? {
         if (s.solved) return null
@@ -56,10 +71,10 @@ internal object HexwordsTeacher {
         val free = s.free
         val all = (1L shl n) - 1
         // A mistake is "no accepted word keeps it", so it is asked of every accepted word, from the whole board's roads.
-        val accepted = HexSearch(HexLogic.roads(s.letters, nb, all, HexLogic.acceptedWords), n, BUDGET)
+        val accepted = HexSearch(HexLogic.roads(s.letters, nb, all, HexLogic.acceptedWords(s.contentLanguage)), n, BUDGET)
         if (accepted.reach(free, s.left) == HexReach.No) return mistake(s, accepted)
 
-        val grid = HexLogic.roads(s.letters, nb, free, HexLogic.gridWords)
+        val grid = HexLogic.roads(s.letters, nb, free, HexLogic.gridWords(s.contentLanguage))
         val search = HexSearch(grid, n, BUDGET)
         val biggest = grid.maxOfOrNull { it.points } ?: 0
         val trap = grid.firstOrNull { it.points == biggest }
@@ -67,7 +82,7 @@ internal object HexwordsTeacher {
             is HexReach.Yes -> {
                 for (r in grid.sortedByDescending { it.points }) {
                     if (search.reach(free xor r.mask, s.left - r.points) !is HexReach.Yes) continue
-                    return if (r.points == biggest) big(r) else holdBack(r, trap!!)
+                    return if (r.points == biggest) big(r, s.contentLanguage) else holdBack(r, trap!!, s.contentLanguage)
                 }
                 return null // unreachable: a road's first word keeps its own road
             }
@@ -75,42 +90,40 @@ internal object HexwordsTeacher {
             HexReach.Truncated -> return trap?.let { unchecked(it) }
         }
         // Only an uncommon word keeps it.
-        val wide = HexLogic.roads(s.letters, nb, free, HexLogic.acceptedWords)
+        val wide = HexLogic.roads(s.letters, nb, free, HexLogic.acceptedWords(s.contentLanguage))
         val keep = wide.sortedByDescending { it.points }.firstOrNull {
             accepted.reach(free xor it.mask, s.left - it.points) is HexReach.Yes
         }
         return keep?.let { rare(it) } ?: wide.maxByOrNull { it.points }?.let { unchecked(it) }
     }
 
-    private fun clueOf(word: String) = "“${WheelWords.clue(word)}” (${word.length})"
+    private fun clueOf(word: String, contentLanguage: String) = message("teacher.hexwords.clue_of.extra.1", "value1" to (WheelWords.clue(word, contentLanguage)), "word_length" to (word.length))
 
-    private fun big(r: HexRoad) = Step(
+    private fun big(r: HexRoad, contentLanguage: String) = Step(
         BIGGEST, r.word, r.path.toList(), 0,
-        nudge = "There is a ${r.word.length}-letter word starting here.",
-        explanation = "Worth ${r.points}, and the target stays in reach after it. Its clue: ${clueOf(r.word)}.",
+        nudge = message("teacher.hexwords.big.1", "r_word_length" to (r.word.length)),
+        explanation = message("teacher.hexwords.big.2", "r_points" to (r.points), "value2" to (clueOf(r.word, contentLanguage))),
         focus = setOf(r.path[0]), cited = emptySet(), targets = setOf(r.path[0]),
     )
 
-    private fun holdBack(r: HexRoad, trap: HexRoad) = Step(
+    private fun holdBack(r: HexRoad, trap: HexRoad, contentLanguage: String) = Step(
         HOLD_BACK, r.word, r.path.toList(), 0,
-        nudge = "Not the biggest word yet: it would cost you the target.",
-        explanation = "A ${trap.word.length}-letter word runs through the marked hexes, but what it leaves falls short. " +
-            "Take this one first (${r.points}). Its clue: ${clueOf(r.word)}.",
+        nudge = message("teacher.hexwords.hold_back.1"),
+        explanation = message("teacher.hexwords.hold_back.2", "trap_word_length" to (trap.word.length), "r_points" to (r.points), "value3" to (clueOf(r.word, contentLanguage))),
         focus = setOf(r.path[0]), cited = trap.path.toSet(), targets = setOf(r.path[0]),
     )
 
     private fun rare(r: HexRoad) = Step(
         RARE, r.word, r.path.toList(), 0,
-        nudge = "Only a less common word keeps the target in reach now.",
-        explanation = "It has ${r.word.length} letters and starts here, with ${r.word[0].uppercaseChar()}. Show me spells it, or undo a word for more choice.",
+        nudge = message("teacher.hexwords.rare.1"),
+        explanation = message("teacher.hexwords.rare.2", "r_word_length" to (r.word.length), "r_word_0_uppercaseChar_" to (r.word[0].uppercaseChar())),
         focus = setOf(r.path[0]), cited = emptySet(), targets = setOf(r.path[0]),
     )
 
     private fun unchecked(r: HexRoad) = Step(
         UNCHECKED, r.word, r.path.toList(), 0,
-        nudge = "Too many ways to check. Here is the biggest word left.",
-        explanation = "This hint could not check every way from here, so it is only the biggest word left, not a proved one. " +
-            "It has ${r.word.length} letters and starts here.",
+        nudge = message("teacher.hexwords.unchecked.1"),
+        explanation = message("teacher.hexwords.unchecked.2", "r_word_length" to (r.word.length)),
         focus = setOf(r.path[0]), cited = emptySet(), targets = setOf(r.path[0]),
     )
 
@@ -130,9 +143,8 @@ internal object HexwordsTeacher {
         val hexes = s.taken.drop(k).flatMap { it.path }.toSet()
         return Step(
             MISTAKE, "", emptyList(), k,
-            nudge = "The target is out of reach from here.",
-            explanation = "After $word, no words from the letters left can make up the points still needed. " +
-                "Show me puts it back${if (k < s.taken.size - 1) ", with the words after it" else ""}.",
+            nudge = message("teacher.hexwords.mistake.1"),
+            explanation = message("teacher.hexwords.mistake.2", "word" to (word), "value2" to (if (k < s.taken.size - 1) message("teacher.hexwords.mistake.extra.1") else "")),
             focus = wrong.path.toSet(), cited = hexes, targets = wrong.path.toSet(),
         )
     }

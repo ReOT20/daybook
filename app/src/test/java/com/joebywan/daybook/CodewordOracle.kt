@@ -1,6 +1,7 @@
 package com.joebywan.daybook
 
 import com.joebywan.daybook.puzzles.WheelWords
+import com.joebywan.daybook.core.words.RussianWords
 
 /**
  * An independent count of a Codeword board's answers, for tests. It shares nothing with `CodewordLogic.solve`: no
@@ -12,9 +13,12 @@ import com.joebywan.daybook.puzzles.WheelWords
 object CodewordOracle {
 
     private val words: Map<Int, Set<String>> by lazy { (3..7).associateWith { WheelWords.grid(it).toSet() } }
+    private val russianWords by lazy { (3..7).associateWith { RussianWords.grid(it).toSet() } }
 
     /** Answers of the board, counted up to [limit]. [known] is a letter (0..25) or -1 per number (index number - 1). */
-    fun count(size: Int, numbers: List<Int>, known: List<Int>, limit: Int = 2): Int {
+    fun count(size: Int, numbers: List<Int>, known: List<Int>, limit: Int = 2, contentLanguage: String = "en"): Int {
+        val dictionary = if (contentLanguage == "ru") russianWords else words
+        val alphabet = if (contentLanguage == "ru") RussianWords.ALPHABET else "abcdefghijklmnopqrstuvwxyz"
         val lines = mutableListOf<List<Int>>()
         for (r in 0 until size) lines += splitWhite((0 until size).map { r * size + it }, numbers)
         for (c in 0 until size) lines += splitWhite((0 until size).map { it * size + c }, numbers)
@@ -25,8 +29,8 @@ object CodewordOracle {
 
         fun agrees(run: List<Int>): Boolean {
             val pattern = run.map { letter[numbers[it] - 1] }
-            if (pattern.all { it >= 0 }) return String(CharArray(run.size) { 'a' + pattern[it] }) in words.getValue(run.size)
-            return words.getValue(run.size).any { w -> pattern.indices.all { pattern[it] < 0 || w[it] - 'a' == pattern[it] } }
+            if (pattern.all { it >= 0 }) return String(CharArray(run.size) { alphabet[pattern[it]] }) in dictionary.getValue(run.size)
+            return dictionary.getValue(run.size).any { w -> pattern.indices.all { pattern[it] < 0 || alphabet.indexOf(w[it]) == pattern[it] } }
         }
 
         fun go(i: Int) {
@@ -36,7 +40,7 @@ object CodewordOracle {
                 return
             }
             val n = order[i]
-            for (l in 0 until 26) {
+            for (l in alphabet.indices) {
                 if (letter.contains(l)) continue
                 letter[n] = l
                 if (runs.filter { run -> run.any { numbers[it] - 1 == n } }.all { agrees(it) }) go(i + 1)

@@ -1,5 +1,9 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -76,9 +80,10 @@ data class CipherState(
     val digits: List<Int>,
     val selected: Int? = null,
     override val moves: Int = 0,
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
-    internal val sum: CipherSum get() = CipherSum(words)
+    internal val sum: CipherSum get() = CipherSum(words, contentLanguage)
 
     /** The rules, not a comparison with [solution]: see [CipherLogic.isSolved]. */
     override val solved: Boolean get() = CipherLogic.isSolved(sum, digits)
@@ -108,18 +113,18 @@ private const val SETTLE_MILLIS = 1000L
 object Cipher : PuzzleType {
 
     override val id = "cipher"
-    override val displayName = "Cipher"
-    override val tagline = "Each letter is a digit. Make the sum true."
+    override val displayName get() = text("puzzle.cipher.name")
+    override val tagline get() = text("puzzle.cipher.tagline")
     override val accent = 0xFFA879AA
-    override val rules = listOf(
-        "Each letter stands for one digit, 0 to 9, the same digit everywhere it appears.",
-        "Different letters are different digits, and no word starts with 0.",
-        "Give every letter its digit so the sum is true. There is exactly one way.",
-        "Tap a letter, then a digit. Tap the digit again to clear it.",
-        "Two letters on one digit, a word starting with 0, or a column that doesn't add up turns red.",
+    override val rules get() = listOf(
+        text("puzzle.cipher.rule.1"),
+        text("puzzle.cipher.rule.2"),
+        text("puzzle.cipher.rule.3"),
+        text("puzzle.cipher.rule.4"),
+        text("puzzle.cipher.rule.5"),
     )
 
-    override val keyboardHelp = listOf("Type a letter to pick it (H too, when the sum has an H), then a digit. Backspace clears, arrows walk the letters.")
+    override val keyboardHelp get() = listOf(text("puzzle.cipher.keyboard.1"))
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
         generateVerified(seed, difficulty) ?: CipherLogic.lastResort(difficulty)
@@ -146,7 +151,7 @@ object Cipher : PuzzleType {
     internal fun deduction(s: CipherState, step: CipherTeacher.Step): Deduction {
         val l = step.letter
         return placementDeduction(
-            s, PlacementStep(step.technique, l, step.digit, step.focus, step.cited, step.nudge, step.explanation),
+            s, PlacementStep(step.technique, l, step.digit, step.focus, step.cited, step.nudgeMessage, step.explanationMessage),
             mistake = step.technique == CipherTeacher.MISTAKE,
             fallback = step.technique == CipherTeacher.FALLBACK,
             targets = s.sum.tilesOf(l) + CipherLogic.key(l),
@@ -195,36 +200,34 @@ object Cipher : PuzzleType {
         listOf(
             TutorialFrame(
                 state = tutorialBoard(),
-                caption = "Each letter is a digit, the same one wherever it appears, and no two letters share one. Find them so the sum is true.",
+                caption = message("puzzle.cipher.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = all),
             ),
             TutorialFrame(
                 state = tutorialBoard(),
-                caption = "OUT is longer than TO and GO, so its O is what the tens column carries. Two digits and a carry " +
-                    "make at most 19, so O is 1. Tap an O, then 1 below.",
+                caption = message("puzzle.cipher.tutorial.2.caption"),
                 glow = { s ->
                     if (o.stage(s) < 0) BoardHighlight(strong = sum.tilesOf(O))
                     else BoardHighlight(strong = setOf(CipherLogic.pad(1)), soft = sum.tilesOf(O))
                 },
                 steps = o.steps,
-                retry = "Tap a glowing O, then the 1.",
-                done = "Every O shows 1.",
+                retry = message("puzzle.cipher.tutorial.2.retry"),
+                done = message("puzzle.cipher.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(one, selected = O),
-                caption = "The units column: O + O is 1 + 1, which makes 2, so T is 2. Tap a T, then 2.",
+                caption = message("puzzle.cipher.tutorial.3.caption"),
                 glow = { s ->
                     if (t.stage(s) < 0) BoardHighlight(strong = sum.tilesOf(T), soft = sum.columnTiles(0))
                     else BoardHighlight(strong = setOf(CipherLogic.pad(2)), soft = sum.tilesOf(T))
                 },
                 steps = t.steps,
-                retry = "Tap a glowing T, then the 2.",
-                done = "T is 2.",
+                retry = message("puzzle.cipher.tutorial.3.retry"),
+                done = message("puzzle.cipher.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(two, selected = T),
-                caption = "A digit that breaks a rule turns red. Give U the 1 that O already has: tap a U, then 1. " +
-                    "Then tap 1 again to clear it.",
+                caption = message("puzzle.cipher.tutorial.4.caption"),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = sum.tilesOf(U), soft = sum.tilesOf(O))
@@ -233,14 +236,14 @@ object Cipher : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap a glowing U, then the 1, then the 1 again.",
-                done = "Cleared. Tapping the digit again takes it out.",
+                retry = message("puzzle.cipher.tutorial.4.retry"),
+                done = message("puzzle.cipher.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(two, selected = U),
-                caption = "Your turn: finish the sum. Stuck? Hint shows you why.",
+                caption = message("puzzle.cipher.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved: 21 + 81 = 102.",
+                done = message("puzzle.cipher.tutorial.5.done"),
             ),
         )
     }
@@ -315,16 +318,18 @@ object Cipher : PuzzleType {
 
     /** TO + GO = OUT with O and T found: a legal moment from the walkthrough's sum. */
     @Composable
-    override fun Preview(modifier: Modifier) {
+    override fun Preview(modifier: Modifier) = Preview(modifier, CipherSum(TUTORIAL_WORDS), listOf(EMPTY, 1, 2, EMPTY), T)
+
+    @Composable
+    internal fun Preview(modifier: Modifier, sum: CipherSum, digits: List<Int>, pick: Int) {
         val scheme = MaterialTheme.colorScheme
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val sum = CipherSum(TUTORIAL_WORDS)
             val slot = minOf(maxWidth / (sum.width + 1), maxHeight / (sum.rows + RULE))
             val dark = BoardHues.isDark(scheme)
             val (hueA, hueB) = BoardHues.HUE_PAIRS[0]
             SumTiles(
-                sum, digits = listOf(EMPTY, 1, 2, EMPTY), selected = null, slot = slot, ruleInk = BoardHues.ink(hueA, dark),
-                tileColour = { if (it == T) BoardHues.fill(hueB, dark) else scheme.surfaceVariant },
+                sum, digits = digits, selected = null, slot = slot, ruleInk = BoardHues.ink(hueA, dark),
+                tileColour = { if (it == pick) BoardHues.fill(hueB, dark) else scheme.surfaceVariant },
                 textColour = { _, placed -> if (placed) BoardHues.ink(hueB, dark) else scheme.onSurface },
             )
         }

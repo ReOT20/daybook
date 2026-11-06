@@ -1,6 +1,7 @@
 package com.joebywan.daybook
 
 import com.joebywan.daybook.puzzles.WordWheelWords
+import com.joebywan.daybook.core.words.RussianWords
 import kotlin.math.hypot
 import kotlin.math.sqrt
 
@@ -9,7 +10,7 @@ import kotlin.math.sqrt
  * centres and touch by distance, words are found by walking every path against a set of prefixes (no letter bag, no word loop), points are
  * written out here, and the best score is a memo over bitsets of hexes with no bound and no budget.
  */
-class HexwordsOracle(rows: List<Int>, private val letters: String, accepted: Boolean) {
+class HexwordsOracle(rows: List<Int>, private val letters: String, accepted: Boolean, contentLanguage: String = "en") {
 
     class Word(val word: String, val path: List<Int>)
 
@@ -26,9 +27,13 @@ class HexwordsOracle(rows: List<Int>, private val letters: String, accepted: Boo
     }
 
     val words: Set<String> = buildSet {
+        if (contentLanguage == "ru") {
+            for (n in 3..7) addAll(if (accepted) RussianWords.guesses(n) else RussianWords.grid(n))
+        } else {
         val all = listOf(WordWheelWords.GRID_3, WordWheelWords.GRID_4, WordWheelWords.GRID_5, WordWheelWords.GRID_6, WordWheelWords.GRID_7).flatten()
         addAll(all)
         if (accepted) addAll(WordWheelWords.BONUS.filter { it.length in 3..7 })
+        }
     }
     private val prefixes: Set<String> = buildSet { for (w in words) for (k in 1..w.length) add(w.take(k)) }
 

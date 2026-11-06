@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Cipher
 import com.joebywan.daybook.puzzles.CipherState
 import com.joebywan.daybook.puzzles.CipherTeacher
@@ -11,16 +12,11 @@ import com.joebywan.daybook.puzzles.CipherTeacher
 val CipherTraining: Course = Course(
     puzzle = Cipher,
     explanations = linkedMapOf(
-        CipherTeacher.LEADING to "When the total is one letter longer than the numbers added, its first letter is the " +
-            "carry out of the last column. Two digits and a carry make at most 19, so that letter is 1.",
-        CipherTeacher.COLUMN to "Each column adds up on its own: its digits and the carry from the right end in the " +
-            "total's letter. When enough of a column is known, one letter has a single digit left.",
-        CipherTeacher.PAIR to "Take two neighbouring columns together, through the carry between them: each cuts what " +
-            "the other allows. Find the one digit that lets both add up.",
-        CipherTeacher.CHAIN to "When no column or pair settles it, work every column and carry through together, giving " +
-            "no two letters the same digit, until a letter has one digit left.",
-        CipherTeacher.WHAT_IF to "Try every choice for two neighbouring columns at once, keeping what the other columns " +
-            "rule out. When only one digit for a letter lets both add up, that's its digit.",
+        CipherTeacher.LEADING to message("training.cipher_leading"),
+        CipherTeacher.COLUMN to message("training.cipher_column"),
+        CipherTeacher.PAIR to message("training.cipher_pair"),
+        CipherTeacher.CHAIN to message("training.cipher_chain"),
+        CipherTeacher.WHAT_IF to message("training.cipher_what_if"),
     ),
     // The generator's tiers: Standard reaches the first three, Hard every column together, Expert the what-if.
     tierFor = tierByIndex({ CipherTraining.techniques }, hard = 3, expert = 4),

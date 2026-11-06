@@ -1,5 +1,9 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -75,10 +79,11 @@ data class MiniState(
     val across: Boolean = true,
     override val moves: Int = 0,
     val secondClues: List<String> = emptyList(),
+    val contentLanguage: String = "en",
 ) : PuzzleState {
 
     /** The rules, not a comparison with [answer]: see [MiniLogic.isSolved]. */
-    override val solved: Boolean get() = MiniLogic.isSolved(size, letters, clues)
+    override val solved: Boolean get() = MiniLogic.isSolved(size, letters, clues, contentLanguage)
 
     /** No open square left and the rules not met: the note under the grid, which never says where. */
     val fullButWrong: Boolean get() = OPEN !in letters && !solved
@@ -164,17 +169,17 @@ private val MAX_KEYBOARD = 520.dp
 object Mini : PuzzleType {
 
     override val id = "mini"
-    override val displayName = "Crossword"
-    override val tagline = "A mini crossword. Solve the clues."
+    override val displayName get() = text("puzzle.mini.name")
+    override val tagline get() = text("puzzle.mini.tagline")
     override val accent = 0xFF098777
-    override val rules = listOf(
-        "Every row and column of white squares is a word, and each word has a clue: 1 Across, 2 Down and so on.",
-        "Tap a square, then type. Tap it again to turn between Across and Down, or tap the clue.",
-        "Letters cross: a letter in one word is a letter of the word across it.",
-        "Once every square is filled, a word that is no word in the list turns red, and a note says if anything is still wrong. Each clue has exactly one answer.",
+    override val rules get() = listOf(
+        text("puzzle.mini.rule.1"),
+        text("puzzle.mini.rule.2"),
+        text("puzzle.mini.rule.3"),
+        text("puzzle.mini.rule.4"),
     )
 
-    override val keyboardHelp = listOf("Type letters; Backspace clears. Arrows move (one the other way turns first), Space turns.")
+    override val keyboardHelp get() = listOf(text("puzzle.mini.keyboard.1"))
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState = MiniLogic.generate(seed, difficulty)
 
@@ -193,11 +198,11 @@ object Mini : PuzzleType {
             val firstOpen = slot.squares.indices.firstOrNull { s.letters[slot.squares[it]] == OPEN }
             return Deduction(
                 technique = step.technique,
-                nudge = step.nudge,
-                explanation = step.explanation,
+                nudge = step.nudgeMessage,
+                explanation = step.explanationMessage,
                 focus = step.focus,
                 cited = step.cited,
-                targets = slot.squares.toSet() + listOfNotNull(firstOpen?.let { MiniLogic.letterKey(word[it] - 'a') }),
+                targets = slot.squares.toSet() + listOfNotNull(firstOpen?.let { MiniLogic.letterKey(WordContent.index(word[it], s.contentLanguage)) }),
                 applyTo = { now -> (now as MiniState).let { t -> if (MiniLogic.spelled(t.letters, slot) == word) t else t.withWord(step.slot, word) } },
                 reachedBy = { now -> MiniLogic.spelled((now as MiniState).letters, slot) == word },
             )
@@ -206,11 +211,11 @@ object Mini : PuzzleType {
         val wrong = s.letters[sq]
         return Deduction(
             technique = step.technique,
-            nudge = step.nudge,
-            explanation = step.explanation,
+            nudge = step.nudgeMessage,
+            explanation = step.explanationMessage,
             focus = step.focus,
             cited = step.cited,
-            targets = setOf(sq) + if (mistake) emptySet() else setOf(MiniLogic.letterKey(step.letter - 'a')),
+            targets = setOf(sq) + if (mistake) emptySet() else setOf(MiniLogic.letterKey(WordContent.index(step.letter, s.contentLanguage))),
             mistake = mistake,
             fallback = step.technique == MiniTeacher.CLUE,
             applyTo = { now ->
@@ -255,10 +260,12 @@ object Mini : PuzzleType {
 
     /** The walkthrough's grid with its first across word in and the cursor on it: a legal moment of a real board. */
     @Composable
-    override fun Preview(modifier: Modifier) {
+    override fun Preview(modifier: Modifier) = Preview(modifier, PREVIEW)
+
+    @Composable
+    internal fun Preview(modifier: Modifier, s: MiniState) {
         val scheme = MaterialTheme.colorScheme
         BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-            val s = PREVIEW
             val square = minOf(maxWidth, maxHeight) / s.size
             val dark = BoardHues.isDark(scheme)
             val (hueA, hueB) = BoardHues.HUE_PAIRS[2]
@@ -278,6 +285,7 @@ object Mini : PuzzleType {
     @Composable
     override fun Board(state: PuzzleState, onState: (PuzzleState) -> Unit, interactive: Boolean) {
         val s = state as MiniState
+        val keyRows = if (s.contentLanguage == "ru") listOf("йцукенгшщзхъ", "фывапролджэ", "ячсмитьбю") else this.keyRows
         val scheme = MaterialTheme.colorScheme
         val dark = BoardHues.isDark(scheme)
         val (hueA, hueB) = BoardHues.pair(s.answer.hashCode())
@@ -289,12 +297,12 @@ object Mini : PuzzleType {
         val slots = remember(s.size, s.answer) { MiniLogic.slots(s.size, s.answer) }
         val units = remember(slots) { slots.map { it.squares } }
         // Once the grid is full, a word no word of the list can be shows after a pause and goes at once when mended (held here, not in the state).
-        val live = remember(s.letters) { MiniLogic.shownDead(s.size, s.letters) }
+        val live = remember(s.letters) { MiniLogic.shownDead(s.size, s.letters, s.contentLanguage) }
         val settled = rememberSettled(live, reset = s.answer, change = s.letters)
         val red = (live intersect settled).flatMap { slots[it].squares.toList() }.toSet()
         val noteSettled = rememberSettled(s.fullButWrong, reset = s.answer, change = s.letters)
         // A letter settles; a word the list holds glows once (a word, not the answer: that would be a check).
-        val feel = rememberMoveFeel(s.letters.map { it }, units) { r -> WheelWords.isGridWord(MiniLogic.spelled(s.letters, slots[r])) }
+        val feel = rememberMoveFeel(s.letters.map { it }, units) { r -> WheelWords.isGridWord(MiniLogic.spelled(s.letters, slots[r]), s.contentLanguage) }
         val current = s.slotIndex()
         val inWord = current?.let { slots[it].squares.toSet() } ?: emptySet()
 
@@ -307,8 +315,12 @@ object Mini : PuzzleType {
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp)
-                .boardKeys(interactive) { key, _, repeat ->
-                    val action = miniKeyAction(key) ?: return@boardKeys false
+                .boardKeys(interactive, onCharacter = if (s.contentLanguage == "ru") { c, repeat ->
+                    val letter = WordContent.normalize(c.toString(), s.contentLanguage).singleOrNull()
+                    if (letter == null || letter !in WordContent.alphabet(s.contentLanguage) || s.cursor == null) false
+                    else { if (!repeat) press(MiniKeyAction.Letter(letter)); true }
+                } else null) { key, _, repeat ->
+                    val action = miniKeyAction(key, s.contentLanguage) ?: return@boardKeys false
                     // With nothing picked a letter is left to the play screen, so H still asks for a hint there.
                     if (action is MiniKeyAction.Letter && s.cursor == null) return@boardKeys false
                     if (!repeat || action is MiniKeyAction.Move) press(action)
@@ -316,7 +328,9 @@ object Mini : PuzzleType {
                 },
             contentAlignment = Alignment.Center,
         ) {
-            val keyboard = KEY_HEIGHT * keyRows.size + KEY_GAP * (keyRows.size - 1)
+            // Short teaching slots keep all keys and leave more room for the grid.
+            val keyHeight = if (maxHeight < 300.dp) 32.dp else KEY_HEIGHT
+            val keyboard = keyHeight * keyRows.size + KEY_GAP * (keyRows.size - 1)
             val controls = NOTE_HEIGHT + CLUE_HEIGHT + keyboard + GAP
             // Sized from both axes (CLAUDE.md): the grid leaves room for the clue and the keys.
             val room = if (constraints.hasBoundedHeight) (maxHeight - controls).coerceAtLeast(0.dp) else maxWidth
@@ -346,7 +360,7 @@ object Mini : PuzzleType {
 
                 // Always laid out, so the note never moves the board.
                 Text(
-                    if (s.fullButWrong && noteSettled) "Something's not right yet" else "",
+                    if (s.fullButWrong && noteSettled) text("puzzle.mini.board.invalid") else "",
                     style = MaterialTheme.typography.labelLarge,
                     color = scheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -374,7 +388,7 @@ object Mini : PuzzleType {
                         contentAlignment = Alignment.CenterStart,
                     ) {
                         Text(
-                            if (current == null) "Tap a square to start." else "${slots[current].number}${if (slots[current].across) "A" else "D"}  ${s.clues[current]}",
+                            if (current == null) text("puzzle.mini.board.start") else "${slots[current].number}${text(if (slots[current].across) "puzzle.mini.board.across" else "puzzle.mini.board.down")}  ${s.clues[current]}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = scheme.onSurface,
                             maxLines = 2,
@@ -394,13 +408,13 @@ object Mini : PuzzleType {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(KEY_GAP)) {
                             if (r == 1) Spacer(Modifier.weight(0.5f))
                             for (c in row) {
-                                val index = MiniLogic.letterKey(c - 'a')
-                                Key(c.uppercase(), Modifier.weight(1f).highlightAnchor(index).ring(highlight.look(index, dims = false), glow, pulse, corner = 6.dp), interactive && s.cursor != null) {
+                                val index = MiniLogic.letterKey(WordContent.index(c, s.contentLanguage))
+                                Key(c.uppercase(), Modifier.weight(1f).highlightAnchor(index).ring(highlight.look(index, dims = false), glow, pulse, corner = 6.dp), interactive && s.cursor != null, keyHeight = keyHeight) {
                                     press(MiniKeyAction.Letter(c))
                                 }
                             }
                             if (r == 1) Spacer(Modifier.weight(0.5f))
-                            if (r == 2) Key("Del", Modifier.weight(1.5f), interactive && s.cursor != null, small = true) { press(MiniKeyAction.Erase) }
+                            if (r == 2) Key(text("puzzle.mini.board.delete"), Modifier.weight(1.5f), interactive && s.cursor != null, small = true, keyHeight = keyHeight) { press(MiniKeyAction.Erase) }
                         }
                     }
                 }
@@ -416,11 +430,11 @@ object Mini : PuzzleType {
     }
 
     @Composable
-    private fun Key(label: String, modifier: Modifier, enabled: Boolean, small: Boolean = false, onClick: () -> Unit) {
+    private fun Key(label: String, modifier: Modifier, enabled: Boolean, small: Boolean = false, keyHeight: Dp = KEY_HEIGHT, onClick: () -> Unit) {
         val scheme = MaterialTheme.colorScheme
         Box(
             modifier
-                .height(KEY_HEIGHT)
+                .height(keyHeight)
                 .clip(RoundedCornerShape(6.dp))
                 .background(scheme.surfaceVariant)
                 .clickable(enabled = enabled, onClick = onClick),
@@ -492,25 +506,24 @@ object Mini : PuzzleType {
         listOf(
             TutorialFrame(
                 state = b0,
-                caption = "Every row and column of white squares is a word, and each has a clue. Letters cross: " +
-                    "a letter of one word is a letter of the word across it.",
+                caption = message("puzzle.mini.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = a1.squares.toSet(), soft = d1.squares.toSet()),
             ),
             TutorialFrame(
                 state = b0,
-                caption = "1 Across is \"$clueA\": $acrossWord. Tap the glowing square, then type $acrossWord.",
+                caption = message("puzzle.mini.tutorial.2.caption", "clueA" to (clueA), "acrossWord" to (acrossWord)),
                 glow = { s ->
                     val k = pa.stage(s)
                     if (k < 0) BoardHighlight(strong = setOf(first), soft = a1.squares.toSet())
                     else BoardHighlight(strong = setOf(MiniLogic.letterKey(acrossWord[minOf(k, acrossWord.length - 1)].lowercaseChar() - 'a')), soft = a1.squares.toSet())
                 },
                 steps = pa.steps,
-                retry = "Tap the glowing square, then type $acrossWord.",
-                done = "$acrossWord is in, and its first letter starts 1 Down.",
+                retry = message("puzzle.mini.tutorial.2.retry", "acrossWord" to (acrossWord)),
+                done = message("puzzle.mini.tutorial.2.done", "acrossWord" to (acrossWord)),
             ),
             TutorialFrame(
                 state = tutorialBoard(afterA, cursor = a1.squares.last()),
-                caption = "1 Down is \"$clueD\": $downWord. Tap the glowing square under the 1, tap it again to turn it Down, then type the rest.",
+                caption = message("puzzle.mini.tutorial.3.caption", "clueD" to (clueD), "downWord" to (downWord)),
                 glow = { s ->
                     val k = pd.stage(s)
                     val open = d1.squares.filter { it !in afterA }
@@ -518,12 +531,12 @@ object Mini : PuzzleType {
                     else BoardHighlight(strong = setOf(MiniLogic.letterKey(TUTORIAL_GRID[open[minOf(k - 1, open.size - 1)]] - 'a')), soft = d1.squares.toSet())
                 },
                 steps = pd.steps,
-                retry = "Tap the glowing square twice, then type $downWord.",
-                done = "Tapping a square again turns it between Across and Down.",
+                retry = message("puzzle.mini.tutorial.3.retry", "downWord" to (downWord)),
+                done = message("puzzle.mini.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(both, cursor = d1.squares.last(), across = false),
-                caption = "A slip is easy to mend. Tap the glowing square and type Z, then tap Del to clear it.",
+                caption = message("puzzle.mini.tutorial.4.caption"),
                 glow = { s ->
                     when (pw.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(wrong))
@@ -532,14 +545,14 @@ object Mini : PuzzleType {
                     }
                 },
                 steps = pw.steps,
-                retry = "Tap the glowing square, type Z, then tap Del.",
-                done = "Cleared. Del takes back the letter under the cursor.",
+                retry = message("puzzle.mini.tutorial.4.retry"),
+                done = message("puzzle.mini.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(both, cursor = wrong),
-                caption = "Your turn: fill the rest. Stuck? Hint shows you why.",
+                caption = message("puzzle.mini.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved: " + listed(MiniLogic.slots(4, TUTORIAL_GRID).map { MiniLogic.spelled(TUTORIAL_GRID, it).uppercase() }) + ".",
+                done = message("puzzle.mini.tutorial.5.done", "value1" to (listed(MiniLogic.slots(4, TUTORIAL_GRID).map { MiniLogic.spelled(TUTORIAL_GRID, it).uppercase() }))),
             ),
         )
     }

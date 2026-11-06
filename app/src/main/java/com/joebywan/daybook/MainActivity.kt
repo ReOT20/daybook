@@ -1,13 +1,32 @@
 package com.joebywan.daybook
 
+import android.app.Application
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.joebywan.daybook.platform.DailyReminder
+import com.joebywan.daybook.platform.appLanguageContext
+import com.joebywan.daybook.platform.migrateAppLanguage
 import com.joebywan.daybook.ui.DaybookApp
 
+class DaybookApplication : Application() {
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(appLanguageContext(base))
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        migrateAppLanguage(this)
+    }
+}
+
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(appLanguageContext(base))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

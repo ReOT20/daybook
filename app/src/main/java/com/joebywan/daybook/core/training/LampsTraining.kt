@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Lamps
 import com.joebywan.daybook.puzzles.LampsLogic
 import com.joebywan.daybook.puzzles.LampsState
@@ -13,20 +14,13 @@ import com.joebywan.daybook.puzzles.LampsTeacher
 val LampsTraining: Course = Course(
     puzzle = Lamps,
     explanations = linkedMapOf(
-        LampsTeacher.ZERO to "A 0 has no lamps beside it, so none of the squares next to it can hold one: tap them to " +
-            "cross them out.",
-        LampsTeacher.DONE to "When a number already has all its lamps beside it, the other squares next to it hold " +
-            "none: cross them out.",
-        LampsTeacher.ROOM to "When a number still needs as many lamps as it has squares beside it that could take one " +
-            "(not walls, lamps, lit or crossed), they are all lamps. Double-tap or long-press for a lamp.",
-        LampsTeacher.ONLY_LIGHT to "Every white square must be lit. When only one square left can light a dark square, " +
-            "whether itself or one in its row or column, that square holds a lamp.",
-        LampsTeacher.STARVE to "A lamp lights its whole row and column. When a lamp on a square would light so many " +
-            "squares beside a number that the number couldn't get its lamps, no lamp goes there: cross it out.",
-        LampsTeacher.DARK to "When a lamp on a square would light every square that could light some dark square, " +
-            "without lighting that square itself, nothing could ever light it. So no lamp goes there: cross it out.",
-        LampsTeacher.WHAT_IF to "Suppose a lamp on a square, or none, and follow the numbers and squares it forces. If " +
-            "a number gets too many lamps or too few, or a square could never be lit, the other choice is the answer.",
+        LampsTeacher.ZERO to message("training.lamps_zero"),
+        LampsTeacher.DONE to message("training.lamps_done"),
+        LampsTeacher.ROOM to message("training.lamps_room"),
+        LampsTeacher.ONLY_LIGHT to message("training.lamps_only_light"),
+        LampsTeacher.STARVE to message("training.lamps_starve"),
+        LampsTeacher.DARK to message("training.lamps_dark"),
+        LampsTeacher.WHAT_IF to message("training.lamps_what_if"),
     ),
     // Standard reaches the four direct facts, Hard the starved number and the dark square (51 and 22 of 60), Expert the what-if.
     tierFor = tierByIndex({ LampsTraining.techniques }, hard = 4, expert = 6),

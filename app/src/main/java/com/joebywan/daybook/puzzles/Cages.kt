@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -99,23 +102,21 @@ private const val LABEL_BAND = 0.34f
 object Cages : PuzzleType {
 
     override val id = "cages"
-    override val displayName = "Cage Sudoku"
-    override val tagline = "Sudoku where dashed cages must add up"
+    override val displayName get() = text("puzzle.cages.name")
+    override val tagline get() = text("puzzle.cages.tagline")
     override val accent = 0xFF528DC9
-    override val rules = listOf(
-        "Fill every square with a digit from 1 to 9, as in Sudoku: no repeat in a row, a column or a 3x3 box.",
-        "The dashed outlines are cages. The digits in a cage add up to the small number in its corner, " +
-            "and a cage never repeats a digit.",
-        "Tap a square, then tap a digit. Tap the digit again to clear it.",
-        "Or pick the digit first: with no square selected, tap a digit, then every square it goes in. Tap the selected square to let go of it, and the digit again to finish.",
-        "Tap the pencil to take notes: while it is lit, a digit is pencilled small in the square " +
-            "instead of placed.",
-        "Clashing digits, and cages that are over their total or finished wrong, are shown in red.",
-        "Every row, column and box adds up to 45. That can tell you what the cages leave out, or spill into.",
+    override val rules get() = listOf(
+        text("puzzle.cages.rule.1"),
+        text("puzzle.cages.rule.2"),
+        text("puzzle.cages.rule.3"),
+        text("puzzle.cages.rule.4"),
+        text("puzzle.cages.rule.5"),
+        text("puzzle.cages.rule.6"),
+        text("puzzle.cages.rule.7"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, 1-9 place a digit (or a note in pencil mode), Backspace clears.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.cages.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -191,26 +192,23 @@ object Cages : PuzzleType {
         listOf(
             TutorialFrame(
                 state = start,
-                caption = "Fill the grid as in Sudoku. The dashed outlines are cages: a cage's digits add up " +
-                    "to the small number in its corner, and never repeat.",
+                caption = message("puzzle.cages.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = firstCage),
             ),
             TutorialFrame(
                 state = start,
-                caption = "This cage totals 11 and already holds a 7, and 11 take away 7 leaves 4. Tap the " +
-                    "empty square, then 4 below.",
+                caption = message("puzzle.cages.tutorial.2.caption"),
                 glow = { s ->
                     val strong = if (place.stage(s) < 0) TUTORIAL_FIRST else SudokuTeacher.pad(4)
                     BoardHighlight(strong = setOf(strong), soft = firstCage)
                 },
                 steps = place.steps,
-                retry = "Tap the glowing square, then the 4.",
-                done = "That cage is complete.",
+                retry = message("puzzle.cages.tutorial.2.retry"),
+                done = message("puzzle.cages.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_FIRST),
-                caption = "A digit that breaks a rule turns red. Put a 5 in the glowing square: 5 + 2 is only 7, " +
-                    "not 11, and its column has a 5. Then tap 5 again to clear it.",
+                caption = message("puzzle.cages.tutorial.3.caption"),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(TUTORIAL_WRONG), soft = wrongCage)
@@ -219,13 +217,12 @@ object Cages : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap the glowing square, then the 5, then the 5 again.",
-                done = "Cleared. Tapping the digit again takes it out.",
+                retry = message("puzzle.cages.tutorial.3.retry"),
+                done = message("puzzle.cages.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG),
-                caption = "Not sure of a digit? Tap the pencil, then a digit, to jot it small. 11 take away the " +
-                    "2 is 9: pencil a 9 here.",
+                caption = message("puzzle.cages.tutorial.4.caption"),
                 highlight = BoardHighlight(
                     strong = setOf(TUTORIAL_WRONG, SudokuTeacher.NOTES_KEY, SudokuTeacher.pad(TUTORIAL_NOTED)),
                     soft = wrongCage,
@@ -234,15 +231,14 @@ object Cages : PuzzleType {
                     next is CageState && next.cells == done.cells &&
                         next.grid.notes == tutorialBoard(placed, noted = mapOf(TUTORIAL_WRONG to TUTORIAL_NOTED)).grid.notes
                 },
-                retry = "Tap the glowing pencil, then the 9.",
-                done = "Penciled. Tap the pencil again to go back to placing digits.",
+                retry = message("puzzle.cages.tutorial.4.retry"),
+                done = message("puzzle.cages.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG, noted = mapOf(TUTORIAL_WRONG to TUTORIAL_NOTED)),
-                caption = "Your turn: finish the board. Stuck? Hint shows you why, cage totals included. " +
-                    "Bigger cages take a little more working out.",
+                caption = message("puzzle.cages.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.cages.tutorial.5.done"),
             ),
         )
     }

@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.foundation.Canvas
@@ -88,20 +91,20 @@ internal fun tallyKeyAction(key: Key, shift: Boolean): PenKeyAction? = penKeyAct
 object Tally : PuzzleType {
 
     override val id = "tally"
-    override val displayName = "Tally"
-    override val tagline = "Keep the numbers that make every sum"
+    override val displayName get() = text("puzzle.tally.name")
+    override val tagline get() = text("puzzle.tally.tagline")
     override val accent = 0xFFA26482
 
-    override val rules = listOf(
-        "The number beside each row, and under each column, is its target.",
-        "Remove numbers so that what is left in every row and every column adds up to its target.",
-        "Pick Remove or Keep under the board and tap numbers. Drag along a row or column to sweep several at once.",
-        "Keep circles a number you are sure of. It is only a note: a circled number counts exactly like any other left in.",
-        "Solved when every row and column adds up. Every board has one answer, found without guessing.",
+    override val rules get() = listOf(
+        text("puzzle.tally.rule.1"),
+        text("puzzle.tally.rule.2"),
+        text("puzzle.tally.rule.3"),
+        text("puzzle.tally.rule.4"),
+        text("puzzle.tally.rule.5"),
     )
 
-    override val keyboardHelp = listOf(
-        "Arrows move, X removes, K circles, Space cycles, Backspace clears; Shift+arrow carries a mark along.",
+    override val keyboardHelp get() = listOf(
+        text("puzzle.tally.keyboard.1"),
     )
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
@@ -141,47 +144,46 @@ object Tally : PuzzleType {
         listOf(
             TutorialFrame(
                 state = solved,
-                caption = "Each number on the edge is a target. Remove numbers until what is left in every row and column " +
-                    "adds up to it: row 1 keeps 1 + 6 = 7.",
+                caption = message("puzzle.tally.tutorial.1.caption"),
                 highlight = BoardHighlight(strong = setOf(0, 2, row(0))),
             ),
             TutorialFrame(
                 state = empty,
-                caption = "Row 1 needs 7, and its 9 is bigger than 7 on its own, so the 9 can't stay. Tap it to remove it.",
+                caption = message("puzzle.tally.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(1, row(0)), soft = setOf(0, 2, 3)),
                 accepts = empty.only(mapOf(1 to TallyLogic.REMOVED)),
-                retry = "Tap the glowing 9 once, with Remove chosen under the board.",
-                done = "Removed. A number bigger than what its line needs always goes.",
+                retry = message("puzzle.tally.tutorial.2.retry"),
+                done = message("puzzle.tally.tutorial.2.done"),
             ),
             TutorialFrame(
                 state = afterNine,
-                caption = "Column 4 needs 3, so both of its 9s go. Drag down across the two of them to remove both in one sweep.",
+                caption = message("puzzle.tally.tutorial.3.caption"),
                 highlight = BoardHighlight(strong = setOf(7, 11, col(3)), soft = setOf(3, 15)),
                 accepts = afterNine.only(mapOf(7 to TallyLogic.REMOVED, 11 to TallyLogic.REMOVED)),
-                retry = "Drag along the glowing 9s in one sweep.",
-                done = "Both gone. A sweep marks a run of squares along one row or column.",
+                retry = message("puzzle.tally.tutorial.3.retry"),
+                done = message("puzzle.tally.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = afterSweep,
-                caption = "Row 2 now adds up to 10, 4 over its 6. Remove its 5 and see what happens.",
+                caption = message("puzzle.tally.tutorial.4.caption"),
                 highlight = BoardHighlight(strong = setOf(5, row(1)), soft = setOf(4, 6)),
                 accepts = afterSweep.only(mapOf(5 to TallyLogic.REMOVED)),
-                retry = "Tap the glowing 5 once.",
-                done = "Too much: 4 + 1 can never make 6, so row 2 turns red, and column 2 with it.",
+                retry = message("puzzle.tally.tutorial.4.retry"),
+                done = message("puzzle.tally.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = afterSlip,
-                caption = "So the 5 stays. Choose Keep under the board, then tap the 5 to circle it.",
+                caption = message("puzzle.tally.tutorial.5.caption"),
                 highlight = BoardHighlight(strong = setOf(5, row(1))),
                 accepts = afterSweep.only(mapOf(5 to TallyLogic.KEPT)),
-                retry = "Choose Keep under the board, then tap the glowing 5.",
-                done = "Circled: a note that you are sure. It counts like any number left in.",
+                retry = message("puzzle.tally.tutorial.5.retry"),
+                done = message("puzzle.tally.tutorial.5.done"),
             ),
             TutorialFrame(
                 state = afterKeep,
-                caption = "Your turn: make every row and column add up. Stuck? Hint shows you why.",
+                caption = message("puzzle.tally.tutorial.6.caption"),
                 freePlay = true,
-                done = "Solved. Every board works out one line at a time.",
+                done = message("puzzle.tally.tutorial.6.done"),
             ),
         )
     }
@@ -411,7 +413,7 @@ object Tally : PuzzleType {
                 }
             }
 
-            PenRow(s.pens, pen, interactive, vivid(accent), { if (it == TallyLogic.REMOVED) "Remove" else "Keep" }, { pen = it }) { option ->
+            PenRow(s.pens, pen, interactive, vivid(accent), { if (it == TallyLogic.REMOVED) text("puzzle.tally.board.remove") else text("puzzle.tally.board.keep") }, { pen = it }) { option ->
                 if (option == TallyLogic.REMOVED) {
                     val a = size.width * 0.2f
                     drawLine(scheme.onSurface.copy(alpha = 0.85f), Offset(a, size.height - a), Offset(size.width - a, a), 3f, StrokeCap.Round)

@@ -13,6 +13,22 @@ number that goes up for activity. These levels are fixed packs of boards, so upd
 
 ## Decisions
 
+### Language-specific menus (2026-11-06)
+
+New English/Russian menus each use an independent level sequence and progress. `planForLanguage`
+deals the frozen first 33 families using the existing deal, then selects matching word editions; it never
+maps the mixed 40-entry pool, which could collapse two slots into the same family. Each level still has
+five different puzzles. Difficulty order is the existing family order, with no change to its frozen scores.
+
+`levels_<tag>` and `level_solves_<tag>` keep progress separate. `SeedHash.levelForLanguage` gives even
+neutral puzzles different saved boards in each language. Previous `levels` / `level_solves`, pool/deal
+algorithms and seeds remain unchanged and accessible through **Previous levels** when they exist.
+Routes append a captured level language; missing fields mean previous levels. Changing interface
+language never rewrites an open level or its save. Tests cover every level in both menus, independent
+unlocks/saves, malformed lane data, old raw data and append-only route decoding.
+
+### Original decisions
+
 Defaults chosen in the spec; the owner can change any of them before the build starts.
 
 | | |

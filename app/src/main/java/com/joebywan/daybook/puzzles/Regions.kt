@@ -1,5 +1,8 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.text
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.ui.theme.vivid
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -96,17 +99,17 @@ data class RegionsState(
 object Regions : PuzzleType {
 
     override val id = "regions"
-    override val displayName = "Regions"
-    override val tagline = "Fill each region, equal digits never touch"
+    override val displayName get() = text("puzzle.regions.name")
+    override val tagline get() = text("puzzle.regions.tagline")
     override val accent = 0xFF5C72BE
-    override val rules = listOf(
-        "A region of N squares holds the digits 1 to N, each once.",
-        "Equal digits may not touch, not even at a corner.",
-        "Tap a square, then tap a digit. Tap the digit again to clear it.",
-        "A repeat, or a touching pair, is shown in red as you go.",
+    override val rules get() = listOf(
+        text("puzzle.regions.rule.1"),
+        text("puzzle.regions.rule.2"),
+        text("puzzle.regions.rule.3"),
+        text("puzzle.regions.rule.4"),
     )
 
-    override val keyboardHelp = listOf("Arrows move, 1-5 place a digit, Backspace clears.")
+    override val keyboardHelp get() = listOf(text("puzzle.regions.keyboard.1"))
 
     override fun generate(seed: Long, difficulty: Difficulty): PuzzleState =
         RegionsLogic.generateVerified(seed, difficulty) ?: RegionsLogic.lastResort(difficulty)
@@ -182,30 +185,28 @@ object Regions : PuzzleType {
         listOf(
             TutorialFrame(
                 state = start,
-                caption = "Each region holds the digits from 1 up to its size, once each. These have four squares, so 1 to 4. Bold digits are given.",
+                caption = message("puzzle.regions.tutorial.1.caption"),
                 highlight = BoardHighlight(soft = setOf(0, 1, 4, 5)),
             ),
             TutorialFrame(
                 state = start,
-                caption = "Equal digits may never touch, not even at a corner. This 3 rules out a 3 in every square around it.",
+                caption = message("puzzle.regions.tutorial.2.caption"),
                 highlight = BoardHighlight(strong = setOf(2), soft = touching),
             ),
             TutorialFrame(
                 state = start,
-                caption = "This square touches a 2, a 3 and a 4, so none of those can go here, and its region " +
-                    "needs 1 to 4. That leaves 1. Tap the square, then 1 below.",
+                caption = message("puzzle.regions.tutorial.3.caption"),
                 glow = { s ->
                     val strong = if (place.stage(s) < 0) TUTORIAL_FIRST else RegionsTeacher.pad(1)
                     BoardHighlight(strong = setOf(strong), soft = setOf(4, 10, 14))
                 },
                 steps = place.steps,
-                retry = "Tap the glowing square, then the 1.",
-                done = "Touching digits settled it.",
+                retry = message("puzzle.regions.tutorial.3.retry"),
+                done = message("puzzle.regions.tutorial.3.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_FIRST),
-                caption = "A digit that breaks a rule turns red. Put a 1 in the glowing square: it touches the " +
-                    "other 1. Then tap 1 again to clear it.",
+                caption = message("puzzle.regions.tutorial.4.caption"),
                 glow = { s ->
                     when (clash.stage(s)) {
                         -1 -> BoardHighlight(strong = setOf(TUTORIAL_WRONG), soft = setOf(TUTORIAL_FIRST))
@@ -214,14 +215,14 @@ object Regions : PuzzleType {
                     }
                 },
                 steps = clash.steps,
-                retry = "Tap the glowing square, then the 1, then the 1 again.",
-                done = "Cleared. Tapping the digit again takes it out.",
+                retry = message("puzzle.regions.tutorial.4.retry"),
+                done = message("puzzle.regions.tutorial.4.done"),
             ),
             TutorialFrame(
                 state = tutorialBoard(placed, selected = TUTORIAL_WRONG),
-                caption = "Your turn: finish the board. Stuck? Hint shows you why.",
+                caption = message("puzzle.regions.tutorial.5.caption"),
                 freePlay = true,
-                done = "Solved. That's all there is to it.",
+                done = message("puzzle.regions.tutorial.5.done"),
             ),
         )
     }

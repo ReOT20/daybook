@@ -1,5 +1,6 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
 import com.joebywan.daybook.core.Difficulty
 import com.joebywan.daybook.core.Rng
 import com.joebywan.daybook.core.Verdict
@@ -16,16 +17,19 @@ internal object CodewordWords {
     const val MIN = 3
     const val MAX = 7
 
-    class Length(val words: List<String>) {
-        val letters: Array<IntArray> = Array(words.size) { i -> IntArray(words[i].length) { words[i][it] - 'a' } }
+    class Length(val words: List<String>, val contentLanguage: String = "en") {
+        val letters: Array<IntArray> = Array(words.size) { i -> IntArray(words[i].length) { WordContent.index(words[i][it], contentLanguage) } }
         val shapes: IntArray = IntArray(words.size) { shape(letters[it]) }
     }
 
     private val lengths: List<Length> by lazy { (0..MAX).map { Length(if (it >= MIN) WheelWords.grid(it) else emptyList()) } }
 
-    fun of(length: Int): Length = lengths[length]
+    private val russianLengths: List<Length> by lazy { (0..MAX).map { Length(if (it >= MIN) WheelWords.grid(it, "ru") else emptyList(), "ru") } }
 
-    fun isWord(word: String): Boolean = word.length in MIN..MAX && of(word.length).words.binarySearch(word) >= 0
+    fun of(length: Int): Length = lengths[length]
+    fun of(length: Int, contentLanguage: String): Length = if (contentLanguage == "en") of(length) else russianLengths[length]
+
+    fun isWord(word: String, contentLanguage: String = "en"): Boolean = word.length in MIN..MAX && of(word.length, contentLanguage).words.binarySearch(word) >= 0
 
     /**
      * Where values repeat in [v], as one Int: three bits a place, each the index of the first place holding the same
@@ -70,7 +74,7 @@ internal object CodewordLogic {
     fun letterKey(letter: Int): Int = LETTER + letter
 
     /** Letter [l] (0 = A) as the player sees it. */
-    fun up(l: Int) = ('A' + l).toString()
+    fun up(l: Int, contentLanguage: String = "en") = WordContent.alphabet(contentLanguage)[l].uppercase()
 
     /** Every across run, then every down run, each as its squares in reading order. Runs of one square are not words. */
     fun runs(size: Int, numbers: List<Int>): List<IntArray> {
@@ -89,9 +93,9 @@ internal object CodewordLogic {
     }
 
     /** The rules and nothing else: every number a letter, no letter twice, every run a word. */
-    fun isSolved(size: Int, numbers: List<Int>, letters: List<Int>): Boolean {
-        if (letters.any { it !in 0..25 } || letters.distinct().size != letters.size) return false
-        return runs(size, numbers).all { run -> CodewordWords.isWord(CharArray(run.size) { 'a' + letters[numbers[run[it]] - 1] }.concatToString()) }
+    fun isSolved(size: Int, numbers: List<Int>, letters: List<Int>, contentLanguage: String = "en"): Boolean {
+        if (letters.any { it !in WordContent.alphabet(contentLanguage).indices } || letters.distinct().size != letters.size) return false
+        return runs(size, numbers).all { run -> CodewordWords.isWord(CharArray(run.size) { WordContent.alphabet(contentLanguage)[letters[numbers[run[it]] - 1]] }.concatToString(), contentLanguage) }
     }
 
     /** What breaks a rule so far: numbers sharing a letter, and runs that no word can be any more. */
@@ -101,7 +105,7 @@ internal object CodewordLogic {
      * A run is dead when no word of its length has its shape, agrees with its placed letters and, where a number is
      * open, uses a letter no number holds. That is a fact about the board, never about the stored answer.
      */
-    fun conflicts(size: Int, numbers: List<Int>, letters: List<Int>): Conflicts {
+    fun conflicts(size: Int, numbers: List<Int>, letters: List<Int>, contentLanguage: String = "en"): Conflicts {
         val twins = (1..letters.size).filter { n -> letters[n - 1] != EMPTY && letters.indices.any { it != n - 1 && letters[it] == letters[n - 1] } }.toSet()
         var held = 0
         for (l in letters) if (l != EMPTY) held = held or bit(l)
@@ -109,7 +113,7 @@ internal object CodewordLogic {
         runs(size, numbers).forEachIndexed { r, run ->
             val nums = IntArray(run.size) { numbers[run[it]] }
             if (nums.all { letters[it - 1] == EMPTY }) return@forEachIndexed
-            val list = CodewordWords.of(run.size)
+            val list = CodewordWords.of(run.size, contentLanguage)
             val shape = CodewordWords.shape(nums)
             val fits = list.letters.indices.any { w ->
                 list.shapes[w] == shape && nums.indices.all { i ->
@@ -132,7 +136,7 @@ internal object CodewordLogic {
      * A spelled run must be a word. No node budget, so it always ends with the true count. [words] is the list a length
      * is judged by; the builder passes a wider one to check that no less common word opens a second answer.
      */
-    fun solve(size: Int, numbers: List<Int>, known: List<Int>, words: (Int) -> CodewordWords.Length = CodewordWords::of): Verdict<List<Int>> {
+    fun solve(size: Int, numbers: List<Int>, known: List<Int>, contentLanguage: String = "en", words: (Int) -> CodewordWords.Length = { CodewordWords.of(it, contentLanguage) }): Verdict<List<Int>> {
         val runs = runs(size, numbers).map { run -> IntArray(run.size) { numbers[run[it]] - 1 } }
         val shapes = runs.map { CodewordWords.shape(it) }
         val assign = known.toIntArray()
@@ -172,7 +176,7 @@ internal object CodewordLogic {
                 val run = runs[r]
                 val list = words(run.size)
                 if (run.all { assign[it] != EMPTY }) {
-                    if (list.words.binarySearch(CharArray(run.size) { 'a' + assign[run[it]] }.concatToString()) < 0) return
+                    if (list.words.binarySearch(CharArray(run.size) { WordContent.alphabet(contentLanguage)[assign[run[it]]] }.concatToString()) < 0) return
                     continue
                 }
                 val limit = bestWords?.size ?: Int.MAX_VALUE
@@ -222,23 +226,23 @@ internal object CodewordLogic {
         Difficulty.EXPERT -> Spec(11, CodewordTeacher.ALL_WORDS)
     }
 
-    fun entries(difficulty: Difficulty): List<String> = when (difficulty) {
+    fun entries(difficulty: Difficulty, contentLanguage: String = "en"): List<String> = if (contentLanguage == "ru") RussianCodewordGrids.entries(difficulty) else when (difficulty) {
         Difficulty.STANDARD -> CodewordGrids.STANDARD
         Difficulty.HARD -> CodewordGrids.HARD
         Difficulty.EXPERT -> CodewordGrids.EXPERT
     }
 
     /** An entry is the grid's squares in reading order (`#` black, else the answer's letter), `:`, the given letters. */
-    class Entry(val size: Int, val squares: String, val givens: String) {
+    class Entry(val size: Int, val squares: String, val givens: String, val contentLanguage: String = "en") {
         /** The letters the grid uses, in alphabetical order. */
-        val alphabet: List<Int> = squares.filter { it != '#' }.map { it - 'a' }.distinct().sorted()
+        val alphabet: List<Int> = squares.filter { it != '#' }.map { WordContent.index(it, contentLanguage) }.distinct().sorted()
 
         override fun toString() = "$squares:$givens"
     }
 
-    fun parse(entry: String): Entry {
+    fun parse(entry: String, contentLanguage: String = "en"): Entry {
         val squares = entry.substringBefore(':')
-        return Entry(MiniLogic.sizeOf(squares), squares, entry.substringAfter(':'))
+        return Entry(MiniLogic.sizeOf(squares), squares, entry.substringAfter(':'), contentLanguage)
     }
 
     /**
@@ -246,29 +250,30 @@ internal object CodewordLogic {
      * from its givens and the search proves one answer; else null.
      */
     fun board(entry: Entry, rng: Rng): CodewordState? {
+        val contentLanguage = entry.contentLanguage
         val order = rng.shuffled(entry.alphabet)
-        val numberOf = IntArray(26)
+        val numberOf = IntArray(WordContent.alphabet(contentLanguage).length)
         order.forEachIndexed { i, l -> numberOf[l] = i + 1 }
-        val numbers = entry.squares.map { if (it == '#') 0 else numberOf[it - 'a'] }
-        val given = entry.givens.map { numberOf[it - 'a'] }.sorted()
+        val numbers = entry.squares.map { if (it == '#') 0 else numberOf[WordContent.index(it, contentLanguage)] }
+        val given = entry.givens.map { numberOf[WordContent.index(it, contentLanguage)] }.sorted()
         val letters = List(order.size) { if (it + 1 in given) order[it] else EMPTY }
-        if (given.isEmpty() || !CodewordTeacher.solvesByLogic(entry.size, numbers, letters)) return null
-        val verdict = solve(entry.size, numbers, letters) as? Verdict.ExactlyOne ?: return null
-        return CodewordState(size = entry.size, numbers = numbers, solution = verdict.value, given = given, letters = letters)
+        if (given.isEmpty() || !CodewordTeacher.solvesByLogic(entry.size, numbers, letters, contentLanguage)) return null
+        val verdict = solve(entry.size, numbers, letters, contentLanguage) as? Verdict.ExactlyOne ?: return null
+        return CodewordState(contentLanguage = contentLanguage, size = entry.size, numbers = numbers, solution = verdict.value, given = given, letters = letters)
     }
 
-    fun generate(seed: Long, difficulty: Difficulty): CodewordState = generateVerified(seed, difficulty) ?: lastResort(difficulty)
+    fun generate(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): CodewordState = generateVerified(seed, difficulty, contentLanguage) ?: lastResort(difficulty, contentLanguage)
 
     /** The board when its answer was proved, null otherwise (what `FallbackTest` asserts on). Pure in (seed, difficulty): only the list's own order reaches the `Rng`. */
-    fun generateVerified(seed: Long, difficulty: Difficulty): CodewordState? {
-        val list = entries(difficulty)
+    fun generateVerified(seed: Long, difficulty: Difficulty, contentLanguage: String = "en"): CodewordState? {
+        val list = entries(difficulty, contentLanguage)
         for (attempt in 0 until ATTEMPTS) {
             val rng = Rng(seed + attempt)
-            board(parse(list[rng.nextInt(list.size)]), rng)?.let { return it }
+            board(parse(list[rng.nextInt(list.size)], contentLanguage), rng)?.let { return it }
         }
         return null
     }
 
     /** A fixed board per tier for a seed nothing proved (none ever has: `FallbackTest`); `CodewordRulesTest` proves each. */
-    fun lastResort(difficulty: Difficulty): CodewordState = board(parse(entries(difficulty)[0]), Rng(1))!!
+    fun lastResort(difficulty: Difficulty, contentLanguage: String = "en"): CodewordState = board(parse(entries(difficulty, contentLanguage)[0], contentLanguage), Rng(1))!!
 }

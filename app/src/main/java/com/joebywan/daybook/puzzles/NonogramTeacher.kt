@@ -1,8 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.listed
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.listedMessage
 
 /**
  * Nonograms, reasoned the way a person reasons them: one row or column at a time.
@@ -61,9 +64,15 @@ internal object NonogramTeacher {
         val clears: List<Int> = emptyList(),
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = (fills + crosses + clears).toSet()
     }
 
@@ -95,11 +104,11 @@ internal object NonogramTeacher {
                     NonogramLogic.rowClueIndex(s.width, s.height, r),
                     NonogramLogic.colClueIndex(s.width, s.height, c),
                 ),
-                nudge = "One of your marks doesn't fit the clues.",
+                nudge = message("teacher.nonogram.mistake.1"),
                 explanation = if (mark == NonogramLogic.FILLED) {
-                    "No picture that fits the clues has the glowing square filled. Take the fill back."
+                    message("teacher.nonogram.mistake.2")
                 } else {
-                    "The glowing square can't be empty: every picture that fits the clues fills it. Take the cross back."
+                    message("teacher.nonogram.mistake.3")
                 },
             )
         }
@@ -142,10 +151,10 @@ internal object NonogramTeacher {
         val row = line < height
         val clueIndex = if (row) NonogramLogic.rowClueIndex(width, height, line)
         else NonogramLogic.colClueIndex(width, height, line - height)
-        val name = if (row) "row ${line + 1}" else "column ${line - height + 1}"
+        val name = if (row) message("teacher.nonogram.line_step.1", "line_1" to (line + 1)) else message("teacher.nonogram.line_step.2", "line_height_1" to (line - height + 1))
         val cap = name.cap()
         val clueText = clue.joinToString(" ")
-        val clues = if (clue.size == 1) "clue $clueText" else "clues $clueText"
+        val clues = if (clue.size == 1) message("teacher.nonogram.line_step.3", "clueText" to (clueText)) else message("teacher.nonogram.line_step.4", "clueText" to (clueText))
 
         fun cellsOf(values: Int) = at.filterIndexed { x, _ -> found[x] == values }
         fun spots(values: Int) = (0 until n).filter { found[it] == values }
@@ -153,7 +162,7 @@ internal object NonogramTeacher {
         val crosses = cellsOf(NonogramLogic.CROSS)
         val lineSet = at.toSet()
 
-        fun step(technique: String, fill: List<Int>, cross: List<Int>, nudge: String, why: String) = Step(
+        fun step(technique: String, fill: List<Int>, cross: List<Int>, nudge: Message, why: Message) = Step(
             technique = technique,
             fills = fill,
             crosses = cross,
@@ -166,21 +175,20 @@ internal object NonogramTeacher {
         // 1. Nowhere to slide.
         if (clue.isNotEmpty() && NonogramLogic.minLength(clue) == n) {
             val why = if (clue.size == 1) {
-                "$cap's clue $clueText is as wide as the line, so every square of it is filled."
+                message("teacher.nonogram.line_step.5", "cap" to (cap), "clueText" to (clueText))
             } else {
-                "$cap has $n squares and its $clues take ${clue.joinToString(" + ")} + ${clue.size - 1} " +
-                    "${if (clue.size == 2) "gap" else "gaps"} = $n exactly. With no room to spare, every square is settled."
+                message("teacher.nonogram.line_step.6", "cap" to (cap), "n" to (n), "clues" to (clues), "clue_joinToString_" to (clue.joinToString(" + ")), "clue_size_1" to (clue.size - 1), "value6" to (if (clue.size == 2) message("teacher.nonogram.line_step.extra.1") else message("teacher.nonogram.line_step.extra.2")))
             }
-            return step(FULL, fills, crosses, "Look at $name: its clues leave no spare room.", why)
+            return step(FULL, fills, crosses, message("teacher.nonogram.line_step.7", "name" to (name)), why)
         }
 
         // 2. Every clue is already on the board.
         val filledNow = BooleanArray(n) { marks[it] == NonogramLogic.FILL }
         if (NonogramLogic.runs(filledNow) == clue && crosses.isNotEmpty()) {
             return step(
-                FINISHED, emptyList(), crosses, "$cap looks complete.",
-                if (clue.isEmpty()) "$cap has no clue, so none of its squares can be filled. Cross them out."
-                else "$cap already has all of its $clues filled in, so none of its other squares can be filled. Cross them out.",
+                FINISHED, emptyList(), crosses, message("teacher.nonogram.line_step.8", "cap" to (cap)),
+                if (clue.isEmpty()) message("teacher.nonogram.line_step.9", "cap" to (cap))
+                else message("teacher.nonogram.line_step.10", "cap" to (cap), "clues" to (clues)),
             )
         }
 
@@ -188,37 +196,35 @@ internal object NonogramTeacher {
         val blank = NonogramLogic.forcedOnBlank(clue, n)
         val overlap = (0 until n).filter { blank[it] == NonogramLogic.FILL && marks[it] == NonogramLogic.UNKNOWN }
         if (overlap.isNotEmpty()) {
-            val (start, end) = if (row) "left" to "right" else "top" to "bottom"
+            val (start, end) = if (row) message("teacher.nonogram.line_step.11") to message("teacher.nonogram.line_step.12") else message("teacher.nonogram.line_step.13") to message("teacher.nonogram.line_step.14")
             return step(
-                OVERLAP, overlap.map { at[it] }, emptyList(), "Imagine the clues as blocks in $name.",
-                "In $name, imagine the $clues as blocks, pushed as far $start as they go, then as far $end. " +
-                    "${if (overlap.size == 1) "The glowing square is" else "The glowing squares are"} covered both times, so filled.",
+                OVERLAP, overlap.map { at[it] }, emptyList(), message("teacher.nonogram.line_step.15", "name" to (name)),
+                message("teacher.nonogram.line_step.16", "name" to (name), "clues" to (clues), "start" to (start), "end" to (end), "value5" to (if (overlap.size == 1) message("teacher.nonogram.line_step.extra.3") else message("teacher.nonogram.line_step.extra.4"))),
             )
         }
 
         // 4. What the marks already in the line leave possible.
         val why = when {
             fills.isNotEmpty() && crosses.isNotEmpty() ->
-                "With the marks already in $name, every way to fit its $clues fills ${describe(spots(NonogramLogic.FILL))} " +
-                    "and leaves ${describe(spots(NonogramLogic.CROSS))} empty."
+                message("teacher.nonogram.line_step.17", "name" to (name), "clues" to (clues), "value3" to (describe(spots(NonogramLogic.FILL))), "value4" to (describe(spots(NonogramLogic.CROSS))))
             fills.isNotEmpty() ->
-                "With the marks already in $name, every way to fit its $clues fills ${describe(spots(NonogramLogic.FILL))}."
+                message("teacher.nonogram.line_step.18", "name" to (name), "clues" to (clues), "value3" to (describe(spots(NonogramLogic.FILL))))
             else ->
-                "With the marks already in $name, every way to fit its $clues leaves ${describe(spots(NonogramLogic.CROSS))} empty."
+                message("teacher.nonogram.line_step.19", "name" to (name), "clues" to (clues), "value3" to (describe(spots(NonogramLogic.CROSS))))
         }
-        return step(LINE, fills, crosses, "$cap has a square that can only go one way.", why)
+        return step(LINE, fills, crosses, message("teacher.nonogram.line_step.20", "cap" to (cap)), why)
     }
 
     /** "square 4", "squares 4 to 7", "squares 2, 5 to 6 and 9", or a count when there are many. */
-    private fun describe(positions: List<Int>): String {
+    private fun describe(positions: List<Int>): Message {
         val groups = ArrayList<IntRange>()
         for (p in positions.map { it + 1 }) {
             val last = groups.lastOrNull()
             if (last != null && last.last + 1 == p) groups[groups.lastIndex] = last.first..p else groups.add(p..p)
         }
-        if (positions.size > 6 || groups.size > 3) return "${positions.size} squares"
-        val parts = groups.map { if (it.first == it.last) "${it.first}" else "${it.first} to ${it.last}" }
-        val list = listed(parts)
-        return if (positions.size == 1) "square $list" else "squares $list"
+        if (positions.size > 6 || groups.size > 3) return message("teacher.nonogram.describe.1", "positions_size" to (positions.size))
+        val parts = groups.map { if (it.first == it.last) message("teacher.nonogram.describe.extra.1", "it_first" to (it.first)) else message("teacher.nonogram.describe.2", "it_first" to (it.first), "it_last" to (it.last)) }
+        val list = listedMessage(parts)
+        return if (positions.size == 1) message("teacher.nonogram.describe.3", "list" to (list)) else message("teacher.nonogram.describe.4", "list" to (list))
     }
 }

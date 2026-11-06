@@ -1,5 +1,6 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.words.WordContent
 import androidx.compose.ui.input.key.Key
 import com.joebywan.daybook.core.arrowStep
 import com.joebywan.daybook.core.isEraseKey
@@ -22,11 +23,11 @@ sealed interface MiniKeyAction {
 }
 
 /** The action for [key], or null for a key the board does not use. The caller has ruled out chords. */
-fun miniKeyAction(key: Key): MiniKeyAction? {
+fun miniKeyAction(key: Key, contentLanguage: String = "en"): MiniKeyAction? {
     arrowStep(key)?.let { (r, c) -> return MiniKeyAction.Move(r, c) }
     if (isEraseKey(key)) return MiniKeyAction.Erase
     if (key == Key.Spacebar) return MiniKeyAction.Turn
-    return letterKey(key)?.let { MiniKeyAction.Letter(it) }
+    return (if (contentLanguage == "en") letterKey(key) else null)?.let { MiniKeyAction.Letter(it) }
 }
 
 /**

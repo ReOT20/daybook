@@ -1,5 +1,8 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.text
 import com.joebywan.daybook.data.KeyValueStore
 import com.joebywan.daybook.puzzles.CageLogic
 import com.joebywan.daybook.puzzles.CageState
@@ -32,7 +35,7 @@ import kotlinx.coroutines.sync.withLock
 class Course(
     val puzzle: PuzzleType,
     /** What each technique is, before the first board, in the ladder's order (the list shows them so). */
-    val explanations: Map<String, String>,
+    val explanations: Map<String, Message>,
     /** The tier a technique's practice is drawn from: the easiest whose walks reach it (the generator gates depth). */
     private val tierFor: (String) -> Difficulty,
     val drill: Drill,
@@ -49,7 +52,7 @@ class Course(
     /** A course on a digit-placing teacher: [PlacementDrill]'s four parts, as the first four courses wrote them. */
     constructor(
         puzzle: PuzzleType,
-        explanations: Map<String, String>,
+        explanations: Map<String, Message>,
         tierFor: (String) -> Difficulty,
         stepper: (PuzzleState) -> (List<Int>) -> PlacementStep?,
         cellsOf: (PuzzleState) -> List<Int>,
@@ -150,7 +153,7 @@ class Course(
 
     /** The technique's name as a title: "A digit's only place in a box". */
     fun titleOf(technique: String): String =
-        techniqueNamesOf(id)[technique]?.replaceFirstChar { it.uppercase() } ?: "Final board"
+        techniqueNamesOf(id)[technique]?.replaceFirstChar { it.uppercase() } ?: text("training.final_board")
 
     fun passed(record: Set<String>, technique: String) = TrainingRecord.entry(id, technique) in record
 
@@ -220,8 +223,8 @@ object Training {
 
     fun of(puzzleId: String?): Course? = COURSES.firstOrNull { it.id == puzzleId }
 
-    fun tally(record: Set<String>) =
-        TrainingTally(COURSES.count { it.graduated(record) }, COURSES.size, COURSES.sumOf { it.passedCount(record) })
+    fun tally(record: Set<String>, courses: List<Course> = COURSES) =
+        TrainingTally(courses.count { it.graduated(record) }, courses.size, courses.sumOf { it.passedCount(record) })
 }
 
 /** The tier for [technique] at its index in [course]: Standard below [hard], Hard below [expert], then Expert. */
@@ -237,22 +240,14 @@ internal fun tierByIndex(techniques: () -> List<String>, hard: Int, expert: Int)
 val SudokuTraining: Course = Course(
     puzzle = Sudoku,
     explanations = linkedMapOf(
-        SudokuTeacher.FULL_HOUSE to "When a row, column or box has one empty square left, the digit it's missing goes there.",
-        SudokuTeacher.HIDDEN_SINGLE_BOX to "Pick a box and a digit it still needs. When every other empty square in the box " +
-            "already sees that digit in its row or column, the one square left must hold it.",
-        SudokuTeacher.HIDDEN_SINGLE_LINE to "The same idea along a row or column: when every other empty square in the line " +
-            "already sees a digit in its column, row or box, the one square left takes it.",
-        SudokuTeacher.NAKED_SINGLE to "Look at one square instead of one digit. When its row, column and box between them " +
-            "hold eight different digits, the ninth is the only one left for it.",
-        SudokuTeacher.LOCKED to "When a digit's places in a box all lie in one row or column, it must go there, so the " +
-            "rest of that line can't have it. (The same works the other way round, a line's places all in one box.) " +
-            "That often leaves a single.",
-        SudokuTeacher.NAKED_PAIR to "Two squares in a row, column or box that can each be only the same two digits take both " +
-            "of them, so no other square there can hold either. Strike them off and look for the single it leaves.",
-        SudokuTeacher.HIDDEN_PAIR to "Two digits that fit in only the same two squares of a row, column or box take those " +
-            "squares, so those two squares can't hold anything else. Look for the single that follows.",
-        SudokuTeacher.WHAT_IF to "A square with two digits left, or a digit with two places left: suppose one and follow it " +
-            "a step or two. If something runs out of digits or places, the other choice is the answer.",
+        SudokuTeacher.FULL_HOUSE to message("training.sudoku_full_house"),
+        SudokuTeacher.HIDDEN_SINGLE_BOX to message("training.sudoku_hidden_single_box"),
+        SudokuTeacher.HIDDEN_SINGLE_LINE to message("training.sudoku_hidden_single_line"),
+        SudokuTeacher.NAKED_SINGLE to message("training.sudoku_naked_single"),
+        SudokuTeacher.LOCKED to message("training.sudoku_locked"),
+        SudokuTeacher.NAKED_PAIR to message("training.sudoku_naked_pair"),
+        SudokuTeacher.HIDDEN_PAIR to message("training.sudoku_hidden_pair"),
+        SudokuTeacher.WHAT_IF to message("training.sudoku_what_if"),
     ),
     // Sudoku.gate: Standard needs singles in a unit only, Hard a naked single, Expert an elimination or a what-if.
     tierFor = tierByIndex({ SudokuTraining.techniques }, hard = 3, expert = 4),
@@ -268,23 +263,15 @@ val SudokuTraining: Course = Course(
 val CagesTraining: Course = Course(
     puzzle = Cages,
     explanations = linkedMapOf(
-        CageTeacher.FULL_HOUSE to "When a row, column or box has one empty square left, the digit it's missing goes there.",
-        CageTeacher.CAGE_LAST to "When a cage has one empty square left, it takes whatever the cage's total still needs.",
-        CageTeacher.HIDDEN_SINGLE_BOX to "Pick a box and a digit it still needs. When every other empty square in the box " +
-            "already sees that digit, or its cage already has one, the one square left must hold it.",
-        CageTeacher.HIDDEN_SINGLE_LINE to "The same idea along a row or column: when every other empty square in the line " +
-            "already sees a digit, the one square left takes it.",
-        CageTeacher.NAKED_SINGLE to "Look at one square. When its row, column, box and cage between them hold eight " +
-            "different digits, the ninth is the only one left for it.",
-        CageTeacher.CAGE_COMBO to "A cage's total can only be made a few ways with digits that don't repeat. A 3 in " +
-            "two squares is 1 and 2; a 17 is 8 and 9. List the ways that still fit and see what they leave.",
-        CageTeacher.FORTY_FIVE to "Every row, column and box adds up to 45. Add the cages lying wholly inside one and take " +
-            "that from 45: the squares left over must make the difference.",
-        CageTeacher.LINKED_TOTALS to "Two or three totals that share squares: settle one, and it cuts the others. Work " +
-            "them through one after another until a square has one digit left.",
-        CageTeacher.CAGE_CHAIN to "A longer line of totals: each cage or 45-rule group strikes digits from its squares, " +
-            "which narrows the next. Some lines come back to a total twice, or close in on a digit's places from two " +
-            "sides. Follow them until a square has one digit left.",
+        CageTeacher.FULL_HOUSE to message("training.cage_full_house"),
+        CageTeacher.CAGE_LAST to message("training.cage_cage_last"),
+        CageTeacher.HIDDEN_SINGLE_BOX to message("training.cage_hidden_single_box"),
+        CageTeacher.HIDDEN_SINGLE_LINE to message("training.cage_hidden_single_line"),
+        CageTeacher.NAKED_SINGLE to message("training.cage_naked_single"),
+        CageTeacher.CAGE_COMBO to message("training.cage_cage_combo"),
+        CageTeacher.FORTY_FIVE to message("training.cage_forty_five"),
+        CageTeacher.LINKED_TOTALS to message("training.cage_linked_totals"),
+        CageTeacher.CAGE_CHAIN to message("training.cage_cage_chain"),
     ),
     // The 45 rule and linked totals from Hard (88 and 42% of its boards reach them), the chain from Expert (all of them; 17% on Hard).
     tierFor = tierByIndex({ CagesTraining.techniques }, hard = 6, expert = 8),
@@ -303,20 +290,13 @@ val CagesTraining: Course = Course(
 val InequalityTraining: Course = Course(
     puzzle = Inequality,
     explanations = linkedMapOf(
-        InequalityTeacher.LAST to "When a row or column has one empty square left, the digit it's missing goes there.",
-        InequalityTeacher.ONLY_DIGIT to "Look at one square. When its row and column between them hold every digit but " +
-            "one, that one is all it can be.",
-        InequalityTeacher.ONLY_PLACE to "Pick a line and a digit it still needs. When every other empty square in it " +
-            "already has that digit in its own row or column, the one square left takes it.",
-        InequalityTeacher.SIGN_BOUND to "A sign points at the smaller side. A square smaller than another can't be the " +
-            "biggest digit, and one bigger can't be 1; along a chain of signs the bounds add up. Count them in and see " +
-            "what's left for the square.",
-        InequalityTeacher.SIGN_PLACE to "The same as a digit's only place in a line, with the signs counted too: a square " +
-            "the signs keep below a digit can't hold it.",
-        InequalityTeacher.NAKED_PAIR to "Two squares in a line that can each be only the same two digits take both of them, " +
-            "so no other square in that line can hold either. Strike them off and look for the single it leaves.",
-        InequalityTeacher.HIDDEN_PAIR to "Two digits that fit in only the same two squares of a line take those squares, so " +
-            "those two squares can't hold anything else. Look for the single that follows.",
+        InequalityTeacher.LAST to message("training.inequality_last"),
+        InequalityTeacher.ONLY_DIGIT to message("training.inequality_only_digit"),
+        InequalityTeacher.ONLY_PLACE to message("training.inequality_only_place"),
+        InequalityTeacher.SIGN_BOUND to message("training.inequality_sign_bound"),
+        InequalityTeacher.SIGN_PLACE to message("training.inequality_sign_place"),
+        InequalityTeacher.NAKED_PAIR to message("training.inequality_naked_pair"),
+        InequalityTeacher.HIDDEN_PAIR to message("training.inequality_hidden_pair"),
     ),
     // InequalityLogic.specFor: Standard the five singles, Hard must need a naked pair, Expert a hidden pair.
     tierFor = tierByIndex({ InequalityTraining.techniques }, hard = 5, expert = 6),
@@ -332,13 +312,10 @@ val InequalityTraining: Course = Course(
 val RegionsTraining: Course = Course(
     puzzle = Regions,
     explanations = linkedMapOf(
-        RegionsTeacher.LAST to "When a region has one empty square left, the digit it's missing goes there.",
-        RegionsTeacher.ONLY_DIGIT to "Look at one square. Its region's digits and the digits touching it, even at a " +
-            "corner, rule digits out. When only one is left, that's it.",
-        RegionsTeacher.ONLY_PLACE to "Pick a region and a digit it still needs. When every other empty square in it " +
-            "touches that digit already, the one square left takes it.",
-        RegionsTeacher.LOCKED to "When every place a region's digit could go touches the same square outside the region, " +
-            "that square can't be that digit. That often leaves a single.",
+        RegionsTeacher.LAST to message("training.regions_last"),
+        RegionsTeacher.ONLY_DIGIT to message("training.regions_only_digit"),
+        RegionsTeacher.ONLY_PLACE to message("training.regions_only_place"),
+        RegionsTeacher.LOCKED to message("training.regions_locked"),
     ),
     // RegionsLogic.specFor: Standard the three singles, Hard and Expert must take locked steps.
     tierFor = tierByIndex({ RegionsTraining.techniques }, hard = 3, expert = 4),
@@ -416,7 +393,7 @@ class PlacementDrill(
         val cells = cellsOf(after)
         val placed = cells.indices.firstOrNull { cells[it] != 0 && was[it] == 0 } ?: return step
         if (placed == step.cell) return step
-        return PlacementStep(step.technique, placed, cells[placed], setOf(placed), emptySet(), "", "${cells[placed]} goes there.")
+        return PlacementStep(step.technique, placed, cells[placed], setOf(placed), emptySet(), "", message("training.placed_digit", "digit" to cells[placed]))
     }
 }
 
@@ -464,7 +441,7 @@ class MoveDrill(
      */
     private val view: ((PuzzleState) -> List<Any?>)? = null,
     /** What [progress]'s line asks next: Nonogram's says its crosses count, since in play they are only notes. */
-    private val keepGoing: String = "Keep going.",
+    private val keepGoing: Message = message("training.keep_going"),
 ) : Drill {
     override fun walk(start: PuzzleState): Sequence<Course.Practice> = sequence {
         var s = start
@@ -508,7 +485,8 @@ class MoveDrill(
 }
 
 /** The line for a step part made: how many of its squares, never which are left. */
-internal fun progressLine(done: Int, of: Int, keepGoing: String) = "Right so far: $done of $of. $keepGoing"
+internal fun progressLine(done: Int, of: Int, keepGoing: Message) =
+    text("training.progress", "done" to done, "of" to of, "keepGoing" to keepGoing)
 
 /**
  * What the player has passed in Training, as `puzzleId|technique` (or `puzzleId|exam`). Its own key set in the

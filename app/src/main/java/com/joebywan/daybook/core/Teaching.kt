@@ -1,6 +1,8 @@
 package com.joebywan.daybook.core
 
 import androidx.compose.runtime.compositionLocalOf
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.PuzzleState
 
 /**
@@ -25,9 +27,9 @@ class Deduction(
     /** The named technique, for tests and coverage counts. Not shown to the player. */
     override val technique: String,
     /** One short line for the first tap: where to look, not what to do. */
-    override val nudge: String,
+    nudge: CharSequence,
     /** The reasoning, in a sentence or two, for the second tap. */
-    override val explanation: String,
+    explanation: CharSequence,
     /** Cells to look at. Glow on the first tap. */
     override val focus: Set<Int>,
     /** Cells the reasoning leans on. Marked, more quietly, on the second tap. */
@@ -45,6 +47,11 @@ class Deduction(
     applyTo: (PuzzleState) -> PuzzleState,
     reachedBy: (PuzzleState) -> Boolean,
 ) : TeachStep {
+    override val nudgeMessage: Message = nudge.asMessage()
+    override val explanationMessage: Message = explanation.asMessage()
+    override val nudge: String get() = nudgeMessage.english
+    override val explanation: String get() = explanationMessage.english
+
     /** The deduction whose words and cells are [step]'s. */
     constructor(
         step: TeachStep,
@@ -53,7 +60,7 @@ class Deduction(
         targets: Set<Int> = step.targets,
         applyTo: (PuzzleState) -> PuzzleState,
         reachedBy: (PuzzleState) -> Boolean,
-    ) : this(step.technique, step.nudge, step.explanation, step.focus, step.cited, targets, mistake, fallback, applyTo, reachedBy)
+    ) : this(step.technique, step.nudgeMessage, step.explanationMessage, step.focus, step.cited, targets, mistake, fallback, applyTo, reachedBy)
 
     /** The board after the move, made on the state given. "Show me" — never applied without that tap. */
     val apply = applyTo
@@ -64,6 +71,8 @@ class Deduction(
 
 /** What a teacher's step hands its [Deduction]: the same six fields, read the same way. */
 interface TeachStep {
+    val nudgeMessage: Message get() = nudge.asMessage()
+    val explanationMessage: Message get() = explanation.asMessage()
     val technique: String
     val nudge: String
     val explanation: String
@@ -82,9 +91,14 @@ class PlacementStep(
     val digit: Int,
     override val focus: Set<Int>,
     override val cited: Set<Int>,
-    override val nudge: String,
-    override val explanation: String,
+    nudge: CharSequence,
+    explanation: CharSequence,
 ) : TeachStep {
+    override val nudgeMessage: Message = nudge.asMessage()
+    override val explanationMessage: Message = explanation.asMessage()
+    override val nudge: String get() = nudgeMessage.english
+    override val explanation: String get() = explanationMessage.english
+
     override val targets: Set<Int> get() = setOf(cell)
 }
 
@@ -97,8 +111,8 @@ fun answerFallback(technique: String, cells: List<Int>, solution: List<Int>): Pl
     val d = solution[i]
     return PlacementStep(
         technique, i, d, setOf(i), emptySet(),
-        "This one takes a longer chain. Look at the glowing square.",
-        "This one needs a longer chain than a hint can walk through, so here's the answer for this square: a $d.",
+        message("teaching.answer_fallback.nudge"),
+        message("teaching.answer_fallback.explanation", "digit" to d),
     )
 }
 
@@ -221,15 +235,21 @@ class TutorialPath(private vararg val stages: (PuzzleState) -> Boolean) {
  */
 class TutorialFrame(
     val state: PuzzleState,
-    val caption: String,
+    caption: Message,
     val highlight: BoardHighlight = BoardHighlight.None,
     val accepts: ((PuzzleState) -> Boolean)? = null,
-    val retry: String = "Try the glowing square.",
-    val done: String = "That's it.",
+    retry: Message = message("tutorial.retry"),
+    done: Message = message("tutorial.done"),
     val freePlay: Boolean = false,
     val steps: ((PuzzleState) -> TutorialStep)? = null,
     val glow: ((PuzzleState) -> BoardHighlight)? = null,
 ) {
+    private val captionMessage = caption
+    private val retryMessage = retry
+    private val doneMessage = done
+    val caption: String get() = captionMessage.resolve()
+    val retry: String get() = retryMessage.resolve()
+    val done: String get() = doneMessage.resolve()
     /** [steps], or [accepts] read as a one-state move; null on a READ or free-play frame. */
     val judge: ((PuzzleState) -> TutorialStep)? =
         steps ?: accepts?.let { a -> { next -> if (a(next)) TutorialStep.DONE else TutorialStep.REJECT } }

@@ -116,7 +116,8 @@ class DwindleTeachingTest {
     fun `the reasoning takes only what the player can see`() {
         val fn = DwindleTeacher::class.java.methods.first { it.name == "deduce" }
         assertEquals(
-            listOf("int", "int", "java.lang.String", "int[]", "java.util.List", "java.util.List", "boolean"),
+            // The last string selects the visible board's dictionary; no stored goals or answer enter deduce.
+            listOf("int", "int", "java.lang.String", "int[]", "java.util.List", "java.util.List", "boolean", "java.lang.String"),
             fn.parameterTypes.map { it.typeName },
         )
     }

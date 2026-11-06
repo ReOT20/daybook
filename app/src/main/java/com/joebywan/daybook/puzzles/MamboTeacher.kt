@@ -1,8 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
-import com.joebywan.daybook.core.numberWord
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.numberWordMessage
 
 /**
  * Mambo, reasoned the way a person reasons it, one named step at a time.
@@ -63,18 +66,24 @@ internal object MamboTeacher {
         val clears: List<Int> = emptyList(),
         override val focus: Set<Int>,
         override val cited: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         override val targets: Set<Int> get() = places.keys + clears
     }
 
     /** A row or a column, with the name the board would be read by. */
-    private class Line(val cells: List<Int>, val name: String)
+    private class Line(val cells: List<Int>, val name: Message)
 
     private fun linesOf(n: Int): List<Line> = buildList {
-        for (r in 0 until n) add(Line(List(n) { r * n + it }, "row ${r + 1}"))
-        for (c in 0 until n) add(Line(List(n) { it * n + c }, "column ${c + 1}"))
+        for (r in 0 until n) add(Line(List(n) { r * n + it }, message("teacher.mambo.lines_of.1", "r_1" to (r + 1))))
+        for (c in 0 until n) add(Line(List(n) { it * n + c }, message("teacher.mambo.lines_of.2", "c_1" to (c + 1))))
     }
 
     // ---- the whole hint: mistakes, then reasoning, then the honest fallback ----------------------
@@ -103,28 +112,28 @@ internal object MamboTeacher {
         val sym = s.cells[cell]
         // The tap cycle runs moon, sun, empty: a wrong moon is one tap from the right sun, while a
         // wrong sun goes to empty. Say which, so the player is not left tapping round the cycle.
-        val fix = if (sym == Sym.MOON) "Tap it once to make it a sun." else "Tap it to clear it."
+        val fix = if (sym == Sym.MOON) message("teacher.mambo.mistake.1") else message("teacher.mambo.mistake.2")
         val why = broken.firstOrNull { cell in it.cells }
         val (reason, cited) = when (why?.rule) {
-            Broken.TRIPLE -> "This makes three ${plural(sym)} together." to why.cells.toSet()
+            Broken.TRIPLE -> message("teacher.mambo.mistake.3", "plural_sym_" to (plural(sym))) to why.cells.toSet()
             Broken.BALANCE -> {
                 val name = linesOf(s.size).first { it.cells == why.cells }.name
-                "${name.cap()} has more than ${s.size / 2} ${plural(sym)} with this one." to why.cells.toSet()
+                message("teacher.mambo.mistake.4", "name_cap_" to (name.cap()), "s_size_2" to (s.size / 2), "plural_sym_" to (plural(sym))) to why.cells.toSet()
             }
             Broken.LINK -> {
                 val link = s.links.first { setOf(it.a, it.b) == why.cells.toSet() }
-                (if (link.same) "The = says these two match, and they don't." else "The x says these two differ, and they don't.") to
+                (if (link.same) message("teacher.mambo.mistake.5") else message("teacher.mambo.mistake.6")) to
                     why.cells.toSet()
             }
-            null -> "This ${sym.word()} doesn't fit the rest of the board." to emptySet()
+            null -> message("teacher.mambo.mistake.7", "sym_word_" to (sym.word())) to emptySet()
         }
         return Step(
             technique = MISTAKE,
             clears = listOf(cell),
             focus = setOf(cell),
             cited = cited - cell,
-            nudge = "Check this ${sym.word()}.",
-            explanation = "$reason $fix",
+            nudge = message("teacher.mambo.mistake.8", "sym_word_" to (sym.word())),
+            explanation = message("teacher.mambo.mistake.extra.1", "reason" to (reason), "fix" to (fix)),
         )
     }
 
@@ -145,9 +154,8 @@ internal object MamboTeacher {
             places = mapOf(cell to sym),
             focus = line.cells.toSet(),
             cited = emptySet(),
-            nudge = "This one takes a longer chain. Look at ${line.name}.",
-            explanation = "This one needs a longer chain than a hint can walk through, " +
-                "so here's a square from the answer: it's a ${sym.word()}.",
+            nudge = message("teacher.mambo.fallback.1", "line_name" to (line.name)),
+            explanation = message("teacher.mambo.fallback.2", "sym_word_" to (sym.word())),
         )
     }
 
@@ -291,16 +299,14 @@ internal object MamboTeacher {
                 val ends = listOfNotNull(l.getOrNull(k - 1), l.getOrNull(k + 2)).filter { cells[it] == Sym.NONE }
                 if (ends.isEmpty()) continue
                 val other = sym.other()
-                val where = if (ends.size == 2) "both ends" else "the open end"
+                val where = if (ends.size == 2) message("teacher.mambo.pair.1") else message("teacher.mambo.pair.2")
                 yield(Step(
                     technique = PAIR,
                     places = ends.associateWith { other },
                     focus = setOf(l[k], l[k + 1]),
                     cited = setOf(l[k], l[k + 1]),
-                    nudge = "Look at the two ${plural(sym)} side by side in ${line.name}.",
-                    explanation = "Two ${plural(sym)} sit side by side in ${line.name}, so $where must be " +
-                        "${if (ends.size == 2) plural(other) else "a ${other.word()}"}. " +
-                        "Another ${sym.word()} there would make three together.",
+                    nudge = message("teacher.mambo.pair.3", "plural_sym_" to (plural(sym)), "line_name" to (line.name)),
+                    explanation = message("teacher.mambo.pair.4", "plural_sym_" to (plural(sym)), "line_name" to (line.name), "where" to (where), "value4" to (if (ends.size == 2) plural(other) else message("teacher.mambo.pair.extra.1", "other_word_" to (other.word()))), "sym_word_" to (sym.word())),
                 ))
             }
         }
@@ -318,9 +324,8 @@ internal object MamboTeacher {
                     places = mapOf(l[k + 1] to other),
                     focus = setOf(l[k], l[k + 1], l[k + 2]),
                     cited = setOf(l[k], l[k + 2]),
-                    nudge = "Look at the gap between two ${plural(sym)} in ${line.name}.",
-                    explanation = "The gap between two ${plural(sym)} must be a ${other.word()}: a ${sym.word()} " +
-                        "there would make three ${plural(sym)} together.",
+                    nudge = message("teacher.mambo.sandwich.1", "plural_sym_" to (plural(sym)), "line_name" to (line.name)),
+                    explanation = message("teacher.mambo.sandwich.2", "plural_sym_" to (plural(sym)), "other_word_" to (other.word()), "sym_word_" to (sym.word())),
                 ))
             }
         }
@@ -342,11 +347,11 @@ internal object MamboTeacher {
                 places = mapOf(open to result),
                 focus = setOf(link.a, link.b),
                 cited = setOf(known),
-                nudge = "Look at the ${if (link.same) "=" else "x"} between the glowing squares.",
+                nudge = message("teacher.mambo.link.1", "if_link_same_else_x_" to (if (link.same) "=" else message("teacher.mambo.link.extra.1"))),
                 explanation = if (link.same) {
-                    "The = says these two squares match. One is a ${sym.word()}, so the other is a ${result.word()} too."
+                    message("teacher.mambo.link.2", "sym_word_" to (sym.word()), "result_word_" to (result.word()))
                 } else {
-                    "The x says these two squares differ. One is a ${sym.word()}, so the other is a ${result.word()}."
+                    message("teacher.mambo.link.3", "sym_word_" to (sym.word()), "result_word_" to (result.word()))
                 },
             ))
         }
@@ -365,9 +370,8 @@ internal object MamboTeacher {
                     places = open.associateWith { other },
                     focus = line.cells.toSet(),
                     cited = line.cells.filter { cells[it] == sym }.toSet(),
-                    nudge = "Count the ${plural(sym)} in ${line.name}.",
-                    explanation = "${line.name.cap()} already has its ${numberWord(half, upTo = 6)} ${plural(sym)}, " +
-                        "so the rest of it must be ${plural(other)}.",
+                    nudge = message("teacher.mambo.quota.1", "plural_sym_" to (plural(sym)), "line_name" to (line.name)),
+                    explanation = message("teacher.mambo.quota.2", "line_name_cap_" to (line.name.cap()), "numberWord_half_upTo_6_" to (numberWordMessage(half, upTo = 6)), "plural_sym_" to (plural(sym)), "plural_other_" to (plural(other))),
                 ))
             }
         }
@@ -402,9 +406,8 @@ internal object MamboTeacher {
                         places = mapOf(e to other),
                         focus = line.cells.toSet(),
                         cited = (run..run + 2).map { line.cells[it] }.toSet(),
-                        nudge = "${line.name.cap()} needs just one more ${sym.word()}.",
-                        explanation = "${line.name.cap()} needs one more ${sym.word()}. If it went here, the rest " +
-                            "would be ${plural(other)}, and three would sit together. So this is a ${other.word()}.",
+                        nudge = message("teacher.mambo.almost.1", "line_name_cap_" to (line.name.cap()), "sym_word_" to (sym.word())),
+                        explanation = message("teacher.mambo.almost.2", "line_name_cap_" to (line.name.cap()), "sym_word_" to (sym.word()), "plural_other_" to (plural(other)), "other_word_" to (other.word())),
                     ))
                 }
             }
@@ -412,7 +415,7 @@ internal object MamboTeacher {
     }
 
     /** Why a hypothetical board cannot stand, and the squares that show it. */
-    private class Contradiction(val phrase: String, val cells: Set<Int>)
+    private class Contradiction(val phrase: Message, val cells: Set<Int>)
 
     /**
      * One symbol on a square, followed through one round of [PAIR], [SANDWICH], [LINK] and [QUOTA].
@@ -427,7 +430,7 @@ internal object MamboTeacher {
                 val forced = forcedOnce(n, trial, links, lines)
                 val clash = forced.entries.firstOrNull { it.value.size > 1 }
                 val contradiction = if (clash != null) {
-                    Contradiction("one square would have to be both a sun and a moon", setOf(clash.key))
+                    Contradiction(message("teacher.mambo.what_if.1"), setOf(clash.key))
                 } else {
                     val after = trial.toMutableList()
                     for ((cell, syms) in forced) after[cell] = syms.first()
@@ -439,9 +442,8 @@ internal object MamboTeacher {
                     places = mapOf(i to other),
                     focus = setOf(i),
                     cited = forced.keys + contradiction.cells,
-                    nudge = "What if the glowing square were a ${sym.word()}?",
-                    explanation = "If this were a ${sym.word()}, the rules would force the marked squares, and " +
-                        "${contradiction.phrase}. So it's a ${other.word()}.",
+                    nudge = message("teacher.mambo.what_if.2", "sym_word_" to (sym.word())),
+                    explanation = message("teacher.mambo.what_if.3", "sym_word_" to (sym.word()), "contradiction_phrase" to (contradiction.phrase), "other_word_" to (other.word())),
                 ))
             }
         }
@@ -485,12 +487,12 @@ internal object MamboTeacher {
             for (k in 0 until l.size - 2) {
                 val sym = cells[l[k]]
                 if (sym != Sym.NONE && cells[l[k + 1]] == sym && cells[l[k + 2]] == sym) {
-                    return Contradiction("that makes three ${plural(sym)} together", setOf(l[k], l[k + 1], l[k + 2]))
+                    return Contradiction(message("teacher.mambo.broken_rule.1", "plural_sym_" to (plural(sym))), setOf(l[k], l[k + 1], l[k + 2]))
                 }
             }
             for (sym in SYMS) {
                 if (l.count { cells[it] == sym } > half) {
-                    return Contradiction("${line.name} would have too many ${plural(sym)}", l.toSet())
+                    return Contradiction(message("teacher.mambo.broken_rule.2", "line_name" to (line.name), "plural_sym_" to (plural(sym))), l.toSet())
                 }
             }
         }
@@ -498,7 +500,7 @@ internal object MamboTeacher {
             val a = cells[link.a]
             val b = cells[link.b]
             if (a != Sym.NONE && b != Sym.NONE && (a == b) != link.same) {
-                return Contradiction("the ${if (link.same) "=" else "x"} between two of them breaks", setOf(link.a, link.b))
+                return Contradiction(message("teacher.mambo.broken_rule.3", "if_link_same_else_x_" to (if (link.same) "=" else message("teacher.mambo.broken_rule.extra.1"))), setOf(link.a, link.b))
             }
         }
         return null
@@ -508,7 +510,7 @@ internal object MamboTeacher {
 
     private val SYMS = listOf(Sym.SUN, Sym.MOON)
 
-    private fun Sym.word() = if (this == Sym.SUN) "sun" else "moon"
+    private fun Sym.word() = if (this == Sym.SUN) message("teacher.mambo.word.1") else message("teacher.mambo.word.2")
 
-    private fun plural(sym: Sym) = sym.word() + "s"
+    private fun plural(sym: Sym) = message(if (sym == Sym.SUN) "teacher.mambo.sun_plural" else "teacher.mambo.moon_plural")
 }

@@ -1,8 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+
 import com.joebywan.daybook.core.PlacementStep
 import com.joebywan.daybook.core.bit
 import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.boxPositionMessage
+import com.joebywan.daybook.core.substringBefore
+import com.joebywan.daybook.core.joinedMessages
 import com.joebywan.daybook.core.digitsOf
 import com.joebywan.daybook.core.has
 
@@ -88,18 +94,18 @@ internal object SudokuTeacher {
     private enum class Kind { BOX, ROW, COLUMN }
 
     private class Unit(val kind: Kind, val id: Int, val cells: List<Int>) {
-        val name: String
+        val name: Message
             get() = when (kind) {
-                Kind.BOX -> "the ${boxNames[id]} box"
-                Kind.ROW -> "row ${id + 1}"
-                Kind.COLUMN -> "column ${id + 1}"
+                Kind.BOX -> message("teacher.sudoku.name.1", "boxNames_id_" to (boxNames[id]))
+                Kind.ROW -> message("teacher.sudoku.name.2", "id_1" to (id + 1))
+                Kind.COLUMN -> message("teacher.sudoku.name.3", "id_1" to (id + 1))
             }
     }
 
     private val boxNames = listOf(
-        "top-left", "top-middle", "top-right",
-        "middle-left", "centre", "middle-right",
-        "bottom-left", "bottom-middle", "bottom-right",
+        boxPositionMessage(0), boxPositionMessage(1), boxPositionMessage(2),
+        boxPositionMessage(3), boxPositionMessage(4), boxPositionMessage(5),
+        boxPositionMessage(6), boxPositionMessage(7), boxPositionMessage(8),
     )
 
     /** Boxes first: a box is what a player scans first on a Sudoku, and hidden singles in one are easiest. */
@@ -156,15 +162,15 @@ internal object SudokuTeacher {
         val wrong = s.cells.indices.firstOrNull { s.cells[it] != 0 && s.cells[it] != s.solution[it] }
             ?: return null
         val d = s.cells[wrong]
-        val clear = "Select it and tap $d again to clear it"
-        fun step(explanation: String, cited: Set<Int>) = PlacementStep(
-            MISTAKE, wrong, 0, setOf(wrong), cited, "Check this $d.", explanation,
+        val clear = message("teacher.sudoku.mistake.1", "d" to (d))
+        fun step(explanation: CharSequence, cited: Set<Int>) = PlacementStep(
+            MISTAKE, wrong, 0, setOf(wrong), cited, message("teacher.sudoku.step.1", "d" to (d)), explanation,
         )
 
         // A clash the red digits already show.
         for (u in unitsOf(wrong)) {
             val twin = u.cells.firstOrNull { it != wrong && s.cells[it] == d } ?: continue
-            return step("This $d clashes with the $d in ${u.name}. $clear.", setOf(twin))
+            return step(message("teacher.sudoku.mistake.2", "d" to (d), "u_name" to (u.name), "clear" to (clear)), setOf(twin))
         }
 
         // Otherwise, reason from the correct digits plus this one: does it leave somewhere empty?
@@ -174,8 +180,7 @@ internal object SudokuTeacher {
             if (seen[p] == 0 && sight.cand[p] == 0) {
                 val shared = unitsOf(p).first { wrong in it.cells }
                 return step(
-                    "With a $d here, the marked square in ${shared.name} would have no digit left: its " +
-                        "row, column and box would hold all nine between them. $clear.",
+                    message("teacher.sudoku.mistake.3", "d" to (d), "shared_name" to (shared.name), "clear" to (clear)),
                     setOf(p),
                 )
             }
@@ -185,12 +190,12 @@ internal object SudokuTeacher {
             for (e in 1..9) {
                 if (sight.holds(u, e) || sight.places(u, e).isNotEmpty()) continue
                 return step(
-                    "With a $d here, ${u.name} would have nowhere left for a $e. $clear.",
+                    message("teacher.sudoku.mistake.4", "d" to (d), "u_name" to (u.name), "e" to (e), "clear" to (clear)),
                     u.cells.toSet(),
                 )
             }
         }
-        return step("This $d isn't part of the answer. $clear, and look again.", emptySet())
+        return step(message("teacher.sudoku.mistake.5", "d" to (d), "clear" to (clear)), emptySet())
     }
 
     /**
@@ -208,9 +213,8 @@ internal object SudokuTeacher {
             FALLBACK, cell, d,
             focus = setOf(cell),
             cited = emptySet(),
-            nudge = "This one takes a longer chain. Look at the glowing square.",
-            explanation = "This one needs a longer chain than a hint can walk through, so here's a " +
-                "digit from the answer: the glowing square is $d.",
+            nudge = message("teacher.sudoku.longer_chain.1"),
+            explanation = message("teacher.sudoku.longer_chain.2", "d" to (d)),
         )
     }
 
@@ -259,9 +263,8 @@ internal object SudokuTeacher {
                 FULL_HOUSE, empty[0], d,
                 focus = u.cells.toSet(),
                 cited = u.cells.toSet(),
-                nudge = "Look at ${u.name}.",
-                explanation = "${u.name.cap()} has one empty square left, and $d is the only digit it's " +
-                    "missing, so $d goes there.",
+                nudge = message("teacher.sudoku.full_house.1", "u_name" to (u.name)),
+                explanation = message("teacher.sudoku.full_house.2", "u_name_cap_" to (u.name.cap()), "d" to (d)),
             )
         }
         return null
@@ -292,9 +295,8 @@ internal object SudokuTeacher {
             if (u.kind == Kind.BOX) HIDDEN_SINGLE_BOX else HIDDEN_SINGLE_LINE, h.cell, d,
             focus = u.cells.toSet(),
             cited = u.cells.toSet() + blockers(s, u, d, h.cell),
-            nudge = "Look at ${u.name}.",
-            explanation = "Every other empty square in ${u.name} already sees a $d in its row, " +
-                "column or box. So its $d goes in the glowing square.",
+            nudge = message("teacher.sudoku.hidden_single.1", "u_name" to (u.name)),
+            explanation = message("teacher.sudoku.hidden_single.2", "u_name" to (u.name), "d" to (d)),
         )
     }
 
@@ -311,9 +313,8 @@ internal object SudokuTeacher {
             NAKED_SINGLE, cell, d,
             focus = setOf(cell),
             cited = Sudoku.peers(cell).filter { s.cells[it] != 0 }.toSet(),
-            nudge = "What can go in the glowing square?",
-            explanation = "Its row, column and box already hold every digit except $d, so $d is " +
-                "the only one left for it.",
+            nudge = message("teacher.sudoku.naked_single.1"),
+            explanation = message("teacher.sudoku.naked_single.2", "d" to (d)),
         )
     }
 
@@ -325,8 +326,8 @@ internal object SudokuTeacher {
         val removed: List<Pair<Int, Int>>,
         val pattern: Set<Int>,
         val where: Set<Int>,
-        val nudge: String,
-        val reason: String,
+        val nudge: CharSequence,
+        val reason: Message,
     )
 
     private fun eliminations(s: Sight): Sequence<Elimination> = sequence {
@@ -350,9 +351,8 @@ internal object SudokuTeacher {
                     yield(
                         Elimination(
                             LOCKED, removed, places.toSet(), box.cells.toSet() + line.cells,
-                            nudge = "Look at ${box.name}, then ${line.name}.",
-                            reason = "In ${box.name}, $d fits only in ${line.name}, so the rest of " +
-                                "that ${line.name.substringBefore(' ')} can't be $d.",
+                            nudge = message("teacher.sudoku.locked.1", "box_name" to (box.name), "line_name" to (line.name)),
+                            reason = message("teacher.sudoku.locked.2", "box_name" to (box.name), "d" to (d), "line_name" to (line.name), "value4" to (line.name.substringBefore(' '))),
                         )
                     )
                 }
@@ -370,9 +370,8 @@ internal object SudokuTeacher {
                 yield(
                     Elimination(
                         LOCKED, removed, places.toSet(), line.cells.toSet() + box.cells,
-                        nudge = "Look at ${line.name}, then ${box.name}.",
-                        reason = "In ${line.name}, $d fits only in ${box.name}, so the rest of that " +
-                            "box can't be $d.",
+                        nudge = message("teacher.sudoku.locked.3", "line_name" to (line.name), "box_name" to (box.name)),
+                        reason = message("teacher.sudoku.locked.4", "line_name" to (line.name), "d" to (d), "box_name" to (box.name)),
                     )
                 )
             }
@@ -394,9 +393,8 @@ internal object SudokuTeacher {
                 yield(
                     Elimination(
                         NAKED_PAIR, removed, setOf(a, b), u.cells.toSet(),
-                        nudge = "Look at ${u.name}.",
-                        reason = "Two squares of ${u.name} can only be $x or $y, so they take both, and " +
-                            "no other square there can be $x or $y.",
+                        nudge = message("teacher.sudoku.naked_pairs.1", "u_name" to (u.name)),
+                        reason = message("teacher.sudoku.naked_pairs.2", "u_name" to (u.name), "x" to (x), "y" to (y)),
                     )
                 )
             }
@@ -416,9 +414,8 @@ internal object SudokuTeacher {
                 yield(
                     Elimination(
                         HIDDEN_PAIR, removed, px.toSet(), u.cells.toSet(),
-                        nudge = "Look at ${u.name}.",
-                        reason = "In ${u.name}, $x and $y fit only in the same two squares, so those two " +
-                            "can't hold anything else.",
+                        nudge = message("teacher.sudoku.hidden_pairs.1", "u_name" to (u.name)),
+                        reason = message("teacher.sudoku.hidden_pairs.2", "u_name" to (u.name), "x" to (x), "y" to (y)),
                     )
                 )
             }
@@ -430,9 +427,9 @@ internal object SudokuTeacher {
      * or a digit they leave with one place in a unit. Returned as the step's closing sentence.
      */
     private class Single(val cell: Int, val digit: Int, val unit: Unit?) {
-        fun sentence(): String =
-            if (unit == null) "That leaves the glowing square only one digit: $digit."
-            else "That leaves the glowing square as the only place for $digit in ${unit.name}."
+        fun sentence(): Message =
+            if (unit == null) message("teacher.sudoku.sentence.1", "digit" to (digit))
+            else message("teacher.sudoku.sentence.2", "digit" to (digit), "unit_name" to (unit.name))
     }
 
     private fun singleAfter(after: Sight, removed: List<Pair<Int, Int>>): Single? {
@@ -454,7 +451,7 @@ internal object SudokuTeacher {
         for (e in eliminations(s)) {
             val after = s.copyWithout(e.removed)
             val single = singleAfter(after, e.removed) ?: continue
-            val text = "${e.reason} ${single.sentence()}"
+            val text = message("teacher.sudoku.with_elimination.extra.1", "e_reason" to (e.reason), "single_sentence_" to (single.sentence()))
             if (text.length > MAX_EXPLANATION) continue
             return PlacementStep(
                 e.technique, single.cell, single.digit,
@@ -471,9 +468,9 @@ internal object SudokuTeacher {
 
     /** How a supposed digit breaks the board: a cell with no digit left, or a unit with no place for one. */
     private class Contradiction(val cell: Int?, val unit: Unit?, val digit: Int) {
-        fun phrase(afterForced: Boolean): String =
-            if (cell != null) "${if (afterForced) "another" else "the"} marked square would have no digit left"
-            else "${unit!!.name} would have nowhere left for a $digit"
+        fun phrase(afterForced: Boolean): Message =
+            if (cell != null) message("teacher.sudoku.phrase.1", "value1" to (if (afterForced) message("teacher.sudoku.phrase.extra.1") else message("teacher.sudoku.phrase.extra.2")))
+            else message("teacher.sudoku.phrase.2", "unit_name" to (unit!!.name), "digit" to (digit))
 
         fun cells(): Set<Int> = if (cell != null) setOf(cell) else unit!!.cells.toSet()
     }
@@ -542,27 +539,27 @@ internal object SudokuTeacher {
     private fun whatIf(s: Sight): PlacementStep? {
         var best: PlacementStep? = null
         var bestLength = Int.MAX_VALUE
-        fun consider(target: Int, digit: Int, supposed: Int, supposedDigit: Int, lead: String, close: String) {
+        fun consider(target: Int, digit: Int, supposed: Int, supposedDigit: Int, lead: Message, close: Message) {
             if (bestLength == 0) return // nothing can be shorter
             val chain = chainFrom(s, supposed, supposedDigit) ?: return
             if (chain.forced.size >= bestLength) return
             val digits = chain.forced.mapIndexed { i, (_, d) ->
-                if (chain.forced.take(i).any { it.second == d }) "another $d" else "a $d"
+                if (chain.forced.take(i).any { it.second == d }) message("teacher.sudoku.consider.1", "d" to (d)) else message("teacher.sudoku.consider.2", "d" to (d))
             }
             val middle = when (digits.size) {
-                0 -> ""
-                1 -> "that would force ${digits[0]} into a marked square, and then "
-                else -> "that would force ${digits.joinToString(" and then ")} into marked squares, and then "
+                0 -> com.joebywan.daybook.core.i18n.literalMessage("")
+                1 -> message("teacher.sudoku.consider.3", "digits_0_" to (digits[0]))
+                else -> message("teacher.sudoku.consider.4", "value1" to (digits.joinedMessages(message("teacher.sudoku.consider.extra.1"))))
             }
-            val text = "$lead, $middle${chain.broken.phrase(digits.isNotEmpty())}. $close"
+            val text = message("teacher.sudoku.consider.extra.2", "lead" to (lead), "middle" to (middle), "value3" to (chain.broken.phrase(digits.isNotEmpty())), "close" to (close))
             if (text.length > MAX_EXPLANATION) return
             bestLength = chain.forced.size
             best = PlacementStep(
                 WHAT_IF, target, digit,
                 focus = setOf(target, supposed),
                 cited = chain.forced.map { it.first }.toSet() + chain.broken.cells() + supposed,
-                nudge = if (supposed == target) "What if the glowing square were $supposedDigit?"
-                else "What if this $digit went in the other place?",
+                nudge = if (supposed == target) message("teacher.sudoku.consider.5", "supposedDigit" to (supposedDigit))
+                else message("teacher.sudoku.consider.6", "digit" to (digit)),
                 explanation = text,
             )
         }
@@ -570,8 +567,8 @@ internal object SudokuTeacher {
         for (c in 0 until 81) {
             if (s.cells[c] != 0 || s.cand[c].countOneBits() != 2) continue
             val (a, b) = digitsOf(s.cand[c])
-            consider(c, b, c, a, "If the glowing square were $a", "So it can't be $a, and must be $b.")
-            consider(c, a, c, b, "If the glowing square were $b", "So it can't be $b, and must be $a.")
+            consider(c, b, c, a, message("teacher.sudoku.what_if.1", "a" to (a)), message("teacher.sudoku.what_if.2", "a" to (a), "b" to (b)))
+            consider(c, a, c, b, message("teacher.sudoku.what_if.3", "b" to (b)), message("teacher.sudoku.what_if.4", "b" to (b), "a" to (a)))
         }
         // A digit with two places left in a unit: suppose one, and it breaks, so it's the other.
         for (u in units) for (d in 1..9) {
@@ -579,8 +576,8 @@ internal object SudokuTeacher {
             val places = s.places(u, d)
             if (places.size != 2) continue
             val (p, q) = places
-            consider(p, d, q, d, "${u.name.cap()} has two places for $d. If it went in the other one", "So $d goes in the glowing square.")
-            consider(q, d, p, d, "${u.name.cap()} has two places for $d. If it went in the other one", "So $d goes in the glowing square.")
+            consider(p, d, q, d, message("teacher.sudoku.what_if.5", "u_name_cap_" to (u.name.cap()), "d" to (d)), message("teacher.sudoku.what_if.6", "d" to (d)))
+            consider(q, d, p, d, message("teacher.sudoku.what_if.7", "u_name_cap_" to (u.name.cap()), "d" to (d)), message("teacher.sudoku.what_if.8", "d" to (d)))
         }
         return best
     }

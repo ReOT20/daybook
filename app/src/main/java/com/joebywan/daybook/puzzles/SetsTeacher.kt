@@ -1,7 +1,11 @@
 package com.joebywan.daybook.puzzles
 
-import com.joebywan.daybook.core.cap
 import com.joebywan.daybook.core.TeachStep
+import com.joebywan.daybook.core.asMessage
+import com.joebywan.daybook.core.cap
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.joinedMessages
 
 /**
  * Sets, taught the way a person finds a set: pick two cards, and work out trait by trait what the
@@ -49,24 +53,29 @@ internal object SetsTeacher {
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
     ) : TeachStep {
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+
+
         val mistake: Boolean get() = technique == MISTAKE
     }
 
     // ---- words -----------------------------------------------------------------------------------
 
-    private val counts = listOf("one", "two", "three")
-    private val shadings = listOf("solid", "outlined", "striped")
-    private val colourNames = listOf("amber", "teal", "violet")
-    private val shapes = listOf("oval", "diamond", "rectangle")
-    private val shapesWithArticle = listOf("an oval", "a diamond", "a rectangle")
+    private val counts = listOf(message("teacher.sets.counts.1"), message("teacher.sets.counts.2"), message("teacher.sets.counts.3"))
+    private val shadings = listOf(message("teacher.sets.shadings.1"), message("teacher.sets.shadings.2"), message("teacher.sets.shadings.3"))
+    private val colourNames = listOf(message("teacher.sets.colour_names.1"), message("teacher.sets.colour_names.2"), message("teacher.sets.colour_names.3"))
+    private val shapes = listOf(message("teacher.sets.shapes.1"), message("teacher.sets.shapes.2"), message("teacher.sets.shapes.3"))
+    private val shapesWithArticle = listOf(message("teacher.sets.shapes_with_article.1"), message("teacher.sets.shapes_with_article.2"), message("teacher.sets.shapes_with_article.3"))
 
     /** "three outlined violet ovals": count, shading, colour, shape — the order the walk runs in. */
-    fun describe(c: Card): String =
-        "${counts[c.count]} ${shadings[c.shading]} ${colourNames[c.colour]} ${shapes[c.shape]}" +
-            if (c.count > 0) "s" else ""
+    fun describeMessage(c: Card): Message =
+        message("teacher.sets.describe_message.extra.1", "counts_c_count_" to (counts[c.count]), "shadings_c_shading_" to (shadings[c.shading]), "colourNames_c_colour_" to (colourNames[c.colour]), "shapes_c_shape_" to (shapes[c.shape]), "value5" to (if (c.count > 0) message("teacher.sets.describe.1") else ""))
 
     /** The one card that makes a set with [a] and [b]. */
     fun third(a: Card, b: Card): Card {
@@ -75,25 +84,25 @@ internal object SetsTeacher {
     }
 
     /** One clause per trait, in [describe]'s order: what [a] and [b] say the third must be. */
-    private fun walk(a: Card, b: Card): String {
+    private fun walk(a: Card, b: Card): Message {
         val t = third(a, b)
         // Two different values are named low to high whichever card came first, so the same pair
         // always reads the same way: "one and two need three", never "two and one".
-        fun clause(x: Int, y: Int, need: Int, names: List<String>, alike: String) =
-            if (x == y) alike else "${names[minOf(x, y)]} and ${names[maxOf(x, y)]} need ${names[need]}"
+        fun clause(x: Int, y: Int, need: Int, names: List<Message>, alike: Message) =
+            if (x == y) alike else message("teacher.sets.clause.1", "names_minOf_x_y_" to (names[minOf(x, y)]), "names_maxOf_x_y_" to (names[maxOf(x, y)]), "names_need_" to (names[need]))
         val parts = listOf(
-            clause(a.count, b.count, t.count, counts, "both have ${counts[a.count]}"),
-            clause(a.shading, b.shading, t.shading, shadings, "both are ${shadings[a.shading]}"),
-            clause(a.colour, b.colour, t.colour, colourNames, "both are ${colourNames[a.colour]}"),
-            clause(a.shape, b.shape, t.shape, shapesWithArticle, "both are ${shapes[a.shape]}s"),
+            clause(a.count, b.count, t.count, counts, message("teacher.sets.walk.1", "counts_a_count_" to (counts[a.count]))),
+            clause(a.shading, b.shading, t.shading, shadings, message("teacher.sets.walk.2", "shadings_a_shading_" to (shadings[a.shading]))),
+            clause(a.colour, b.colour, t.colour, colourNames, message("teacher.sets.walk.3", "colourNames_a_colour_" to (colourNames[a.colour]))),
+            clause(a.shape, b.shape, t.shape, shapesWithArticle, message("teacher.sets.walk.4", "shapes_a_shape_" to (shapes[a.shape]))),
         )
-        return parts.joinToString("; ").cap()
+        return parts.joinedMessages("; ").cap()
     }
 
     /** The walk from [a] and [b], ending on the card it defines. Used by hints and the walkthrough. */
-    fun walkToThird(a: Card, b: Card): String = "${walk(a, b)}. So the third is ${describe(third(a, b))}."
+    fun walkToThirdMessage(a: Card, b: Card): Message = message("teacher.sets.walk_to_third.1", "walk_a_b_" to (walk(a, b)), "describe_third_a_b_" to (describeMessage(third(a, b))))
 
-    private val traitNames = listOf("count", "shading", "colour", "shape")
+    private val traitNames = listOf(message("teacher.sets.trait_names.1"), message("teacher.sets.trait_names.2"), message("teacher.sets.trait_names.3"), message("teacher.sets.trait_names.4"))
 
     private fun traitValue(c: Card, trait: Int) = when (trait) {
         0 -> c.count
@@ -108,30 +117,35 @@ internal object SetsTeacher {
     }
 
     /** "two are striped and one is solid", for a trait on which two of [trio] agree. */
-    fun whyBroken(trio: List<Card>, trait: Int): String {
+    fun whyBrokenMessage(trio: List<Card>, trait: Int): Message {
         val values = trio.map { traitValue(it, trait) }
         val pair = values.first { v -> values.count { it == v } == 2 }
         val odd = values.first { it != pair }
         return when (trait) {
-            0 -> "two have ${counts[pair]} symbol${if (pair > 0) "s" else ""} and one has ${counts[odd]}"
-            1 -> "two are ${shadings[pair]} and one is ${shadings[odd]}"
-            2 -> "two are ${colourNames[pair]} and one is ${colourNames[odd]}"
-            else -> "two are ${shapes[pair]}s and one is ${shapesWithArticle[odd]}"
+            0 -> message("teacher.sets.why_broken.1", "counts_pair_" to (counts[pair]), "if_pair_0_s_else_" to (if (pair > 0) message("teacher.sets.why_broken_message.extra.1") else ""), "counts_odd_" to (counts[odd]))
+            1 -> message("teacher.sets.why_broken.2", "shadings_pair_" to (shadings[pair]), "shadings_odd_" to (shadings[odd]))
+            2 -> message("teacher.sets.why_broken.3", "colourNames_pair_" to (colourNames[pair]), "colourNames_odd_" to (colourNames[odd]))
+            else -> message("teacher.sets.why_broken.4", "shapes_pair_" to (shapes[pair]), "shapesWithArticle_odd_" to (shapesWithArticle[odd]))
         }
     }
 
     /** The whole sentence for a trio that is not a set. Shared with the walkthrough. */
-    fun notASet(trio: List<Card>): String {
+    fun notASetMessage(trio: List<Card>): Message {
         val broken = brokenTraits(trio)
         val first = broken.first()
         val also = broken.drop(1).map { traitNames[it] }
         val tail = when (also.size) {
             0 -> ""
-            1 -> " ${also[0].cap()} breaks it too."
-            else -> " ${also.dropLast(1).joinToString(", ").cap()} and ${also.last()} break it too."
+            1 -> message("teacher.sets.not_a_set.1", "also_0_cap_" to (also[0].cap()))
+            else -> message("teacher.sets.not_a_set.2", "value1" to (also.dropLast(1).joinedMessages(", ").cap()), "also_last_" to (also.last()))
         }
-        return "${whyBroken(trio, first).cap()}, and ${traitNames[first]} must be all alike or all different.$tail"
+        return message("teacher.sets.not_a_set.3", "value1" to (whyBrokenMessage(trio, first).cap()), "traitNames_first_" to (traitNames[first]), "tail" to (tail))
     }
+
+    fun describe(c: Card): String = describeMessage(c).english
+    fun walkToThird(a: Card, b: Card): String = walkToThirdMessage(a, b).english
+    fun whyBroken(trio: List<Card>, trait: Int): String = whyBrokenMessage(trio, trait).english
+    fun notASet(trio: List<Card>): String = notASetMessage(trio).english
 
     // ---- the whole hint --------------------------------------------------------------------------
 
@@ -154,8 +168,8 @@ internal object SetsTeacher {
                 focus = s.lastPick.toSet(),
                 cited = emptySet(),
                 targets = s.lastPick.toSet(),
-                nudge = "Check the three you just picked.",
-                explanation = "Not a set: ${notASet(trio).replaceFirstChar { it.lowercaseChar() }}",
+                nudge = message("teacher.sets.mistake.1"),
+                explanation = message("teacher.sets.mistake.2", "value1" to (Message { language -> notASetMessage(trio).resolve(language).replaceFirstChar { it.lowercaseChar() } })),
             )
         }
         val open = openSets(s.cards, s.found)
@@ -170,11 +184,11 @@ internal object SetsTeacher {
                     focus = s.selected.toSet(),
                     cited = emptySet(),
                     targets = s.selected.toSet(),
-                    nudge = "Check the card you picked.",
+                    nudge = message("teacher.sets.mistake.3"),
                     explanation = if (anywhere) {
-                        "Every set this card is in has been found already. Tap it again to let it go."
+                        message("teacher.sets.mistake.4")
                     } else {
-                        "This card isn't in any set on this board. Tap it again to let it go."
+                        message("teacher.sets.mistake.5")
                     },
                 )
             }
@@ -189,13 +203,11 @@ internal object SetsTeacher {
                     focus = s.selected.toSet(),
                     cited = if (c >= 0) setOf(c) else emptySet(),
                     targets = s.selected.toSet(),
-                    nudge = "Check the two cards you picked.",
+                    nudge = message("teacher.sets.mistake.6"),
                     explanation = if (c < 0) {
-                        "Only ${describe(need)} would finish these two, and that card isn't here. " +
-                            "Tap them again to let go."
+                        message("teacher.sets.mistake.7", "describe_need_" to (describeMessage(need)))
                     } else {
-                        "These two are in a set you've found, and two cards only ever make one set. " +
-                            "Tap them again to let go."
+                        message("teacher.sets.mistake.8")
                     },
                 )
             }
@@ -226,9 +238,9 @@ internal object SetsTeacher {
                 focus = pair.toSet(),
                 cited = pair.toSet(),
                 targets = setOf(third),
-                nudge = if (selected.size == 2) "Your two cards are good. What finishes them?"
-                else "Try your card with this one.",
-                explanation = walkToThird(cards[pair[0]], cards[pair[1]]),
+                nudge = if (selected.size == 2) message("teacher.sets.deduce.1")
+                else message("teacher.sets.deduce.2"),
+                explanation = walkToThirdMessage(cards[pair[0]], cards[pair[1]]),
             )
         }
 
@@ -253,8 +265,8 @@ internal object SetsTeacher {
             focus = pair.toSet(),
             cited = pair.toSet(),
             targets = setOf(third),
-            nudge = if (reused.isEmpty()) "Look at these two." else "Look at these two. A tinted card still counts.",
-            explanation = walkToThird(cards[pair[0]], cards[pair[1]]),
+            nudge = if (reused.isEmpty()) message("teacher.sets.deduce.3") else message("teacher.sets.deduce.4"),
+            explanation = walkToThirdMessage(cards[pair[0]], cards[pair[1]]),
         )
     }
 

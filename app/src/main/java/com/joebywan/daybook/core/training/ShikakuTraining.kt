@@ -1,5 +1,6 @@
 package com.joebywan.daybook.core
 
+import com.joebywan.daybook.core.i18n.message
 import com.joebywan.daybook.puzzles.Shikaku
 import com.joebywan.daybook.puzzles.ShikakuState
 import com.joebywan.daybook.puzzles.ShikakuTeacher
@@ -12,14 +13,10 @@ import com.joebywan.daybook.puzzles.ShikakuTeacher
 val ShikakuTraining: Course = Course(
     puzzle = Shikaku,
     explanations = linkedMapOf(
-        ShikakuTeacher.ONLY_FITS to "A number is its rectangle's area. When the edges, the other numbers and the " +
-            "rectangles already drawn leave it just one way to lay that many squares out, draw it: drag from corner to corner.",
-        ShikakuTeacher.ONLY_REACHES to "Every square belongs to some rectangle. When only one number's rectangles can " +
-            "reach an empty square, and just one of them covers it, that rectangle is the one.",
-        ShikakuTeacher.COMMON_CELLS to "When every rectangle a number can make covers the same squares, no other number " +
-            "can use them. Set them aside and see which number that leaves just one rectangle.",
-        ShikakuTeacher.WHAT_IF to "Suppose a number took one of its other rectangles. If that leaves another number no " +
-            "room, or a square no number can reach, it can't go that way. Draw the one way left.",
+        ShikakuTeacher.ONLY_FITS to message("training.shikaku_only_fits"),
+        ShikakuTeacher.ONLY_REACHES to message("training.shikaku_only_reaches"),
+        ShikakuTeacher.COMMON_CELLS to message("training.shikaku_common_cells"),
+        ShikakuTeacher.WHAT_IF to message("training.shikaku_what_if"),
     ),
     // Standard boards reach the first two; Hard is the easiest tier that reaches the other two.
     tierFor = tierByIndex({ ShikakuTraining.techniques }, hard = 2, expert = 4),

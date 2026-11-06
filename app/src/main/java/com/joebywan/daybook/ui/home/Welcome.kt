@@ -1,5 +1,7 @@
 package com.joebywan.daybook.ui.home
 
+import com.joebywan.daybook.core.i18n.text
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.joebywan.daybook.core.PuzzleRegistry
+import com.joebywan.daybook.platform.platformLanguage
 import com.joebywan.daybook.ui.stats.MedalIcon
 
 /**
@@ -58,25 +61,20 @@ internal fun Welcome(onStart: () -> Unit) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     DaybookMark(Modifier.size(44.dp))
                     Spacer(Modifier.width(12.dp))
-                    Text("Welcome to Daybook", style = MaterialTheme.typography.headlineSmall, color = scheme.onBackground)
+                    Text(text("ui.welcome.welcome_to_daybook"), style = MaterialTheme.typography.headlineSmall, color = scheme.onBackground)
                 }
                 Text(
-                    "New boards every day from ${PuzzleRegistry.all.size} kinds of logic puzzle. Free, with no ads and " +
-                        "no account, and it all works offline.",
+                    text("welcome.intro", "count" to (PuzzleRegistry.forLanguage(platformLanguage()).size)),
                     style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onBackground,
                 )
                 Pointer(
                     { Icon(Icons.Default.AutoAwesome, null, tint = Color(0xFFE8A317), modifier = icon) },
-                    "Today's three, over the grid, are a quick one, a longer one and a word or number one: gentle ones " +
-                        "while you find your feet, then the same three as everyone else. Tap the ? on any puzzle for its " +
-                        "rules and a one-minute walkthrough.",
+                    text("ui.welcome.today_s_three_over_the_grid"),
                 )
                 Pointer(
                     { Icon(Icons.Default.CalendarToday, null, tint = scheme.secondary, modifier = icon) },
-                    "At the top: Daily for today's board (tap it again for Random, a fresh one any time), Levels for " +
-                        "sets of five, and Training to practise each puzzle's techniques. Daily and Random come in " +
-                        "Standard, Hard and Expert.",
+                    text("ui.welcome.at_the_top_daily_for_today"),
                 )
                 Pointer(
                     {
@@ -86,17 +84,15 @@ internal fun Welcome(onStart: () -> Unit) {
                             Icon(Icons.Default.InsertChart, null, tint = scheme.onSurfaceVariant, modifier = small)
                         }
                     },
-                    "The buttons by the title open the archive of every past day and your achievements. The chart badge " +
-                        "with your streak opens your stats.",
+                    text("ui.welcome.the_buttons_by_the_title_open"),
                 )
                 Pointer(
                     { Icon(Icons.Default.OpenWith, null, tint = scheme.secondary, modifier = icon) },
-                    "Press and hold a puzzle to move it. Until you do, the ones you play most come first, and the easiest " +
-                        "to pick up lead among the rest.",
+                    text("ui.welcome.press_and_hold_a_puzzle_to"),
                 )
             }
             Button(onClick = onStart, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp).height(52.dp)) {
-                Text("Start", style = MaterialTheme.typography.titleMedium)
+                Text(text("ui.welcome.start"), style = MaterialTheme.typography.titleMedium)
             }
         }
     }

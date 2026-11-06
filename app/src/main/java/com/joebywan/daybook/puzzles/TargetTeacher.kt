@@ -1,5 +1,14 @@
 package com.joebywan.daybook.puzzles
 
+import com.joebywan.daybook.core.i18n.message
+import com.joebywan.daybook.core.i18n.literalMessage
+import com.joebywan.daybook.core.listedMessage
+import com.joebywan.daybook.core.joinedMessages
+import com.joebywan.daybook.core.numberWordMessage
+
+import com.joebywan.daybook.core.i18n.Message
+import com.joebywan.daybook.core.asMessage
+
 import com.joebywan.daybook.core.Deduction
 import com.joebywan.daybook.core.TeachStep
 import kotlin.math.abs
@@ -39,14 +48,20 @@ internal object TargetTeacher {
         val a: Int,
         val b: Int,
         val op: TargetOp?,
-        override val nudge: String,
-        override val explanation: String,
+        nudge: CharSequence,
+        explanation: CharSequence,
         override val focus: Set<Int>,
         override val cited: Set<Int>,
         override val targets: Set<Int>,
         /** The tiles the board should show after the step, sorted; empty for a mistake. */
         val after: List<Int>,
-    ) : TeachStep
+    ) : TeachStep {
+
+        override val nudgeMessage: Message = nudge.asMessage()
+        override val explanationMessage: Message = explanation.asMessage()
+        override val nudge: String get() = nudgeMessage.english
+        override val explanation: String get() = explanationMessage.english
+    }
 
     /** Mistakes first, then a step on a shortest road. Null once solved (or if the position is lost with nothing to take back, which a board made here never is). */
     fun teach(s: TargetState): Step? {
@@ -69,8 +84,8 @@ internal object TargetTeacher {
         val i = badStep(s) ?: return null
         return Step(
             MISTAKE, -1, -1, null,
-            "Check where you are heading.",
-            "After ${s.log[i].text()}, no way of combining what is left reaches ${s.target}. Take that step back.",
+            message("teacher.target.mistake.1"),
+            message("teacher.target.mistake.2", "s_log_i_text_" to (s.log[i].text()), "s_target" to (s.target)),
             setOf(Target.TARGET), emptySet(), setOf(Target.TARGET), emptyList(),
         )
     }
@@ -119,13 +134,13 @@ internal object TargetTeacher {
         val sum = "${m.left} ${m.op.symbol} ${m.right}"
         val finish = m.result == target
         val gap = abs(m.result - target)
-        val side = if (m.result < target) "below" else "above"
-        val more = if (m.steps == 1) "one more step" else "${m.steps} more steps"
+        val side = if (m.result < target) message("teacher.target.explain.1") else message("teacher.target.explain.2")
+        val more = if (m.steps == 1) message("teacher.target.explain.3") else message("teacher.target.explain.4", "m_steps" to (m.steps))
         return Step(
             if (finish) FINISH else STEP, m.a, m.b, m.op,
-            if (finish) "Do two of these make the target?" else "Which two tiles belong together?",
-            if (finish) "$sum is $target, the target. Tap ${m.left}, then ${m.op.symbol}, then ${m.right}."
-            else "$sum makes ${m.result}, $gap $side the target, and from there $more reaches it. Tap ${m.left}, then ${m.op.symbol}, then ${m.right}.",
+            if (finish) message("teacher.target.explain.5") else message("teacher.target.explain.6"),
+            if (finish) message("teacher.target.explain.7", "sum" to (sum), "target" to (target), "m_left" to (m.left), "m_op_symbol" to (m.op.symbol), "m_right" to (m.right))
+            else message("teacher.target.explain.8", "sum" to (sum), "m_result" to (m.result), "gap" to (gap), "side" to (side), "more" to (more), "m_left" to (m.left), "m_op_symbol" to (m.op.symbol), "m_right" to (m.right)),
             setOf(m.a, m.b), setOf(Target.TARGET), setOf(m.a, m.b, Target.OP0 + m.op.ordinal), m.after,
         )
     }
@@ -135,7 +150,7 @@ internal object TargetTeacher {
         val step = teach(s) ?: return null
         if (step.technique == MISTAKE) {
             return Deduction(
-                technique = MISTAKE, nudge = step.nudge, explanation = step.explanation,
+                technique = MISTAKE, nudge = step.nudgeMessage, explanation = step.explanationMessage,
                 focus = step.focus, cited = step.cited, targets = step.targets, mistake = true,
                 applyTo = { now -> (now as TargetState).let { n -> badStep(n)?.let { n.withoutFrom(it) } ?: n } },
                 reachedBy = { now -> (now as TargetState).let { it.solved || TargetLogic.steps(it.tiles, it.target) != TargetLogic.NO } },

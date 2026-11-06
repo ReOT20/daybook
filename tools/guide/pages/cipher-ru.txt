@@ -1,0 +1,105 @@
+# Cipher
+> A sum of Russian words, with digits hidden.
+
+## How to play
+
+This version uses Russian words. Е and Ё count as the same letter; the board writes Е. The display language can change without changing this word list or a saved board.
+
+Tap a letter, then a digit. Tap the digit again to clear it. The row of keys under the sum shows each letter's digit, and a digit another letter already holds is greyed on the pad with that letter beneath it, though you can still choose it.
+
+On a keyboard, type a Russian letter from the sum to pick it, then a digit. Backspace clears, and the arrows walk the letters.
+
+Two letters on one digit, a word starting with 0, or a column that doesn't add up turns red after a moment. Nothing stops you placing a digit.
+
+Stuck? The first tap on Hint says where to look, and the second shows the working. You make the move yourself, unless you ask for "Show me". Every sum has exactly one answer, and the hints can always reach it without a guess.
+
+## Rules
+
+- Each letter stands for one digit, 0 to 9, the same digit everywhere it appears.
+- Different letters are different digits, and no word starts with 0.
+- Give every letter its digit so the sum is true.
+
+## What changes per tier
+
+- Standard: Each digit follows from a column or two. Every sum on every tier is two four-letter words making a five-letter one.
+- Hard: Some digits need every column at once.
+- Expert: Some digits need a what-if across two columns.
+
+## Techniques
+
+These are the steps the hints teach, simplest first. On each board, the top two words add up to the bottom one, and a placed letter shows its digit beside it. The tinted squares are where to look, rings mark the columns the reasoning reads, and the filled squares are the move. Every board here is a real position from the game, and this is the step the hint gives on it.
+
+### leading-carry | The leading carry
+
+The total is longer than the words above it, so its first letter has nothing to add. It can only be the carry from the column before, and two digits and a carry make at most 19. So it's 1. Start here on every board.
+
+~~~board
+_ А З О Т
+_ Г Р О Т
+Т Р О П А
+content-language: ru
+focus: r1c5 r2c5 r3c1
+cite: r1c2 r2c2 r3c2
+answer: r1c5=Т1 r2c5=Т1 r3c1=Т1
+caption: The total's extra first letter, Т, is the carry out of the thousands column. Two digits and a carry make at most 19, so Т is 1.
+~~~
+
+### column | One column and its carry
+
+Take one column and ask what its letters can be. A carry is only ever 0 or 1, so a column often leaves one digit even before you know its carry. Watch for a letter that shows up in its own total: X + Y ending in X means Y adds nothing to the last digit.
+
+~~~board
+_ А З О Т1
+_ Г Р О Т1
+Т1 Р О П А
+content-language: ru
+focus: r1c5 r2c5 r3c5
+cite: r1c5 r2c5 r3c5
+answer: r1c2=А2 r3c5=А2
+caption: In the units column, 1 + 1 makes 2, so А is 2.
+~~~
+
+### column-pair | Two columns through their carry
+
+When one column can't settle anything alone, read it with its neighbour. The carry between them is what joins them: one column may fix the carry, and that finishes the other.
+
+~~~board
+_ А2 З О Т1
+_ Г Р О Т1
+Т1 Р О П А2
+content-language: ru
+focus: r2c3 r3c2
+cite: r1c2 r2c2 r3c1 r3c2
+answer: r2c3=Р0 r3c2=Р0
+caption: Т is 1, so the thousands carry 1. In the thousands, 2 + Г + carry makes 10 + Р. That is at least 10 and at most 2 + 9 + 1 = 12, so Р is 0, 1 or 2; Т has 1 and А has 2, so Р is 0.
+~~~
+
+### columns-together | Every column worked through together
+
+Sometimes no two columns are enough, and the answer comes from letting every column rule out what it can, passing each carry along and giving no two letters the same digit. The hint names this when it happens, and shows the shortest working it can.
+
+~~~board
+_ Б1 Л О Г
+_ Г Л А0 С
+Б1 А0 Н К А0
+content-language: ru
+focus: r1c5 r2c2
+cite: r1c2 r1c3 r1c5 r2c2 r2c3 r2c5 r3c2 r3c3 r3c5
+answer: r1c5=Г8 r2c2=Г8
+caption: If the hundreds carried nothing, Г would be 9 and С would be 1, which Б already holds. They must carry 1, so the thousands read 1 + Г + 1 ending in 0: Г is 8.
+~~~
+
+### pair-what-if | A what-if on two columns
+
+Here you try the digits a letter could still be, one at a time, following only what it does to its column and the next. Each that breaks is out. This isn't guessing: you only write down the digit once the others have been shown to fail.
+
+~~~board
+_ А8 Р А8 Б4
+_ Д1 Ы Р А8
+Д1 Е0 Б4 Ю Т2
+content-language: ru
+focus: r1c3 r2c4
+cite: r1c3 r1c4 r2c3 r2c4 r3c3 r3c4
+answer: r1c3=Р6 r2c4=Р6
+caption: Р could be 3, 5, 6, 7 or 9. Trying 3, 5 or 9 gives Ю a digit already taken, while 7 forces both Ю and Ы to be 6, so Р must be 6.
+~~~
