@@ -1,5 +1,22 @@
 # Localization implementation and acceptance
 
+## Tester follow-up: plain game names
+
+Removed language labels from all seven word-edition names in both catalogs, regenerated Kotlin, and
+updated the corresponding guide titles and native verifier expectation. Edition IDs and saved content
+are unchanged. Source: `bbf0e129`.
+
+Catalog checks (10), verifier self-checks (8), and focused guide-name/share/menu JVM tests (8) pass.
+Android release and web builds pass. Four Russian home cases across Chromium/WebKit and short/tall
+phones show all seven clean names, with no browser errors or external requests. Evidence:
+`/tmp/daybook-clean-game-names/`.
+
+Signed test APK `1.39.4` uses the same persistent certificate as the earlier test builds and passes
+signature, package, permission and 16 KiB alignment checks. SHA-256:
+`042e56a21020e1d3305941e5c2e5bd73c8b40b2df99bdc8fb513d732af5f4e74`.
+The earlier full native/annual evidence below remains tied to `8ff85ba7`; those checks were not rerun
+for this name-only follow-up.
+
 ## Tester follow-up: language menus and icons
 
 The 2026-11-06 test feedback identified mixed-language word menus and placeholder Russian tile icons.
